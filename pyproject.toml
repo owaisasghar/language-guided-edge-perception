@@ -16,6 +16,9 @@ dependencies = [
     "pillow>=10.1",
     "numpy>=1.26",
     "pyyaml>=6.0",
+    # Tracking (Milestone 3): ByteTrack's Kalman filter (scipy) and assignment solver (lap), both BSD.
+    "scipy>=1.13",
+    "lap>=0.5.12",
 ]
 
 [project.optional-dependencies]
@@ -26,7 +29,14 @@ yolo = [
     "ultralytics==8.4.211",
     "clip @ git+https://github.com/ultralytics/CLIP.git@7ffa84b3bfa40c42ecc1c77147a855e69cb2dd40",
 ]
-eval = ["pycocotools>=2.0.8"]
+# Evaluation: COCO detection metrics (M2) and the official TrackEval for HOTA / IDF1 / MOTA (M3), pinned to
+# a commit because TrackEval has no official PyPI release (the PyPI "trackeval" is a third-party fork).
+eval = [
+    "pycocotools>=2.0.8",
+    "trackeval @ git+https://github.com/JonathonLuiten/TrackEval.git@12c8791b303e0a0b50f753af204249e622d0281a",
+]
+# Video file input/output for scripts/track_video.py (Ultralytics already pulls this in).
+video = ["opencv-python>=4.10"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

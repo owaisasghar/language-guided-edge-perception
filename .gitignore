@@ -33,3 +33,6 @@ outputs/
 # Ultralytics defaults (only used if it runs without the project-local config in models/ultralytics)
 weights/
 runs/
+
+# Reference checkouts of official code (used by tests, never committed)
+third_party/

@@ -60,7 +60,7 @@ def collect_environment() -> dict:
         "ram_gib": _ram_gib(),
         "packages": {p: _pkg(p) for p in ("torch", "torchvision", "transformers", "huggingface-hub",
                                           "tokenizers", "safetensors", "numpy", "pillow", "lgep", "ultralytics",
-                                          "clip", "opencv-python", "pycocotools")},
+                                          "clip", "opencv-python", "pycocotools", "scipy", "lap", "trackeval")},
         "torch_cuda_build": torch.version.cuda,
         "cudnn": torch.backends.cudnn.version() if torch.backends.cudnn.is_available() else None,
         "torch_arch_list": torch.cuda.get_arch_list() if torch.cuda.is_available() else [],

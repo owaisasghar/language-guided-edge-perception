@@ -43,11 +43,14 @@ Project and its dependencies (run from the repository root):
 pip install -e ".[dev]"
 ```
 
-From Milestone 2 on, also install the YOLO-World backend and the COCO evaluator:
+From Milestone 2 on, also install the YOLO-World backend and the evaluators (COCO; from Milestone 3 the
+official TrackEval, pinned to a GitHub commit because it has no official PyPI release):
 
 ```bash
 pip install -e ".[dev,yolo,eval]"
 ```
+
+`scripts/track_video.py` reads and writes video with OpenCV (`video` extra; already installed by `yolo`).
 
 The `yolo` extra pulls in Ultralytics, which is **AGPL-3.0**. It is optional on purpose: the core package
 (Grounding DINO path) does not depend on it. See `docs/milestone2.md#licence`.
@@ -104,6 +107,22 @@ with analytics off. The detector sets `YOLO_CONFIG_DIR`, `YOLO_OFFLINE=1` and `Y
 before importing Ultralytics, so your global `~/.config/Ultralytics` settings are never read or changed,
 nothing is pip-installed at runtime, and no usage data is sent.
 
+From Milestone 3 on: the 7 MOT17 training sequences (images + tracking ground truth) into `data/mot17/`.
+The script downloads MOT17Det.zip (1.95 GB, each sequence once) and MOT17Labels.zip (10 MB) instead of
+the 5.9 GB MOT17.zip, which stores every sequence three times. Peak disk use is about 3 GB; about 0.9 GB
+remains. MOT17 is CC BY-NC-SA 3.0 (non-commercial):
+
+```bash
+python scripts/download_mot17.py
+```
+
+The test that compares our vendored ByteTrack with the official code needs the official repository at the
+pinned commit (git-ignored; the test is skipped without it):
+
+```bash
+git clone https://github.com/ifzhang/ByteTrack.git third_party/ByteTrack && git -C third_party/ByteTrack checkout d1bf0191adff59bc8fcfeaa0b33d3d1642552a99
+```
+
 For fully offline Grounding DINO runs after the first download:
 
 ```bash
@@ -118,6 +137,10 @@ bash scripts/run_milestone1.sh
 
 ```bash
 bash scripts/run_milestone2.sh
+```
+
+```bash
+bash scripts/run_milestone3.sh
 ```
 
 Milestone 2 takes about 1.7 h; the two Grounding DINO COCO evaluations dominate. To keep a laptop from

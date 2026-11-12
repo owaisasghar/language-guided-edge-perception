@@ -5,8 +5,9 @@ blue shirt"* or *"which cameras saw this vehicle?"*. The system detects matching
 tracks them, links the same object across cameras, and retrieves its earlier appearances. It is built for
 a single 8 GB GPU first and for NVIDIA Jetson Orin NX later.
 
-**Status:** Milestones 1 and 2 of 10 are done (measured 2026-11-12): the Grounding DINO baseline, and
-YOLO-World integration with a full COCO val2017 comparison of six detectors. Nothing in this repository
+**Status:** Milestones 1–3 of 10 are done (measured 2026-11-12): the Grounding DINO baseline,
+YOLO-World integration with a full COCO val2017 comparison of six detectors, and per-camera tracking
+(official ByteTrack, persistent IDs) evaluated on MOT17 with every detector. Nothing in this repository
 reports a number that was not measured; planned targets are labelled as targets.
 
 ## Milestones
@@ -15,7 +16,7 @@ reports a number that was not measured; planned targets are labelled as targets.
 |---|---|---|
 | 1 | Environment + Grounding DINO baseline on images | ✅ code, tests, CPU check, GPU benchmark |
 | 2 | YOLO-World integration and detector comparison | ✅ 6 detectors on COCO val2017, published AP reproduced |
-| 3 | Single-camera tracking (ByteTrack) | – |
+| 3 | Single-camera tracking (ByteTrack) | ✅ official ByteTrack (equality-tested), persistent IDs, MOT17 HOTA/IDF1/MOTA for 6 detectors |
 | 4 | Multi-camera RTSP ingestion | – |
 | 5 | Cross-camera Re-ID (CityFlow) | – |
 | 6 | Language-guided retrieval (CityFlow-NL) | – |
@@ -68,6 +69,30 @@ RTX 4060 Laptop GPU (55 W). Our pipelines reproduce every published AP to within
 Details, ablations and caveats: [docs/milestone2.md](docs/milestone2.md); all tables:
 [benchmarks/milestone2/](benchmarks/milestone2/README.md).
 
+## Tracking (Milestone 3, measured)
+
+ByteTrack (official code, vendored; identical output to the official implementation in tests) on MOT17's
+val-half (ByteTrack's protocol), prompt `person`, zero-shot detectors, threshold tuned on train-half:
+
+| detector | HOTA | IDF1 | MOTA | detector ms per 1080p frame |
+|---|---|---|---|---|
+| Grounding DINO-B | 51.3 | 59.2 | 38.6 | 461.2 |
+| Grounding DINO-T | 50.8 | 58.1 | 41.4 | 343.1 |
+| YOLO-World-X | 44.1 | 50.2 | 34.9 | 29.3 |
+| YOLO-World-M | 43.5 | 51.5 | 36.7 | 10.2 |
+| ByteTrack on ground-truth boxes (reference) | 95.3 | 98.4 | 99.6 | – |
+
+* **The detector, not the tracker, limits tracking**: ByteTrack reaches 95.3 HOTA on perfect boxes and adds
+  under 1 ms per frame on the CPU.
+* **ByteTrack's default threshold does not transfer**: zero-shot detectors score people lower than the
+  MOT17-trained YOLOX ByteTrack was tuned for. With the default, Grounding DINO-B drops to 4.8 HOTA;
+  re-tuning is required for every detector.
+* Most misses are occluded or 100–200 px tall people; YOLO-World at 1280 px input does **not** fix this.
+* Track IDs are per camera (`cam01/17`), survive short occlusions, and are never reused (optionally across
+  restarts); they are not cross-camera identities.
+
+Details: [docs/milestone3.md](docs/milestone3.md); tables: [benchmarks/milestone3/](benchmarks/milestone3/README.md).
+
 ## Quick start (Ubuntu 22.04, NVIDIA driver ≥ 580)
 
 ```bash
@@ -94,6 +119,18 @@ pip install -e ".[dev,yolo,eval]"
 
 ```bash
 systemd-inhibit --what=sleep:idle bash scripts/run_milestone2.sh
+```
+
+Milestone 3 (downloads MOT17's training sequences, CC BY-NC-SA; about 1.7 h on the GPU):
+
+```bash
+systemd-inhibit --what=sleep:idle bash scripts/run_milestone3.sh
+```
+
+Track any prompt in your own video (annotated video + MOT file in `outputs/milestone3/demo/`):
+
+```bash
+python scripts/track_video.py --source path/to/video.mp4 --model yoloworld_m --prompt "car . bus . person" --track-thresh 0.25
 ```
 
 Other driver or CUDA versions: see [docs/installation.md](docs/installation.md).

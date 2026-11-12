@@ -1,0 +1,81 @@
+# Milestone 3 — single-camera tracking (ByteTrack) on MOT17, with every Milestone 2 detector.
+#
+#   python scripts/download_mot17.py                              # once: 7 train sequences, ~1.1 GB
+#   python scripts/detect_mot17.py --model yoloworld_l            # GPU: run the detector once, cache boxes
+#   python scripts/eval_mot17.py --model yoloworld_l              # CPU: ByteTrack + TrackEval on the cache
+#
+# Protocol (ByteTrack's MOT17 ablation setting): each training sequence is split into a first half
+# (train_half, frames 1..N/2+1) and a second half (val_half). The detectors are zero-shot (never trained
+# on MOT17). ByteTrack's high-score threshold `track_thresh` assumes YOLOX's score calibration, so it is
+# tuned per detector on train_half (by HOTA) and all reported numbers are on val_half. ByteTrack's own
+# default (0.6) is reported as well.
+
+run_name: m3_mot17
+device: cuda
+log_level: INFO
+output_dir: outputs/milestone3
+benchmark_dir: benchmarks/milestone3
+
+data:
+  root: data/mot17/train
+  sequences: [MOT17-02, MOT17-04, MOT17-05, MOT17-09, MOT17-10, MOT17-11, MOT17-13]
+
+prompt: person            # MOT17 scores pedestrians
+
+detections:
+  cache_dir: outputs/milestone3/detections   # <cache_dir>/<model>/<sequence>.npz + meta.json
+benchmark:
+  warmup_runs: 5
+
+tracker:                  # ByteTrack's MOT17 settings (tools/track.py and its evaluator)
+  track_thresh: 0.6
+  track_buffer: 30        # at 30 fps; scaled by each sequence's frame rate (14 fps -> 14, 25 fps -> 25)
+  match_thresh: 0.9
+  mot20: false
+  min_box_area: 100
+  max_aspect_ratio: 1.6   # ByteTrack drops "vertical" outputs (w/h > 1.6) for pedestrians
+
+tuning:
+  split: train_half
+  metric: HOTA
+  track_thresh: [0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.6, 0.7]  # 0.1 = ByteTrack's fixed low-score floor
+evaluation:
+  split: val_half
+
+# Detector presets for tracking: low score threshold (ByteTrack associates boxes down to 0.1), NMS at
+# IoU 0.7 (as YOLOX's output in ByteTrack), at most 300 boxes, deployment input sizes.
+models:
+  gdino_t: &gdino
+    backend: hf_transformers
+    model_id: IDEA-Research/grounding-dino-tiny
+    revision: a2bb814dd30d776dcf7e30523b00659f4f141c71
+    dtype: float32
+    box_threshold: 0.05
+    phrase_score_reduction: max
+    nms_iou: 0.7
+    max_detections: 300
+    token_labels: false
+  gdino_b:
+    <<: *gdino
+    model_id: IDEA-Research/grounding-dino-base
+    revision: 12bdfa3120f3e7ec7b434d90674b3396eccf88eb
+  yoloworld_s: &yw
+    backend: ultralytics_yolo_world
+    weights: models/yolo_world/yolov8s-worldv2.pt
+    dtype: float32
+    imgsz: 640
+    conf: 0.05
+    iou: 0.7
+    max_det: 300
+    multi_label: false
+    letterbox: minimal
+  yoloworld_m: {<<: *yw, weights: models/yolo_world/yolov8m-worldv2.pt}
+  yoloworld_l: {<<: *yw, weights: models/yolo_world/yolov8l-worldv2.pt}
+  yoloworld_x: {<<: *yw, weights: models/yolo_world/yolov8x-worldv2.pt}
+  # Input-resolution ablation: 1280 px long side instead of 640 (1920x1080 -> 1280x736 instead of 640x384).
+  yoloworld_l_1280: {<<: *yw, weights: models/yolo_world/yolov8l-worldv2.pt, imgsz: 1280}
+  yoloworld_x_1280: {<<: *yw, weights: models/yolo_world/yolov8x-worldv2.pt, imgsz: 1280}
+  # Reference: the ground-truth pedestrian boxes as "detections" (score 1.0). Shows the tracker's own
+  # errors with perfect detection; not a detector.
+  oracle_gt:
+    backend: ground_truth
