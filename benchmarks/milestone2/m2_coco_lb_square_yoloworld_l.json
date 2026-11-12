@@ -1,0 +1,339 @@
+{
+  "run_name": "m2_coco_lb_square_yoloworld_l",
+  "measured": true,
+  "environment": {
+    "timestamp_utc": "2026-11-12T07:18:52+00:00",
+    "os": "Linux-6.8.0-138-generic-x86_64-with-glibc2.35",
+    "python": "3.12.16",
+    "cpu": "AMD Ryzen 7 8845HS w/ Radeon 780M Graphics",
+    "cpu_logical_cores": 16,
+    "ram_gib": 30.6,
+    "packages": {
+      "torch": "2.13.0+cu130",
+      "torchvision": "0.28.0+cu130",
+      "transformers": "5.22.2",
+      "huggingface-hub": "2.4.0",
+      "tokenizers": "0.23.3",
+      "safetensors": "0.8.0",
+      "numpy": "2.5.4",
+      "pillow": "13.0.0",
+      "lgep": "0.1.0",
+      "ultralytics": "8.4.211",
+      "clip": "1.0",
+      "opencv-python": "5.0.0.93",
+      "pycocotools": "2.0.11"
+    },
+    "torch_cuda_build": "13.0",
+    "cudnn": 92000,
+    "torch_arch_list": [
+      "sm_75",
+      "sm_80",
+      "sm_86",
+      "sm_90",
+      "sm_100",
+      "sm_120"
+    ],
+    "gpu": {
+      "name": "NVIDIA GeForce RTX 4060 Laptop GPU",
+      "driver": "580.178.04",
+      "memory_total": "8188 MiB",
+      "compute_capability": "8.9",
+      "power_limit": "55.00 W"
+    }
+  },
+  "other_gpu_processes": [
+    {
+      "pid": 888,
+      "name": "./rtservice",
+      "used_mib": 94.0
+    }
+  ],
+  "torch_num_threads": 8,
+  "config": {
+    "run_name": "m2_coco_lb_square_yoloworld_l",
+    "device": "cuda",
+    "log_level": "INFO",
+    "output_dir": "outputs/milestone2",
+    "benchmark_dir": "benchmarks/milestone2",
+    "data": {
+      "images_dir": "data/coco/val2017",
+      "annotations": "data/coco/annotations/instances_val2017.json",
+      "limit": null
+    },
+    "benchmark": {
+      "warmup_runs": 5
+    },
+    "pr_thresholds": [
+      0.05,
+      0.1,
+      0.25,
+      0.35,
+      0.5
+    ],
+    "report_classes": [
+      "person",
+      "bicycle",
+      "car",
+      "motorcycle",
+      "bus",
+      "truck",
+      "traffic light"
+    ],
+    "models": {
+      "gdino_t": {
+        "backend": "hf_transformers",
+        "model_id": "IDEA-Research/grounding-dino-tiny",
+        "revision": "a2bb814dd30d776dcf7e30523b00659f4f141c71",
+        "dtype": "float32",
+        "box_threshold": 0.0,
+        "phrase_score_reduction": "mean",
+        "multi_label": true,
+        "max_detections": 300,
+        "shortest_edge": 800,
+        "longest_edge": 1333,
+        "token_labels": false
+      },
+      "gdino_b": {
+        "backend": "hf_transformers",
+        "model_id": "IDEA-Research/grounding-dino-base",
+        "revision": "12bdfa3120f3e7ec7b434d90674b3396eccf88eb",
+        "dtype": "float32",
+        "box_threshold": 0.0,
+        "phrase_score_reduction": "mean",
+        "multi_label": true,
+        "max_detections": 300,
+        "shortest_edge": 800,
+        "longest_edge": 1333,
+        "token_labels": false
+      },
+      "yoloworld_s": {
+        "backend": "ultralytics_yolo_world",
+        "weights": "models/yolo_world/yolov8s-worldv2.pt",
+        "dtype": "float32",
+        "imgsz": 640,
+        "conf": 0.001,
+        "iou": 0.7,
+        "max_det": 300,
+        "multi_label": true,
+        "letterbox": "val_rect"
+      },
+      "yoloworld_m": {
+        "backend": "ultralytics_yolo_world",
+        "weights": "models/yolo_world/yolov8m-worldv2.pt",
+        "dtype": "float32",
+        "imgsz": 640,
+        "conf": 0.001,
+        "iou": 0.7,
+        "max_det": 300,
+        "multi_label": true,
+        "letterbox": "val_rect"
+      },
+      "yoloworld_l": {
+        "backend": "ultralytics_yolo_world",
+        "weights": "models/yolo_world/yolov8l-worldv2.pt",
+        "dtype": "float32",
+        "imgsz": 640,
+        "conf": 0.001,
+        "iou": 0.7,
+        "max_det": 300,
+        "multi_label": true,
+        "letterbox": "square"
+      },
+      "yoloworld_x": {
+        "backend": "ultralytics_yolo_world",
+        "weights": "models/yolo_world/yolov8x-worldv2.pt",
+        "dtype": "float32",
+        "imgsz": 640,
+        "conf": 0.001,
+        "iou": 0.7,
+        "max_det": 300,
+        "multi_label": true,
+        "letterbox": "val_rect"
+      }
+    },
+    "model": {
+      "backend": "ultralytics_yolo_world",
+      "weights": "models/yolo_world/yolov8l-worldv2.pt",
+      "dtype": "float32",
+      "imgsz": 640,
+      "conf": 0.001,
+      "iou": 0.7,
+      "max_det": 300,
+      "multi_label": true,
+      "letterbox": "square"
+    }
+  },
+  "model": {
+    "backend": "ultralytics_yolo_world",
+    "model_id": "yolov8l-worldv2",
+    "revision": "sha256:276b618c2f04e6e08e32f085b3c0e8baf2dbffa46af5119b888423e859a6ee01",
+    "parameters_millions": 46.81,
+    "text_encoder": "CLIP ViT-B/32 on cpu",
+    "text_encoder_parameters_millions": 151.28,
+    "load_seconds": 1.93,
+    "device": "cuda",
+    "dtype": "float32",
+    "imgsz": 640,
+    "conf": 0.001,
+    "iou": 0.7,
+    "multi_label": true,
+    "max_det": 300,
+    "letterbox": "square"
+  },
+  "dataset": {
+    "name": "COCO 2017 val",
+    "images": 5000,
+    "evaluated_images": 5000,
+    "oom_images": [],
+    "prompt_classes": 80
+  },
+  "coco": {
+    "AP": 0.4538,
+    "AP50": 0.6102,
+    "AP75": 0.4942,
+    "AP_small": 0.3068,
+    "AP_medium": 0.5002,
+    "AP_large": 0.5809,
+    "AR1": 0.3722,
+    "AR10": 0.6261,
+    "AR100": 0.6791,
+    "AR_small": 0.5138,
+    "AR_medium": 0.7381,
+    "AR_large": 0.8311
+  },
+  "per_class": {
+    "person": {
+      "AP": 0.6283,
+      "AP50": 0.8446
+    },
+    "bicycle": {
+      "AP": 0.3668,
+      "AP50": 0.5914
+    },
+    "car": {
+      "AP": 0.4885,
+      "AP50": 0.703
+    },
+    "motorcycle": {
+      "AP": 0.4887,
+      "AP50": 0.7074
+    },
+    "bus": {
+      "AP": 0.7167,
+      "AP50": 0.8444
+    },
+    "truck": {
+      "AP": 0.3882,
+      "AP50": 0.5439
+    },
+    "traffic light": {
+      "AP": 0.2892,
+      "AP50": 0.5139
+    }
+  },
+  "coco_summary_text": "Running per image evaluation...\nEvaluate annotation type *bbox*\nDONE (t=21.68s).\nAccumulating evaluation results...\nDONE (t=5.00s).\n Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.454\n Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.610\n Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.494\n Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.307\n Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.500\n Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.581\n Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.372\n Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.626\n Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.679\n Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.514\n Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.738\n Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.831\n",
+  "precision_recall_iou50": [
+    {
+      "score_thr": 0.05,
+      "precision": 0.3355,
+      "recall": 0.7735,
+      "tp": 28106,
+      "fp": 55665,
+      "num_gt": 36335
+    },
+    {
+      "score_thr": 0.1,
+      "precision": 0.4638,
+      "recall": 0.7224,
+      "tp": 26247,
+      "fp": 30346,
+      "num_gt": 36335
+    },
+    {
+      "score_thr": 0.25,
+      "precision": 0.6758,
+      "recall": 0.6258,
+      "tp": 22740,
+      "fp": 10911,
+      "num_gt": 36335
+    },
+    {
+      "score_thr": 0.35,
+      "precision": 0.7565,
+      "recall": 0.5707,
+      "tp": 20737,
+      "fp": 6674,
+      "num_gt": 36335
+    },
+    {
+      "score_thr": 0.5,
+      "precision": 0.8422,
+      "recall": 0.4869,
+      "tp": 17691,
+      "fp": 3314,
+      "num_gt": 36335
+    }
+  ],
+  "num_detections": 765578,
+  "nms_time_limit_warnings": 0,
+  "latency_ms": {
+    "total": {
+      "n": 5000,
+      "mean": 24.047,
+      "std": 0.802,
+      "median": 23.998,
+      "p90": 24.699,
+      "min": 21.073,
+      "max": 65.501
+    },
+    "inference": {
+      "n": 5000,
+      "mean": 22.754,
+      "std": 0.417,
+      "median": 22.734,
+      "p90": 23.312,
+      "min": 19.827,
+      "max": 24.157
+    },
+    "preprocess": {
+      "n": 5000,
+      "mean": 0.546,
+      "std": 0.191,
+      "median": 0.456,
+      "p90": 0.77,
+      "min": 0.322,
+      "max": 2.381
+    },
+    "postprocess": {
+      "n": 5000,
+      "mean": 0.747,
+      "std": 0.657,
+      "median": 0.659,
+      "p90": 0.985,
+      "min": 0.483,
+      "max": 42.754
+    }
+  },
+  "images_per_second_wall": 37.51,
+  "memory_after_load": {
+    "allocated_mib": 179.0,
+    "reserved_mib": 206.0,
+    "peak_allocated_mib": 179.0,
+    "peak_reserved_mib": 206.0,
+    "device_used_mib": 433.6,
+    "process_used_mib": 312.0
+  },
+  "memory_peak_mib": {
+    "allocated": 304.3,
+    "reserved": 400.0
+  },
+  "memory_at_end": {
+    "allocated_mib": 211.2,
+    "reserved_mib": 400.0,
+    "peak_allocated_mib": 304.3,
+    "peak_reserved_mib": 400.0,
+    "device_used_mib": 665.6,
+    "process_used_mib": 544.0
+  },
+  "wall_seconds": 133.3
+}

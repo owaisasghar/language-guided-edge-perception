@@ -12,6 +12,9 @@ in one deliberate way: each box is assigned to exactly ONE query phrase, scored 
 phrase's tokens only ("max" mirrors the official demo, "mean" mirrors the official COCO
 evaluation). The upstream helper scores against all tokens and returns a free-text token
 label, which cannot tell you which phrase of "white truck . red car ." a box belongs to.
+
+``multi_label=True`` reproduces the official COCO evaluation (demo/test_ap_on_coco.py): the
+top-``max_detections`` (query, phrase) pairs are kept, so one box can appear with several phrases.
 """
 
 from __future__ import annotations
@@ -45,6 +48,8 @@ class GroundingDinoConfig:
     longest_edge: int = 1333
     nms_iou: float | None = None  # class-aware NMS; None = raw DETR output (no NMS)
     max_detections: int = 100
+    multi_label: bool = False  # True = top-k over (query, phrase) pairs (official COCO evaluation)
+    token_labels: bool = True  # decode the raw token label per box (diagnostic; costs time at 300 boxes)
     local_files_only: bool = False
 
     @classmethod
@@ -61,22 +66,29 @@ def _cxcywh_to_xyxy(b: torch.Tensor) -> torch.Tensor:
     return torch.stack([cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2], dim=-1)
 
 
-def assign_phrases(
-    probs: torch.Tensor, spans: list[list[int]], reduction: str = "max"
-) -> tuple[torch.Tensor, torch.Tensor]:
-    """probs: (num_queries, num_text_positions) sigmoid scores.
-
-    Returns (score, phrase_index) per query, where score is the best phrase score.
-    """
+def phrase_scores(probs: torch.Tensor, spans: list[list[int]], reduction: str = "max") -> torch.Tensor:
+    """probs: (num_queries, num_text_positions) sigmoid scores -> (num_queries, num_phrases)."""
     if not spans:
         raise ValueError("No phrase spans: prompt was empty or fully truncated")
     per_phrase = []
     for span in spans:
         tok = probs[:, span]
         per_phrase.append(tok.max(dim=1).values if reduction == "max" else tok.mean(dim=1))
-    phrase_scores = torch.stack(per_phrase, dim=1)  # (Q, P)
-    score, idx = phrase_scores.max(dim=1)
+    return torch.stack(per_phrase, dim=1)
+
+
+def assign_phrases(
+    probs: torch.Tensor, spans: list[list[int]], reduction: str = "max"
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Returns (score, phrase_index) per query, where score is the best phrase score."""
+    score, idx = phrase_scores(probs, spans, reduction).max(dim=1)
     return score, idx
+
+
+def top_pairs(scores: torch.Tensor, k: int) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Top-k (query, phrase) pairs of a (Q, P) score matrix -> (score, query_index, phrase_index)."""
+    score, flat = scores.flatten().topk(min(k, scores.numel()))
+    return score, flat // scores.shape[1], flat % scores.shape[1]
 
 
 class GroundingDinoDetector:
@@ -108,6 +120,14 @@ class GroundingDinoDetector:
         self.num_parameters = sum(p.numel() for p in self.model.parameters())
         log.info("Loaded %s (%.1fM params, %s, %s) in %.1fs", cfg.model_id, self.num_parameters / 1e6,
                  self.device, str(self.dtype).replace("torch.", ""), self.load_seconds)
+
+    def describe(self) -> dict:
+        return {"backend": "hf_transformers", "model_id": self.cfg.model_id, "revision": self.cfg.revision,
+                "parameters_millions": round(self.num_parameters / 1e6, 2),
+                "load_seconds": round(self.load_seconds, 2), "device": str(self.device),
+                "dtype": str(self.dtype).replace("torch.", ""), "box_threshold": self.cfg.box_threshold,
+                "phrase_score_reduction": self.cfg.phrase_score_reduction, "multi_label": self.cfg.multi_label,
+                "max_detections": self.cfg.max_detections}
 
     @torch.inference_mode()
     def detect(self, image: Image.Image | np.ndarray, phrases: str | list[str]) -> DetectionResult:
@@ -147,7 +167,12 @@ class GroundingDinoDetector:
         probs = outputs.logits[0].float().sigmoid()  # (Q, 256)
         boxes = outputs.pred_boxes[0].float()  # (Q, 4) normalised cxcywh
 
-        score, idx = assign_phrases(probs, spans, cfg.phrase_score_reduction)
+        if cfg.multi_label:
+            score, query, idx = top_pairs(phrase_scores(probs, spans, cfg.phrase_score_reduction),
+                                          cfg.max_detections)
+            boxes, probs = boxes[query], probs[query]
+        else:
+            score, idx = assign_phrases(probs, spans, cfg.phrase_score_reduction)
         keep = score > cfg.box_threshold
         score, idx, boxes, probs = score[keep], idx[keep], boxes[keep], probs[keep]
 
@@ -163,6 +188,9 @@ class GroundingDinoDetector:
         order = score.argsort(descending=True)[: cfg.max_detections]
         score, idx, xyxy, probs = score[order].cpu(), idx[order].cpu(), xyxy[order].cpu(), probs[order].cpu()
 
+        if not cfg.token_labels:
+            return [Detection(box_xyxy=tuple(b), score=s, phrase_id=p, phrase=phrases[p])
+                    for s, p, b in zip(score.tolist(), idx.tolist(), xyxy.tolist())]
         n_tok = len(input_ids)
         valid = torch.tensor([i not in self._special_ids and i != self._sep_id for i in input_ids])
         dets = []

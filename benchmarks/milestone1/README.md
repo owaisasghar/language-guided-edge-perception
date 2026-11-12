@@ -1,7 +1,7 @@
 # Milestone 1 benchmark results
 
 Only measured runs are stored here. Each `<run>.md` is generated from `<run>.json` by
-`scripts/run_grounding_dino.py`; the JSON holds the full environment, config, per-pair detections,
+`scripts/run_detector.py`; the JSON holds the full environment, config, per-pair detections,
 timings and memory.
 
 | run | device | status |

@@ -1,7 +1,8 @@
 # Architecture
 
-Target system (12 stages). Milestone 1 implements the **text-guided detector** on still images only;
-everything else is planned and will be designed in detail at the start of its milestone.
+Target system (12 stages). Milestones 1–2 implement the **text-guided detector** on still images (two
+backends, Grounding DINO and YOLO-World, behind one interface); everything else is planned and will be
+designed in detail at the start of its milestone.
 
 ```mermaid
 flowchart LR
@@ -45,7 +46,8 @@ flowchart LR
 
 | package | milestone | responsibility |
 |---|---|---|
-| `lgep.perception` | 1–2 | detector backends behind one `detect(image, phrases) -> DetectionResult` contract |
+| `lgep.perception` | 1–2 | detector backends behind one `detect(image, phrases) -> DetectionResult` contract; `factory.build_detector(cfg)` picks the backend (`hf_transformers` = Grounding DINO, `ultralytics_yolo_world` = YOLO-World) |
+| `lgep.evaluation` | 2 | COCO detection evaluation (pycocotools); tracking and retrieval metrics later |
 | `lgep.tracking` | 3 | per-camera MOT (ByteTrack first; BoT-SORT/OC-SORT compared) |
 | `lgep.ingestion` | 4 | RTSP/GStreamer readers, reconnects, frame queues |
 | `lgep.reid` | 5 | appearance embeddings, spatio-temporal association, global IDs |

@@ -80,7 +80,7 @@ src/lgep/perception/types.py             Detection / DetectionResult / StageTimi
 src/lgep/utils/{gpu,env,config,logging,visualization}.py
 scripts/check_env.py                     real CUDA kernel test, driver/GPU report, other GPU processes
 scripts/download_samples.py              manifest-driven download with checksum verification
-scripts/run_grounding_dino.py            5×5 inference matrix, annotated images, latency/VRAM stats
+scripts/run_detector.py            5×5 inference matrix, annotated images, latency/VRAM stats
 scripts/run_milestone1.sh                one-command reproduction
 tests/                                   27 tests (unit + real-weights integration + GPU consistency)
 ```

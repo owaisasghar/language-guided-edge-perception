@@ -3,7 +3,7 @@
 # images where the target is absent: false positives matter as much as hits.
 #
 # Override anything from the CLI, e.g.
-#   python scripts/run_grounding_dino.py --config configs/milestone1_grounding_dino.yaml \
+#   python scripts/run_detector.py --config configs/milestone1_grounding_dino.yaml \
 #       --override device=cpu benchmark.warmup_runs=0 benchmark.timed_runs=1
 
 run_name: m1_gdino_tiny_fp32

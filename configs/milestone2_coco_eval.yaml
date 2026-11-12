@@ -1,0 +1,61 @@
+# Milestone 2 — COCO val2017 detection evaluation (accuracy + latency + VRAM) for every detector.
+#
+#   python scripts/download_coco_val2017.py          # once (5,000 images, ~0.8 GB)
+#   python scripts/eval_coco.py --model yoloworld_l
+#
+# Each model uses its OFFICIAL COCO evaluation protocol, so our numbers can be checked against the
+# published ones before they are compared with each other:
+#   * Grounding DINO: GroundingDINO/demo/test_ap_on_coco.py — 80 class names in one caption, phrase score
+#     = mean over the phrase's tokens, top-300 (query, class) pairs, no score threshold, 800/1333 resize.
+#   * YOLO-World: Ultralytics `model.val()` — conf 0.001, NMS IoU 0.7, multi-label NMS, max 300/image,
+#     imgsz 640 with its rect letterbox (640x480 -> 672x512; `predict()` would use 640x480). The other
+#     letterboxes are measured as an ablation: scripts/run_milestone2.sh step 6.
+# Precision/recall are additionally reported at several score thresholds (the deployment view).
+
+run_name: m2_coco
+device: cuda
+log_level: INFO
+output_dir: outputs/milestone2
+benchmark_dir: benchmarks/milestone2
+
+data:
+  images_dir: data/coco/val2017
+  annotations: data/coco/annotations/instances_val2017.json
+  limit: null          # first N images by id, for smoke tests; null = all 5,000
+
+benchmark:
+  warmup_runs: 5       # on the first image; excluded from latency statistics
+
+pr_thresholds: [0.05, 0.1, 0.25, 0.35, 0.5]
+report_classes: [person, bicycle, car, motorcycle, bus, truck, traffic light]
+
+models:
+  gdino_t: &gdino_t
+    backend: hf_transformers
+    model_id: IDEA-Research/grounding-dino-tiny
+    revision: a2bb814dd30d776dcf7e30523b00659f4f141c71
+    dtype: float32
+    box_threshold: 0.0
+    phrase_score_reduction: mean
+    multi_label: true
+    max_detections: 300
+    shortest_edge: 800
+    longest_edge: 1333
+    token_labels: false
+  gdino_b:
+    <<: *gdino_t
+    model_id: IDEA-Research/grounding-dino-base
+    revision: 12bdfa3120f3e7ec7b434d90674b3396eccf88eb
+  yoloworld_s: &yw
+    backend: ultralytics_yolo_world
+    weights: models/yolo_world/yolov8s-worldv2.pt
+    dtype: float32
+    imgsz: 640
+    conf: 0.001
+    iou: 0.7
+    max_det: 300
+    multi_label: true
+    letterbox: val_rect   # Ultralytics validation; deployment default is `minimal`
+  yoloworld_m: {<<: *yw, weights: models/yolo_world/yolov8m-worldv2.pt}
+  yoloworld_l: {<<: *yw, weights: models/yolo_world/yolov8l-worldv2.pt}
+  yoloworld_x: {<<: *yw, weights: models/yolo_world/yolov8x-worldv2.pt}

@@ -1,4 +1,4 @@
-"""YAML config loading with dotted command-line overrides.
+"""YAML config loading with ``extends`` inheritance and dotted command-line overrides.
 
 Example::
 
@@ -38,12 +38,30 @@ def apply_overrides(cfg: dict, overrides: Iterable[str]) -> dict:
     return out
 
 
-def load_config(path: str | Path, overrides: Iterable[str] = ()) -> dict:
-    path = Path(path)
+def deep_merge(base: dict, update: dict) -> dict:
+    """Recursively merge ``update`` into a copy of ``base``; non-dict values are replaced."""
+    out = copy.deepcopy(base)
+    for k, v in update.items():
+        out[k] = deep_merge(out[k], v) if isinstance(v, dict) and isinstance(out.get(k), dict) else copy.deepcopy(v)
+    return out
+
+
+def _load_yaml(path: Path, chain: tuple[Path, ...] = ()) -> dict:
+    path = path.resolve()
+    if path in chain:
+        raise ValueError(f"Circular 'extends' in {path}")
     if not path.is_file():
         raise FileNotFoundError(f"Config not found: {path}")
     with path.open("r", encoding="utf-8") as f:
         cfg = yaml.safe_load(f) or {}
     if not isinstance(cfg, dict):
         raise ValueError(f"Top level of {path} must be a mapping")
-    return apply_overrides(cfg, overrides)
+    parent = cfg.pop("extends", None)  # path relative to this file
+    if parent:
+        cfg = deep_merge(_load_yaml(path.parent / parent, (*chain, path)), cfg)
+    return cfg
+
+
+def load_config(path: str | Path, overrides: Iterable[str] = ()) -> dict:
+    """Load YAML, resolve ``extends: base.yaml`` (deep-merged, child wins), then apply overrides."""
+    return apply_overrides(_load_yaml(Path(path)), overrides)

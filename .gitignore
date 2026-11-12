@@ -29,3 +29,7 @@ outputs/
 .vscode/
 .idea/
 .DS_Store
+
+# Ultralytics defaults (only used if it runs without the project-local config in models/ultralytics)
+weights/
+runs/

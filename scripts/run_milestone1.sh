@@ -19,10 +19,10 @@ echo "== 3/5 tests (incl. GPU-vs-CPU consistency)"
 python -m pytest -q
 
 echo "== 4/5 Grounding DINO-T (Swin-T) fp32 benchmark"
-python scripts/run_grounding_dino.py --config configs/milestone1_grounding_dino.yaml
+python scripts/run_detector.py --config configs/milestone1_grounding_dino.yaml
 
 echo "== 5/5 Grounding DINO-B (Swin-B) fp32 benchmark"
-python scripts/run_grounding_dino.py --config configs/milestone1_grounding_dino.yaml \
+python scripts/run_detector.py --config configs/milestone1_grounding_dino.yaml \
   --override run_name=m1_gdino_base_fp32 \
              model.model_id=IDEA-Research/grounding-dino-base \
              model.revision=12bdfa3120f3e7ec7b434d90674b3396eccf88eb

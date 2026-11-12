@@ -1,0 +1,38 @@
+# Milestone 2 — the Milestone 1 prompt x image matrix (5 prompts x 5 COCO images) for every detector,
+# each at its documented default operating point. Images, prompts and benchmark settings are inherited.
+#
+#   python scripts/run_detector.py --config configs/milestone2_prompts.yaml --model yoloworld_l
+
+extends: milestone1_grounding_dino.yaml
+run_name: m2_prompts
+output_dir: outputs/milestone2
+benchmark_dir: benchmarks/milestone2
+
+models:
+  gdino_t: &gdino_t
+    backend: hf_transformers
+    model_id: IDEA-Research/grounding-dino-tiny
+    revision: a2bb814dd30d776dcf7e30523b00659f4f141c71
+    dtype: float32
+    box_threshold: 0.35          # IDEA-Research demo defaults (as in Milestone 1)
+    text_threshold: 0.25
+    phrase_score_reduction: max
+    shortest_edge: 800
+    longest_edge: 1333
+    max_detections: 100
+  gdino_b:
+    <<: *gdino_t
+    model_id: IDEA-Research/grounding-dino-base
+    revision: 12bdfa3120f3e7ec7b434d90674b3396eccf88eb
+  yoloworld_s: &yw
+    backend: ultralytics_yolo_world
+    weights: models/yolo_world/yolov8s-worldv2.pt   # scripts/setup_yolo_world.py
+    dtype: float32
+    imgsz: 640
+    conf: 0.25                   # Ultralytics predict defaults
+    iou: 0.5
+    max_det: 300
+    multi_label: false
+  yoloworld_m: {<<: *yw, weights: models/yolo_world/yolov8m-worldv2.pt}
+  yoloworld_l: {<<: *yw, weights: models/yolo_world/yolov8l-worldv2.pt}
+  yoloworld_x: {<<: *yw, weights: models/yolo_world/yolov8x-worldv2.pt}

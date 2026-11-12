@@ -20,6 +20,13 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
+# YOLO-World backend (Milestone 2). AGPL-3.0: kept optional so the core package stays licence-neutral.
+# The CLIP fork is the one Ultralytics would otherwise pip-install at runtime; pinned to a commit here.
+yolo = [
+    "ultralytics==8.4.211",
+    "clip @ git+https://github.com/ultralytics/CLIP.git@7ffa84b3bfa40c42ecc1c77147a855e69cb2dd40",
+]
+eval = ["pycocotools>=2.0.8"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

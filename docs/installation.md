@@ -43,7 +43,16 @@ Project and its dependencies (run from the repository root):
 pip install -e ".[dev]"
 ```
 
-Pinned versions actually used for the Milestone 1 measurements are in `requirements-lock.txt`.
+From Milestone 2 on, also install the YOLO-World backend and the COCO evaluator:
+
+```bash
+pip install -e ".[dev,yolo,eval]"
+```
+
+The `yolo` extra pulls in Ultralytics, which is **AGPL-3.0**. It is optional on purpose: the core package
+(Grounding DINO path) does not depend on it. See `docs/milestone2.md#licence`.
+
+Pinned versions actually used for the Milestone 1 and 2 measurements are in `requirements-lock.txt`.
 
 ## 3. Verify CUDA really works
 
@@ -70,26 +79,55 @@ Sample images (5 COCO val2017 images, about 1 MB in total, SHA-256 verified):
 python scripts/download_samples.py --manifest configs/samples/milestone1_coco.yaml
 ```
 
-Optional, needed from Milestone 2 onward: COCO val2017 instance annotations. The download is 241 MB;
-only `instances_val2017.json` (19 MB) is kept.
+From Milestone 2 on: COCO val2017 (5,000 images + instance annotations) into `data/coco/`. Peak disk use
+is about 1.6 GB during extraction and about 0.8 GB afterwards. Archives are MD5-checked, and the image,
+annotation and category counts are verified:
 
 ```bash
-mkdir -p data/coco/annotations && cd /tmp && curl -LO http://images.cocodataset.org/annotations/annotations_trainval2017.zip && unzip -j annotations_trainval2017.zip annotations/instances_val2017.json -d "$OLDPWD/data/coco/annotations" && rm annotations_trainval2017.zip && cd -
+python scripts/download_coco_val2017.py
 ```
 
-For fully offline runs after the first download:
+From Milestone 2 on: YOLO-World weights and the CLIP ViT-B/32 text encoder, all checksum-verified, into
+`models/` (about 0.65 GB):
+
+```bash
+python scripts/setup_yolo_world.py
+```
+
+| model | file | size | SHA-256 source | licence |
+|---|---|---|---|---|
+| YOLO-World v2 S / M / L / X | `models/yolo_world/yolov8{s,m,l,x}-worldv2.pt` | 26 / 57 / 94 / 146 MB | GitHub release digests (`configs/weights/yolo_world.yaml`) | AGPL-3.0 |
+| CLIP ViT-B/32 (text encoder) | `models/ultralytics/weights/clip/ViT-B-32.pt` | 338 MiB | embedded in OpenAI's download URL | OpenAI weights; the `clip` package (Ultralytics fork) is AGPL-3.0 |
+
+The setup also writes a **project-local** Ultralytics settings file (`models/ultralytics/Ultralytics/settings.json`)
+with analytics off. The detector sets `YOLO_CONFIG_DIR`, `YOLO_OFFLINE=1` and `YOLO_AUTOINSTALL=False`
+before importing Ultralytics, so your global `~/.config/Ultralytics` settings are never read or changed,
+nothing is pip-installed at runtime, and no usage data is sent.
+
+For fully offline Grounding DINO runs after the first download:
 
 ```bash
 export HF_HUB_OFFLINE=1
 ```
 
-## 5. Run Milestone 1
+## 5. Run a milestone
 
 ```bash
 bash scripts/run_milestone1.sh
 ```
 
-The script unsets `PYTHONPATH`, because a sourced ROS 2 install would otherwise inject its Python 3.10
+```bash
+bash scripts/run_milestone2.sh
+```
+
+Milestone 2 takes about 1.7 h; the two Grounding DINO COCO evaluations dominate. To keep a laptop from
+suspending mid-run (which can break the NVIDIA driver; see `docs/milestone1.md#known-issues`):
+
+```bash
+systemd-inhibit --what=sleep:idle bash scripts/run_milestone2.sh
+```
+
+Each script unsets `PYTHONPATH`, because a sourced ROS 2 install would otherwise inject its Python 3.10
 packages and pytest plugins into this env. For manual test runs in a ROS-sourced shell:
 
 ```bash
