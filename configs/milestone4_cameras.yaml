@@ -1,0 +1,49 @@
+# Milestone 4 — multi-camera RTSP ingestion with asynchronous perception (detector + per-camera ByteTrack).
+#
+#   python scripts/run_cameras.py --simulate --duration 60      # starts the simulated cameras below
+#   python scripts/run_cameras.py --config configs/cameras.local.yaml   # your own cameras
+#   python scripts/benchmark_ingestion.py                        # the measurements in docs/milestone4.md
+#
+# Real cameras: copy this file to configs/cameras.local.yaml (git-ignored) and put credentials in
+# environment variables, e.g. url: "rtsp://admin:${CAM01_PASSWORD}@192.168.1.20:554/Streaming/Channels/101".
+# URLs are always redacted (rtsp://***@host/...) in logs and outputs.
+
+extends: milestone3_mot17.yaml   # detector presets (models:) and ByteTrack settings (tracker:)
+
+run_name: m4_cameras
+output_dir: outputs/milestone4
+benchmark_dir: benchmarks/milestone4
+
+camera_defaults:
+  rtsp_transport: tcp       # robust on lossy links; udp has lower latency but drops packets
+  open_timeout_s: 5
+  read_timeout_s: 2.5       # a silent stream is dropped after ~2x this (measured)
+  stall_after_s: 1.0        # flagged as "stalled" in the status after this long without a frame
+  decode_threads: 1         # frame-threaded decoding holds back one frame per thread (measured)
+  reconnect_initial_s: 1
+  reconnect_max_s: 10       # a returning camera can wait up to this long (+20 %) for the next retry
+  reconnect_jitter: 0.2
+
+cameras:                    # the simulated cameras (see `simulation`); replace with real ones
+  - {camera_id: cam01, url: "rtsp://127.0.0.1:8601/cam"}
+  - {camera_id: cam02, url: "rtsp://127.0.0.1:8602/cam"}
+  - {camera_id: cam03, url: "rtsp://127.0.0.1:8603/cam"}
+  - {camera_id: cam04, url: "rtsp://127.0.0.1:8604/cam"}
+
+# Local RTSP cameras (scripts/rtsp_test_server.py, system Python + GStreamer) that loop MOT17 sequences:
+# 1920x1080, 30 fps, H.264 (x264 ultrafast / zerolatency, 4 Mbit/s, keyframe every 30 frames).
+simulation:
+  fps: 30
+  bitrate_kbps: 4000
+  cameras:
+    - {camera_id: cam01, port: 8601, source: data/mot17/train/MOT17-02/img1}
+    - {camera_id: cam02, port: 8602, source: data/mot17/train/MOT17-04/img1}
+    - {camera_id: cam03, port: 8603, source: data/mot17/train/MOT17-09/img1}
+    - {camera_id: cam04, port: 8604, source: data/mot17/train/MOT17-11/img1}
+
+pipeline:
+  model: yoloworld_m        # detector preset from models: (Milestone 3 deployment candidate)
+  prompt: person
+  process_fps: 10           # per camera; 0 = every new frame
+  tracker:
+    track_thresh: 0.1       # tuned for yoloworld_m on MOT17 train-half (benchmarks/milestone3)

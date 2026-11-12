@@ -35,7 +35,8 @@ eval = [
     "pycocotools>=2.0.8",
     "trackeval @ git+https://github.com/JonathonLuiten/TrackEval.git@12c8791b303e0a0b50f753af204249e622d0281a",
 ]
-# Video file input/output for scripts/track_video.py (Ultralytics already pulls this in).
+# Video and camera input/output (OpenCV with FFmpeg): scripts/track_video.py (M3) and RTSP ingestion (M4),
+# which uses CAP_PROP_N_THREADS and the open/read timeouts. Tested with opencv-python 5.0.0.93.
 video = ["opencv-python>=4.10"]
 
 [tool.setuptools.packages.find]

@@ -34,7 +34,7 @@ scripts/detect_mot17.py        runs a detector over all 5,316 frames once and ca
 scripts/eval_mot17.py          ByteTrack on the cache, threshold tuning, TrackEval scoring, publishing
 scripts/track_video.py         any prompt on a video or image folder -> annotated video + MOT file
 scripts/analyze_mot17_recall.py  which pedestrians are missed: recall by visibility and box height
-scripts/validate_trackeval.py  optional: our TrackEval integration vs TrackEval's own reference output
+scripts/validate_trackeval.py  optional: our TrackEval wrapper vs TrackEval's own summary on a real tracker
 scripts/summarize_milestone3.py  tables + HOTA-vs-latency plot -> benchmarks/milestone3/
 scripts/run_milestone3.sh      one-command reproduction
 tests/                         +30 tests (74 total): ByteTrack == official, IDs, tracker behaviour, MOT evaluation
@@ -236,9 +236,13 @@ embeddings.
 4. **Unexplained:** YOLO-World-L tracking (and recalling) worse than -M on MOT17; recall of 100–200 px
    pedestrians dropping at 1280 px input.
 5. **TrackEval** at the pinned commit needs the NumPy alias shim (no effect on results; hand-checked tests
-   pass). The extra cross-check against TrackEval's own reference output (`scripts/validate_trackeval.py`)
-   depends on a 150 MB example archive that downloads at about 15 KB/s from the TrackEval authors' server; it
-   had not finished when this report was written, so that cross-check **has not been run yet**.
+   pass). *Added after this milestone's commit:* TrackEval's example archive (150 MB) turned out to contain
+   no reference scores (its own tests read them from a separate, unlinked `data/tests` package), so an
+   independent check of TrackEval's numbers was not possible. What was checked instead
+   (`scripts/validate_trackeval.py`, [`trackeval_validation.json`](../benchmarks/milestone3/trackeval_validation.json)):
+   on the real MPNTrack tracker over all 21 MOT17-train sequence variants, the numbers our wrapper reports
+   are **identical** to the summary file TrackEval itself writes (HOTA 61.904, MOTA 64.399, IDF1 71.206,
+   ID switches 482; 14 fields checked, all equal).
 6. **Per-phrase association** (separate trackers per prompt phrase) is only shown qualitatively: MOT17 has
    one scored class. A multi-class tracking benchmark is Milestone 9.
 7. **Latency** is per stage at batch 1 (detector on the GPU, ByteTrack on the CPU); a full streaming pipeline

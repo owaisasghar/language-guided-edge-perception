@@ -123,6 +123,20 @@ pinned commit (git-ignored; the test is skipped without it):
 git clone https://github.com/ifzhang/ByteTrack.git third_party/ByteTrack && git -C third_party/ByteTrack checkout d1bf0191adff59bc8fcfeaa0b33d3d1642552a99
 ```
 
+From Milestone 4 on: camera ingestion uses OpenCV's FFmpeg backend (`video` extra; the pip OpenCV wheel has
+FFmpeg but no GStreamer). The **simulated RTSP cameras** used by the tests and benchmarks run with the
+**system** Python and GStreamer's RTSP server (not the conda env):
+
+```bash
+sudo apt install python3-gi gir1.2-gst-rtsp-server-1.0 gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly
+```
+
+Check: `/usr/bin/python3 scripts/rtsp_test_server.py --source testsrc` should print `serving rtsp://...`.
+Without these packages the RTSP tests are skipped.
+
+Real cameras: copy `configs/milestone4_cameras.yaml` to `configs/cameras.local.yaml` (git-ignored), list
+your cameras there and keep passwords in environment variables (`url: "rtsp://admin:${CAM01_PASSWORD}@..."`).
+
 For fully offline Grounding DINO runs after the first download:
 
 ```bash
@@ -141,6 +155,10 @@ bash scripts/run_milestone2.sh
 
 ```bash
 bash scripts/run_milestone3.sh
+```
+
+```bash
+bash scripts/run_milestone4.sh
 ```
 
 Milestone 2 takes about 1.7 h; the two Grounding DINO COCO evaluations dominate. To keep a laptop from

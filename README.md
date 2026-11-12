@@ -5,9 +5,10 @@ blue shirt"* or *"which cameras saw this vehicle?"*. The system detects matching
 tracks them, links the same object across cameras, and retrieves its earlier appearances. It is built for
 a single 8 GB GPU first and for NVIDIA Jetson Orin NX later.
 
-**Status:** Milestones 1–3 of 10 are done (measured 2026-11-12): the Grounding DINO baseline,
-YOLO-World integration with a full COCO val2017 comparison of six detectors, and per-camera tracking
-(official ByteTrack, persistent IDs) evaluated on MOT17 with every detector. Nothing in this repository
+**Status:** Milestones 1–4 of 10 are done (measured 2026-11-12): the Grounding DINO baseline,
+YOLO-World integration with a full COCO val2017 comparison of six detectors, per-camera tracking
+(official ByteTrack, persistent IDs) evaluated on MOT17, and multi-camera RTSP ingestion with
+asynchronous processing and automatic reconnection. Nothing in this repository
 reports a number that was not measured; planned targets are labelled as targets.
 
 ## Milestones
@@ -17,7 +18,7 @@ reports a number that was not measured; planned targets are labelled as targets.
 | 1 | Environment + Grounding DINO baseline on images | ✅ code, tests, CPU check, GPU benchmark |
 | 2 | YOLO-World integration and detector comparison | ✅ 6 detectors on COCO val2017, published AP reproduced |
 | 3 | Single-camera tracking (ByteTrack) | ✅ official ByteTrack (equality-tested), persistent IDs, MOT17 HOTA/IDF1/MOTA for 6 detectors |
-| 4 | Multi-camera RTSP ingestion | – |
+| 4 | Multi-camera RTSP ingestion | ✅ capture thread per camera, newest-frame buffers, reconnection with backoff, shared detector; outages measured |
 | 5 | Cross-camera Re-ID (CityFlow) | – |
 | 6 | Language-guided retrieval (CityFlow-NL) | – |
 | 7 | FastAPI backend + React dashboard | – |
@@ -93,6 +94,28 @@ val-half (ByteTrack's protocol), prompt `person`, zero-shot detectors, threshold
 
 Details: [docs/milestone3.md](docs/milestone3.md); tables: [benchmarks/milestone3/](benchmarks/milestone3/README.md).
 
+## Multi-camera ingestion (Milestone 4, measured)
+
+Four simulated RTSP cameras (MOT17 sequences, 1920×1080, 30 fps, H.264, local GStreamer servers) → one
+shared YOLO-World-M → ByteTrack per camera:
+
+| setting | per camera | latency p50 (decoded frame → tracks) | CPU | GPU util |
+|---|---|---|---|---|
+| 4 cameras, 10 fps each | 10.0 fps | 19 ms | 1.2 cores | 39 % |
+| 4 cameras, every frame | 16.8 fps (67 fps total) | 32 ms | 1.5 cores | 53 % |
+
+* Each camera has its own capture thread and keeps only its newest frame, so a slow detector never makes a
+  camera fall behind; one worker serves all cameras round-robin with a per-camera rate limit.
+* **Outages are isolated and recovered automatically**: a stopped camera is noticed in 0.01 s, a silent one
+  (open connection, no data) is flagged after 1 s and dropped after 4 s; reconnection uses exponential
+  backoff (capped at 10 s); the other cameras keep exactly their rate; the camera's tracker restarts and its
+  track IDs keep increasing (never reused).
+* **FFmpeg's default decoder threading holds back one frame per thread**: 16 frames, 533 ms at 30 fps on this
+  CPU, invisible to in-pipeline timing. Live streams therefore decode with one thread (33 ms, and less CPU).
+* One worker saturates at ~67 frames/s while the GPU is half idle: batching across cameras is Milestone 8.
+
+Details: [docs/milestone4.md](docs/milestone4.md); tables: [benchmarks/milestone4/](benchmarks/milestone4/README.md).
+
 ## Quick start (Ubuntu 22.04, NVIDIA driver ≥ 580)
 
 ```bash
@@ -125,6 +148,18 @@ Milestone 3 (downloads MOT17's training sequences, CC BY-NC-SA; about 1.7 h on t
 
 ```bash
 systemd-inhibit --what=sleep:idle bash scripts/run_milestone3.sh
+```
+
+Milestone 4 (simulated RTSP cameras need the system GStreamer RTSP server, see docs/installation.md):
+
+```bash
+bash scripts/run_milestone4.sh
+```
+
+Run the multi-camera application on the simulated cameras (or your own: `--config configs/cameras.local.yaml`):
+
+```bash
+python scripts/run_cameras.py --simulate --duration 60
 ```
 
 Track any prompt in your own video (annotated video + MOT file in `outputs/milestone3/demo/`):

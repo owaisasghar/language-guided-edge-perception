@@ -2,8 +2,8 @@
 
 Target system (12 stages). Milestones 1–2 implement the **text-guided detector** (two backends,
 Grounding DINO and YOLO-World, behind one interface); Milestone 3 adds **per-camera tracking** with
-persistent local track IDs. Everything else is planned and will be designed in detail at the start of its
-milestone.
+persistent local track IDs; Milestone 4 adds **multi-camera RTSP ingestion** with asynchronous processing
+and reconnection. Everything else is planned and will be designed in detail at the start of its milestone.
 
 ```mermaid
 flowchart LR
@@ -21,7 +21,7 @@ flowchart LR
   I --> J[11. FastAPI]
   J --> K[12. React dashboard]
   classDef done fill:#0b7,stroke:#063,color:#fff;
-  class C,E done;
+  class A,B,C,E done;
 ```
 
 ## Identity model (fixed from day one)
@@ -54,6 +54,32 @@ DetectionResult (phrases, boxes, scores)
   reported, never the tracker state, as in ByteTrack.
 * ByteTrack runs on the CPU (about 0.5 ms per frame on MOT17); the GPU is left to the detector.
 
+## Multi-camera ingestion and processing (Milestone 4)
+
+```
+camera 1 ──RTSP──> CameraReader thread ─┐  decode (FFmpeg, 1 thread) -> RGB -> newest-frame slot
+camera 2 ──RTSP──> CameraReader thread ─┼─> StreamManager (status, wake-up event, add/remove cameras)
+camera N ──RTSP──> CameraReader thread ─┘
+                                          │ newest frame per camera, round-robin, process_fps per camera
+                                          v
+                         PerceptionPipeline worker: one shared detector (GPU) -> CameraTracker per camera
+                                          │ (Frame, DetectionResult, TrackingResult) per processed frame
+                                          v
+                                 callbacks: track files, status.json (later: database, API)
+```
+
+* **Capture never waits for processing.** Each camera keeps only its newest decoded frame; a slower
+  consumer gets the latest frame, not an ever older queue, and skipped frames are counted.
+* **Reconnection.** A failed open, a closed connection, or a silent stream (FFmpeg read timeout) ends the
+  connection; the reader retries with exponential backoff (1 s doubling to 10 s, ±20 % jitter) until it is
+  stopped, and resets the backoff after a successful connection. Each connection is an *epoch*; when the
+  epoch changes, the camera's tracker is reset (tracks never span a gap; IDs are never reused).
+* **Decoder latency.** FFmpeg's frame-threaded H.264 decoder holds back about one frame per thread, so live
+  streams decode with one thread (configurable; see docs/milestone4.md).
+* **Credentials.** Camera URLs may contain `${ENV_VAR}` references; URLs are always redacted
+  (`rtsp://***@host/...`) in logs, status and results; local camera configs are git-ignored.
+* Batching several cameras into one detector call, and GPU (NVDEC / Jetson) decoding, are Milestone 8.
+
 ## GPU budget principles (8 GB)
 
 * One large detector resident at a time; it is shared across cameras through batching, not one model
@@ -70,7 +96,8 @@ DetectionResult (phrases, boxes, scores)
 | `lgep.perception` | 1–2 | detector backends behind one `detect(image, phrases) -> DetectionResult` contract; `factory.build_detector(cfg)` picks the backend (`hf_transformers` = Grounding DINO, `ultralytics_yolo_world` = YOLO-World) |
 | `lgep.evaluation` | 2–3 | COCO detection evaluation (pycocotools); MOT17 tracking evaluation (TrackEval: HOTA, IDF1, MOTA); retrieval metrics later |
 | `lgep.tracking` | 3 | `CameraTracker` (per-camera, per-phrase ByteTrack), `IdAllocator` (persistent local IDs), vendored official ByteTrack; BoT-SORT/OC-SORT compared in Milestone 9 |
-| `lgep.ingestion` | 4 | RTSP/GStreamer readers, reconnects, frame queues |
+| `lgep.ingestion` | 4 | `CameraReader` (capture thread, newest-frame slot, reconnection with backoff), `StreamManager`, `CameraConfig` (URL redaction, `${ENV}` credentials), simulated RTSP cameras for tests |
+| `lgep.pipeline` | 4 | `PerceptionPipeline`: round-robin over cameras, per-camera rate limit, shared detector, per-camera trackers reset on reconnect, latency statistics |
 | `lgep.reid` | 5 | appearance embeddings, spatio-temporal association, global IDs |
 | `lgep.query` | 6 | natural-language → structured query (class, attributes, camera, time) |
 | `lgep.database` | 7 | SQLite schema for detections, tracks, identities and events |

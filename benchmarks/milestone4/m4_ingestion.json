@@ -1,0 +1,666 @@
+{
+  "measured": true,
+  "environment": {
+    "timestamp_utc": "2026-11-12T11:19:43+00:00",
+    "os": "Linux-6.8.0-138-generic-x86_64-with-glibc2.35",
+    "python": "3.12.16",
+    "cpu": "AMD Ryzen 7 8845HS w/ Radeon 780M Graphics",
+    "cpu_logical_cores": 16,
+    "ram_gib": 30.6,
+    "packages": {
+      "torch": "2.13.0+cu130",
+      "torchvision": "0.28.0+cu130",
+      "transformers": "5.22.2",
+      "huggingface-hub": "2.4.0",
+      "tokenizers": "0.23.3",
+      "safetensors": "0.8.0",
+      "numpy": "2.5.4",
+      "pillow": "13.0.0",
+      "lgep": "0.1.0",
+      "ultralytics": "8.4.211",
+      "clip": "1.0",
+      "opencv-python": "5.0.0.93",
+      "pycocotools": "2.0.11",
+      "scipy": "1.18.1",
+      "lap": "0.5.14",
+      "trackeval": "1.0.dev1"
+    },
+    "torch_cuda_build": "13.0",
+    "cudnn": 92000,
+    "torch_arch_list": [
+      "sm_75",
+      "sm_80",
+      "sm_86",
+      "sm_90",
+      "sm_100",
+      "sm_120"
+    ],
+    "gpu": {
+      "name": "NVIDIA GeForce RTX 4060 Laptop GPU",
+      "driver": "580.178.04",
+      "memory_total": "8188 MiB",
+      "compute_capability": "8.9",
+      "power_limit": "55.00 W"
+    }
+  },
+  "other_gpu_processes": [
+    {
+      "pid": 888,
+      "name": "./rtservice",
+      "used_mib": 94.0
+    }
+  ],
+  "config": {
+    "run_name": "m4_cameras",
+    "device": "cuda",
+    "log_level": "INFO",
+    "output_dir": "outputs/milestone4",
+    "benchmark_dir": "benchmarks/milestone4",
+    "data": {
+      "root": "data/mot17/train",
+      "sequences": [
+        "MOT17-02",
+        "MOT17-04",
+        "MOT17-05",
+        "MOT17-09",
+        "MOT17-10",
+        "MOT17-11",
+        "MOT17-13"
+      ]
+    },
+    "prompt": "person",
+    "detections": {
+      "cache_dir": "outputs/milestone3/detections"
+    },
+    "benchmark": {
+      "warmup_runs": 5
+    },
+    "tracker": {
+      "track_thresh": 0.6,
+      "track_buffer": 30,
+      "match_thresh": 0.9,
+      "mot20": false,
+      "min_box_area": 100,
+      "max_aspect_ratio": 1.6
+    },
+    "tuning": {
+      "split": "train_half",
+      "metric": "HOTA",
+      "track_thresh": [
+        0.1,
+        0.15,
+        0.2,
+        0.25,
+        0.3,
+        0.4,
+        0.5,
+        0.6,
+        0.7
+      ]
+    },
+    "evaluation": {
+      "split": "val_half"
+    },
+    "models": {
+      "gdino_t": {
+        "backend": "hf_transformers",
+        "model_id": "IDEA-Research/grounding-dino-tiny",
+        "revision": "a2bb814dd30d776dcf7e30523b00659f4f141c71",
+        "dtype": "float32",
+        "box_threshold": 0.05,
+        "phrase_score_reduction": "max",
+        "nms_iou": 0.7,
+        "max_detections": 300,
+        "token_labels": false
+      },
+      "gdino_b": {
+        "backend": "hf_transformers",
+        "model_id": "IDEA-Research/grounding-dino-base",
+        "revision": "12bdfa3120f3e7ec7b434d90674b3396eccf88eb",
+        "dtype": "float32",
+        "box_threshold": 0.05,
+        "phrase_score_reduction": "max",
+        "nms_iou": 0.7,
+        "max_detections": 300,
+        "token_labels": false
+      },
+      "yoloworld_s": {
+        "backend": "ultralytics_yolo_world",
+        "weights": "models/yolo_world/yolov8s-worldv2.pt",
+        "dtype": "float32",
+        "imgsz": 640,
+        "conf": 0.05,
+        "iou": 0.7,
+        "max_det": 300,
+        "multi_label": false,
+        "letterbox": "minimal"
+      },
+      "yoloworld_m": {
+        "backend": "ultralytics_yolo_world",
+        "weights": "models/yolo_world/yolov8m-worldv2.pt",
+        "dtype": "float32",
+        "imgsz": 640,
+        "conf": 0.05,
+        "iou": 0.7,
+        "max_det": 300,
+        "multi_label": false,
+        "letterbox": "minimal"
+      },
+      "yoloworld_l": {
+        "backend": "ultralytics_yolo_world",
+        "weights": "models/yolo_world/yolov8l-worldv2.pt",
+        "dtype": "float32",
+        "imgsz": 640,
+        "conf": 0.05,
+        "iou": 0.7,
+        "max_det": 300,
+        "multi_label": false,
+        "letterbox": "minimal"
+      },
+      "yoloworld_x": {
+        "backend": "ultralytics_yolo_world",
+        "weights": "models/yolo_world/yolov8x-worldv2.pt",
+        "dtype": "float32",
+        "imgsz": 640,
+        "conf": 0.05,
+        "iou": 0.7,
+        "max_det": 300,
+        "multi_label": false,
+        "letterbox": "minimal"
+      },
+      "yoloworld_l_1280": {
+        "backend": "ultralytics_yolo_world",
+        "weights": "models/yolo_world/yolov8l-worldv2.pt",
+        "dtype": "float32",
+        "imgsz": 1280,
+        "conf": 0.05,
+        "iou": 0.7,
+        "max_det": 300,
+        "multi_label": false,
+        "letterbox": "minimal"
+      },
+      "yoloworld_x_1280": {
+        "backend": "ultralytics_yolo_world",
+        "weights": "models/yolo_world/yolov8x-worldv2.pt",
+        "dtype": "float32",
+        "imgsz": 1280,
+        "conf": 0.05,
+        "iou": 0.7,
+        "max_det": 300,
+        "multi_label": false,
+        "letterbox": "minimal"
+      },
+      "oracle_gt": {
+        "backend": "ground_truth"
+      }
+    },
+    "camera_defaults": {
+      "rtsp_transport": "tcp",
+      "open_timeout_s": 5,
+      "read_timeout_s": 2.5,
+      "stall_after_s": 1.0,
+      "decode_threads": 1,
+      "reconnect_initial_s": 1,
+      "reconnect_max_s": 10,
+      "reconnect_jitter": 0.2
+    },
+    "cameras": [
+      {
+        "camera_id": "cam01",
+        "url": "rtsp://127.0.0.1:8601/cam"
+      },
+      {
+        "camera_id": "cam02",
+        "url": "rtsp://127.0.0.1:8602/cam"
+      },
+      {
+        "camera_id": "cam03",
+        "url": "rtsp://127.0.0.1:8603/cam"
+      },
+      {
+        "camera_id": "cam04",
+        "url": "rtsp://127.0.0.1:8604/cam"
+      }
+    ],
+    "simulation": {
+      "fps": 30,
+      "bitrate_kbps": 4000,
+      "cameras": [
+        {
+          "camera_id": "cam01",
+          "port": 8601,
+          "source": "data/mot17/train/MOT17-02/img1"
+        },
+        {
+          "camera_id": "cam02",
+          "port": 8602,
+          "source": "data/mot17/train/MOT17-04/img1"
+        },
+        {
+          "camera_id": "cam03",
+          "port": 8603,
+          "source": "data/mot17/train/MOT17-09/img1"
+        },
+        {
+          "camera_id": "cam04",
+          "port": 8604,
+          "source": "data/mot17/train/MOT17-11/img1"
+        }
+      ]
+    },
+    "pipeline": {
+      "model": "yoloworld_m",
+      "prompt": "person",
+      "process_fps": 10,
+      "tracker": {
+        "track_thresh": 0.1
+      }
+    }
+  },
+  "model": {
+    "backend": "ultralytics_yolo_world",
+    "model_id": "yolov8m-worldv2",
+    "revision": "sha256:b614d33aa35b8e61d988041ff6939dfb3ed627af88ccaf643e4cdb822eb41d71",
+    "parameters_millions": 28.36,
+    "text_encoder": "CLIP ViT-B/32 on cpu",
+    "text_encoder_parameters_millions": 151.28,
+    "load_seconds": 1.92,
+    "device": "cuda",
+    "dtype": "float32",
+    "imgsz": 640,
+    "conf": 0.05,
+    "iou": 0.7,
+    "multi_label": false,
+    "max_det": 300,
+    "letterbox": "minimal"
+  },
+  "A": [
+    {
+      "cameras": 1,
+      "decode_threads": 1,
+      "seconds": 20.0,
+      "input_fps_per_camera": {
+        "cam01": 30.0
+      },
+      "process_cpu_percent": 10.7,
+      "simulated_cameras_cpu_percent": 50.7
+    },
+    {
+      "cameras": 2,
+      "decode_threads": 1,
+      "seconds": 20.0,
+      "input_fps_per_camera": {
+        "cam01": 30.0,
+        "cam02": 30.0
+      },
+      "process_cpu_percent": 20.7,
+      "simulated_cameras_cpu_percent": 102.8
+    },
+    {
+      "cameras": 4,
+      "decode_threads": 1,
+      "seconds": 20.0,
+      "input_fps_per_camera": {
+        "cam01": 30.0,
+        "cam02": 30.0,
+        "cam03": 30.0,
+        "cam04": 30.0
+      },
+      "process_cpu_percent": 43.3,
+      "simulated_cameras_cpu_percent": 194.2
+    },
+    {
+      "cameras": 4,
+      "decode_threads": 0,
+      "seconds": 20.0,
+      "input_fps_per_camera": {
+        "cam01": 30.0,
+        "cam02": 30.0,
+        "cam03": 30.0,
+        "cam04": 30.0
+      },
+      "process_cpu_percent": 75.9,
+      "simulated_cameras_cpu_percent": 177.0
+    }
+  ],
+  "B": [
+    {
+      "cameras": 1,
+      "process_fps_target": 10,
+      "seconds": 30.0,
+      "processed_fps_per_camera": {
+        "cam01": 9.99
+      },
+      "throughput_fps": 9.99,
+      "input_fps_per_camera": {
+        "cam01": 29.99
+      },
+      "latency_ms_p50_per_camera": {
+        "cam01": 15.93
+      },
+      "latency_ms_p90_per_camera": {
+        "cam01": 16.69
+      },
+      "latency_ms_p50_median": 15.9,
+      "wait_ms_p50_per_camera": {
+        "cam01": 0.07
+      },
+      "detector_ms_p50_per_camera": {
+        "cam01": 12.89
+      },
+      "tracker_ms_p50_per_camera": {
+        "cam01": 0.91
+      },
+      "process_cpu_percent": 27.0,
+      "gpu": {
+        "samples": 60,
+        "util_percent_mean": 10.0,
+        "util_percent_p90": 10.0,
+        "device_memory_used_mib_max": 536.0
+      },
+      "detector_peak_allocated_mib": 211.1
+    },
+    {
+      "cameras": 2,
+      "process_fps_target": 10,
+      "seconds": 30.0,
+      "processed_fps_per_camera": {
+        "cam01": 9.99,
+        "cam02": 9.99
+      },
+      "throughput_fps": 19.98,
+      "input_fps_per_camera": {
+        "cam01": 30.0,
+        "cam02": 30.0
+      },
+      "latency_ms_p50_per_camera": {
+        "cam01": 19.06,
+        "cam02": 17.52
+      },
+      "latency_ms_p90_per_camera": {
+        "cam01": 21.31,
+        "cam02": 19.41
+      },
+      "latency_ms_p50_median": 18.3,
+      "wait_ms_p50_per_camera": {
+        "cam01": 3.5,
+        "cam02": 0.1
+      },
+      "detector_ms_p50_per_camera": {
+        "cam01": 12.86,
+        "cam02": 13.49
+      },
+      "tracker_ms_p50_per_camera": {
+        "cam01": 1.07,
+        "cam02": 1.63
+      },
+      "process_cpu_percent": 56.4,
+      "gpu": {
+        "samples": 60,
+        "util_percent_mean": 20.0,
+        "util_percent_p90": 20.0,
+        "device_memory_used_mib_max": 536.0
+      },
+      "detector_peak_allocated_mib": 211.1
+    },
+    {
+      "cameras": 4,
+      "process_fps_target": 10,
+      "seconds": 30.0,
+      "processed_fps_per_camera": {
+        "cam01": 9.99,
+        "cam02": 9.99,
+        "cam03": 9.99,
+        "cam04": 9.99
+      },
+      "throughput_fps": 39.94,
+      "input_fps_per_camera": {
+        "cam01": 29.99,
+        "cam02": 29.99,
+        "cam03": 29.99,
+        "cam04": 29.99
+      },
+      "latency_ms_p50_per_camera": {
+        "cam01": 17.55,
+        "cam02": 19.31,
+        "cam03": 18.85,
+        "cam04": 30.23
+      },
+      "latency_ms_p90_per_camera": {
+        "cam01": 18.59,
+        "cam02": 20.77,
+        "cam03": 32.67,
+        "cam04": 50.58
+      },
+      "latency_ms_p50_median": 19.1,
+      "wait_ms_p50_per_camera": {
+        "cam01": 0.1,
+        "cam02": 0.51,
+        "cam03": 2.45,
+        "cam04": 13.67
+      },
+      "detector_ms_p50_per_camera": {
+        "cam01": 13.51,
+        "cam02": 13.84,
+        "cam03": 13.02,
+        "cam04": 13.31
+      },
+      "tracker_ms_p50_per_camera": {
+        "cam01": 1.27,
+        "cam02": 1.96,
+        "cam03": 1.37,
+        "cam04": 1.05
+      },
+      "process_cpu_percent": 116.6,
+      "gpu": {
+        "samples": 60,
+        "util_percent_mean": 39.0,
+        "util_percent_p90": 40.0,
+        "device_memory_used_mib_max": 536.0
+      },
+      "detector_peak_allocated_mib": 211.1
+    },
+    {
+      "cameras": 1,
+      "process_fps_target": 0,
+      "seconds": 30.0,
+      "processed_fps_per_camera": {
+        "cam01": 29.98
+      },
+      "throughput_fps": 29.98,
+      "input_fps_per_camera": {
+        "cam01": 29.98
+      },
+      "latency_ms_p50_per_camera": {
+        "cam01": 16.07
+      },
+      "latency_ms_p90_per_camera": {
+        "cam01": 16.79
+      },
+      "latency_ms_p50_median": 16.1,
+      "wait_ms_p50_per_camera": {
+        "cam01": 0.08
+      },
+      "detector_ms_p50_per_camera": {
+        "cam01": 12.91
+      },
+      "tracker_ms_p50_per_camera": {
+        "cam01": 0.96
+      },
+      "process_cpu_percent": 59.2,
+      "gpu": {
+        "samples": 60,
+        "util_percent_mean": 30.0,
+        "util_percent_p90": 30.0,
+        "device_memory_used_mib_max": 536.0
+      },
+      "detector_peak_allocated_mib": 211.1
+    },
+    {
+      "cameras": 2,
+      "process_fps_target": 0,
+      "seconds": 30.0,
+      "processed_fps_per_camera": {
+        "cam01": 29.98,
+        "cam02": 29.98
+      },
+      "throughput_fps": 59.97,
+      "input_fps_per_camera": {
+        "cam01": 30.02,
+        "cam02": 29.98
+      },
+      "latency_ms_p50_per_camera": {
+        "cam01": 14.69,
+        "cam02": 15.17
+      },
+      "latency_ms_p90_per_camera": {
+        "cam01": 17.94,
+        "cam02": 16.93
+      },
+      "latency_ms_p50_median": 14.9,
+      "wait_ms_p50_per_camera": {
+        "cam01": 0.81,
+        "cam02": 0.07
+      },
+      "detector_ms_p50_per_camera": {
+        "cam01": 10.39,
+        "cam02": 10.97
+      },
+      "tracker_ms_p50_per_camera": {
+        "cam01": 1.0,
+        "cam02": 1.67
+      },
+      "process_cpu_percent": 110.5,
+      "gpu": {
+        "samples": 60,
+        "util_percent_mean": 46.6,
+        "util_percent_p90": 48.0,
+        "device_memory_used_mib_max": 536.0
+      },
+      "detector_peak_allocated_mib": 211.1
+    },
+    {
+      "cameras": 4,
+      "process_fps_target": 0,
+      "seconds": 30.0,
+      "processed_fps_per_camera": {
+        "cam01": 16.81,
+        "cam02": 16.78,
+        "cam03": 16.78,
+        "cam04": 16.78
+      },
+      "throughput_fps": 67.15,
+      "input_fps_per_camera": {
+        "cam01": 30.0,
+        "cam02": 30.0,
+        "cam03": 30.0,
+        "cam04": 30.0
+      },
+      "latency_ms_p50_per_camera": {
+        "cam01": 31.74,
+        "cam02": 33.59,
+        "cam03": 32.41,
+        "cam04": 31.65
+      },
+      "latency_ms_p90_per_camera": {
+        "cam01": 45.95,
+        "cam02": 47.31,
+        "cam03": 46.69,
+        "cam04": 46.01
+      },
+      "latency_ms_p50_median": 32.1,
+      "wait_ms_p50_per_camera": {
+        "cam01": 16.42,
+        "cam02": 17.3,
+        "cam03": 17.61,
+        "cam04": 17.05
+      },
+      "detector_ms_p50_per_camera": {
+        "cam01": 11.45,
+        "cam02": 11.52,
+        "cam03": 11.46,
+        "cam04": 11.4
+      },
+      "tracker_ms_p50_per_camera": {
+        "cam01": 1.1,
+        "cam02": 1.71,
+        "cam03": 1.11,
+        "cam04": 0.91
+      },
+      "process_cpu_percent": 150.3,
+      "gpu": {
+        "samples": 60,
+        "util_percent_mean": 53.2,
+        "util_percent_p90": 56.0,
+        "device_memory_used_mib_max": 536.0
+      },
+      "detector_peak_allocated_mib": 211.1
+    }
+  ],
+  "C": {
+    "events": {
+      "cam02_stop_detected_s": 0.01,
+      "cam02_outage_s": 15.0,
+      "cam02_streaming_again_s": 9.12,
+      "cam02_processed_again_s": 0.0,
+      "cam03_stalled_flag_s": 0.98,
+      "cam03_freeze_detected_s": 4.01,
+      "cam03_streaming_again_s": 0.95
+    },
+    "processed_fps_before_outage": {
+      "cam01": 9.99,
+      "cam04": 9.99
+    },
+    "processed_fps_during_cam02_outage": {
+      "cam01": 9.99,
+      "cam04": 9.99
+    },
+    "processed_fps_during_cam03_freeze": {
+      "cam01": 9.98,
+      "cam04": 9.98
+    },
+    "cam02": {
+      "tracker_resets": 1,
+      "connects": 2,
+      "max_local_id_epoch1": 202,
+      "min_local_id_epoch2": 208,
+      "retry_waits_s": [
+        1.136,
+        1.933,
+        3.201,
+        6.422,
+        10.505
+      ]
+    },
+    "cam03": {
+      "tracker_resets": 1,
+      "connects": 2
+    }
+  },
+  "D": [
+    {
+      "decode_threads": 1,
+      "frames_held": 1,
+      "added_latency_ms_at_30fps": 33.3,
+      "read_failed_after_s": 4.02
+    },
+    {
+      "decode_threads": 2,
+      "frames_held": 2,
+      "added_latency_ms_at_30fps": 66.7,
+      "read_failed_after_s": 6.03
+    },
+    {
+      "decode_threads": 4,
+      "frames_held": 4,
+      "added_latency_ms_at_30fps": 133.3,
+      "read_failed_after_s": 6.03
+    },
+    {
+      "decode_threads": "ffmpeg default",
+      "frames_held": 16,
+      "added_latency_ms_at_30fps": 533.3,
+      "read_failed_after_s": 6.04
+    }
+  ]
+}

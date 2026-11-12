@@ -1,0 +1,80 @@
+{
+  "measured": true,
+  "tracker": "MPNTrack",
+  "split": "MOT17-train",
+  "sequences": 21,
+  "trackeval_commit": "12c8791b303e0a0b50f753af204249e622d0281a",
+  "all_equal": true,
+  "fields": {
+    "HOTA": {
+      "wrapper": 61.9045,
+      "trackeval_summary": 61.904,
+      "equal": true
+    },
+    "DetA": {
+      "wrapper": 57.9887,
+      "trackeval_summary": 57.989,
+      "equal": true
+    },
+    "AssA": {
+      "wrapper": 66.2398,
+      "trackeval_summary": 66.24,
+      "equal": true
+    },
+    "LocA": {
+      "wrapper": 90.2534,
+      "trackeval_summary": 90.253,
+      "equal": true
+    },
+    "MOTA": {
+      "wrapper": 64.3995,
+      "trackeval_summary": 64.399,
+      "equal": true
+    },
+    "MOTP": {
+      "wrapper": 89.1432,
+      "trackeval_summary": 89.143,
+      "equal": true
+    },
+    "IDF1": {
+      "wrapper": 71.2063,
+      "trackeval_summary": 71.206,
+      "equal": true
+    },
+    "IDR": {
+      "wrapper": 59.7903,
+      "trackeval_summary": 59.79,
+      "equal": true
+    },
+    "IDP": {
+      "wrapper": 88.0106,
+      "trackeval_summary": 88.011,
+      "equal": true
+    },
+    "IDSW": {
+      "wrapper": 482,
+      "trackeval_summary": 482.0,
+      "equal": true
+    },
+    "CLR_FP": {
+      "wrapper": 5715,
+      "trackeval_summary": 5715.0,
+      "equal": true
+    },
+    "CLR_FN": {
+      "wrapper": 113738,
+      "trackeval_summary": 113738.0,
+      "equal": true
+    },
+    "MT": {
+      "wrapper": 649,
+      "trackeval_summary": 649.0,
+      "equal": true
+    },
+    "ML": {
+      "wrapper": 360,
+      "trackeval_summary": 360.0,
+      "equal": true
+    }
+  }
+}
