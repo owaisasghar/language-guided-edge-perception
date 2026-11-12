@@ -1,0 +1,3314 @@
+{
+  "run_name": "m1_gdino_base_fp32",
+  "measured": true,
+  "environment": {
+    "timestamp_utc": "2026-11-12T04:32:05+00:00",
+    "os": "Linux-6.8.0-138-generic-x86_64-with-glibc2.35",
+    "python": "3.12.16",
+    "cpu": "AMD Ryzen 7 8845HS w/ Radeon 780M Graphics",
+    "cpu_logical_cores": 16,
+    "ram_gib": 30.6,
+    "packages": {
+      "torch": "2.13.0+cu130",
+      "torchvision": "0.28.0+cu130",
+      "transformers": "5.22.2",
+      "huggingface-hub": "2.4.0",
+      "tokenizers": "0.23.3",
+      "safetensors": "0.8.0",
+      "numpy": "2.5.4",
+      "pillow": "13.0.0",
+      "lgep": "0.1.0"
+    },
+    "torch_cuda_build": "13.0",
+    "cudnn": 92000,
+    "torch_arch_list": [
+      "sm_75",
+      "sm_80",
+      "sm_86",
+      "sm_90",
+      "sm_100",
+      "sm_120"
+    ],
+    "gpu": {
+      "name": "NVIDIA GeForce RTX 4060 Laptop GPU",
+      "driver": "580.178.04",
+      "memory_total": "8188 MiB",
+      "compute_capability": "8.9",
+      "power_limit": "55.00 W"
+    }
+  },
+  "other_gpu_processes": [
+    {
+      "pid": 888,
+      "name": "./rtservice",
+      "used_mib": 94.0
+    }
+  ],
+  "torch_num_threads": 8,
+  "config": {
+    "run_name": "m1_gdino_base_fp32",
+    "device": "cuda",
+    "log_level": "INFO",
+    "output_dir": "outputs/milestone1",
+    "benchmark_dir": "benchmarks/milestone1",
+    "model": {
+      "backend": "hf_transformers",
+      "model_id": "IDEA-Research/grounding-dino-base",
+      "revision": "12bdfa3120f3e7ec7b434d90674b3396eccf88eb",
+      "dtype": "float32",
+      "box_threshold": 0.35,
+      "text_threshold": 0.25,
+      "phrase_score_reduction": "max",
+      "shortest_edge": 800,
+      "longest_edge": 1333,
+      "nms_iou": null,
+      "max_detections": 100,
+      "local_files_only": false
+    },
+    "benchmark": {
+      "warmup_runs": 3,
+      "timed_runs": 10
+    },
+    "data": {
+      "manifest": "configs/samples/milestone1_coco.yaml"
+    },
+    "prompts": [
+      {
+        "id": "p1_white_truck",
+        "text": "white truck",
+        "tests": "colour attribute + vehicle class; positives in 573943 (+ partial in 401862); hard negatives: white bus/cars in 210273, red/yellow cabs in 573943"
+      },
+      {
+        "id": "p2_blue_shirt_person",
+        "text": "person wearing a blue shirt",
+        "tests": "clothing attribute + relation; single positive in 401862; hard negative: navy jacket in 401862"
+      },
+      {
+        "id": "p3_red_car",
+        "text": "red car",
+        "tests": "colour + class; small positive in 210273; hard negatives: red buses (210273, 280710), red food truck (401862), red cabs (573943)"
+      },
+      {
+        "id": "p4_green_bus",
+        "text": "green bus",
+        "tests": "colour + class; positives in 210273; hard negative: blue bus (377723), red buses (280710)"
+      },
+      {
+        "id": "p5_multi_class",
+        "text": "person . car . bus . truck",
+        "tests": "multi-phrase prompt (COCO-style classes); checks one-box-one-phrase assignment"
+      }
+    ]
+  },
+  "model": {
+    "model_id": "IDEA-Research/grounding-dino-base",
+    "revision": "12bdfa3120f3e7ec7b434d90674b3396eccf88eb",
+    "parameters_millions": 232.32,
+    "load_seconds": 4.49,
+    "device": "cuda",
+    "dtype": "float32"
+  },
+  "memory_after_load": {
+    "allocated_mib": 892.1,
+    "reserved_mib": 904.0,
+    "peak_allocated_mib": 892.1,
+    "peak_reserved_mib": 904.0,
+    "device_used_mib": 1131.6,
+    "process_used_mib": 1010.0
+  },
+  "memory_peak_during_inference_mib": {
+    "allocated": 2130.9,
+    "reserved": 2382.0
+  },
+  "memory_at_end": {
+    "allocated_mib": 900.2,
+    "reserved_mib": 2382.0,
+    "peak_allocated_mib": 2130.9,
+    "peak_reserved_mib": 2382.0,
+    "device_used_mib": 2623.6,
+    "process_used_mib": 2502.0
+  },
+  "latency_all_pairs_ms": {
+    "total": {
+      "n": 250,
+      "mean": 428.225,
+      "std": 22.803,
+      "median": 414.643,
+      "p90": 459.003,
+      "min": 399.694,
+      "max": 462.531
+    },
+    "inference": {
+      "n": 250,
+      "mean": 419.988,
+      "std": 22.424,
+      "median": 406.735,
+      "p90": 449.975,
+      "min": 391.849,
+      "max": 454.515
+    }
+  },
+  "pairs": [
+    {
+      "image": "000000210273.jpg",
+      "prompt_id": "p1_white_truck",
+      "prompt_text": "white truck",
+      "prompt": "white truck .",
+      "phrases": [
+        "white truck"
+      ],
+      "image_size": [
+        640,
+        428
+      ],
+      "input_size": [
+        1196,
+        800
+      ],
+      "num_detections": 1,
+      "detections": [
+        {
+          "box_xyxy": [
+            317.95,
+            308.36,
+            394.51,
+            370.89
+          ],
+          "score": 0.4211,
+          "phrase_id": 0,
+          "phrase": "white truck",
+          "token_label": "white truck"
+        }
+      ],
+      "latency_ms": {
+        "total": {
+          "n": 10,
+          "mean": 456.959,
+          "std": 2.738,
+          "median": 457.397,
+          "p90": 460.396,
+          "min": 452.967,
+          "max": 461.794
+        },
+        "inference": {
+          "n": 10,
+          "mean": 448.682,
+          "std": 2.485,
+          "median": 448.813,
+          "p90": 452.084,
+          "min": 445.553,
+          "max": 453.163
+        },
+        "preprocess": {
+          "n": 10,
+          "mean": 7.628,
+          "std": 0.503,
+          "median": 7.482,
+          "p90": 8.24,
+          "min": 6.767,
+          "max": 8.603
+        },
+        "postprocess": {
+          "n": 10,
+          "mean": 0.65,
+          "std": 0.043,
+          "median": 0.639,
+          "p90": 0.707,
+          "min": 0.601,
+          "max": 0.744
+        }
+      },
+      "memory": {
+        "allocated_mib": 900.2,
+        "reserved_mib": 2382.0,
+        "peak_allocated_mib": 2124.7,
+        "peak_reserved_mib": 2382.0,
+        "device_used_mib": 2623.6,
+        "process_used_mib": 2502.0
+      }
+    },
+    {
+      "image": "000000210273.jpg",
+      "prompt_id": "p2_blue_shirt_person",
+      "prompt_text": "person wearing a blue shirt",
+      "prompt": "person wearing a blue shirt .",
+      "phrases": [
+        "person wearing a blue shirt"
+      ],
+      "image_size": [
+        640,
+        428
+      ],
+      "input_size": [
+        1196,
+        800
+      ],
+      "num_detections": 2,
+      "detections": [
+        {
+          "box_xyxy": [
+            0.4,
+            253.51,
+            20.32,
+            312.78
+          ],
+          "score": 0.5068,
+          "phrase_id": 0,
+          "phrase": "person wearing a blue shirt",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            0.61,
+            262.91,
+            18.82,
+            288.55
+          ],
+          "score": 0.3593,
+          "phrase_id": 0,
+          "phrase": "person wearing a blue shirt",
+          "token_label": "shirt"
+        }
+      ],
+      "latency_ms": {
+        "total": {
+          "n": 10,
+          "mean": 458.995,
+          "std": 1.216,
+          "median": 459.071,
+          "p90": 460.342,
+          "min": 456.489,
+          "max": 460.799
+        },
+        "inference": {
+          "n": 10,
+          "mean": 450.293,
+          "std": 1.461,
+          "median": 450.159,
+          "p90": 452.08,
+          "min": 448.0,
+          "max": 452.529
+        },
+        "preprocess": {
+          "n": 10,
+          "mean": 7.968,
+          "std": 0.579,
+          "median": 7.775,
+          "p90": 8.798,
+          "min": 7.304,
+          "max": 9.16
+        },
+        "postprocess": {
+          "n": 10,
+          "mean": 0.734,
+          "std": 0.08,
+          "median": 0.709,
+          "p90": 0.866,
+          "min": 0.643,
+          "max": 0.872
+        }
+      },
+      "memory": {
+        "allocated_mib": 900.2,
+        "reserved_mib": 2382.0,
+        "peak_allocated_mib": 2129.3,
+        "peak_reserved_mib": 2382.0,
+        "device_used_mib": 2623.6,
+        "process_used_mib": 2502.0
+      }
+    },
+    {
+      "image": "000000210273.jpg",
+      "prompt_id": "p3_red_car",
+      "prompt_text": "red car",
+      "prompt": "red car .",
+      "phrases": [
+        "red car"
+      ],
+      "image_size": [
+        640,
+        428
+      ],
+      "input_size": [
+        1196,
+        800
+      ],
+      "num_detections": 0,
+      "detections": [],
+      "latency_ms": {
+        "total": {
+          "n": 10,
+          "mean": 458.78,
+          "std": 1.809,
+          "median": 458.678,
+          "p90": 460.439,
+          "min": 456.578,
+          "max": 462.42
+        },
+        "inference": {
+          "n": 10,
+          "mean": 450.526,
+          "std": 1.746,
+          "median": 449.835,
+          "p90": 452.63,
+          "min": 448.781,
+          "max": 454.515
+        },
+        "preprocess": {
+          "n": 10,
+          "mean": 7.861,
+          "std": 0.78,
+          "median": 7.417,
+          "p90": 9.184,
+          "min": 7.247,
+          "max": 9.421
+        },
+        "postprocess": {
+          "n": 10,
+          "mean": 0.394,
+          "std": 0.044,
+          "median": 0.382,
+          "p90": 0.395,
+          "min": 0.368,
+          "max": 0.526
+        }
+      },
+      "memory": {
+        "allocated_mib": 900.2,
+        "reserved_mib": 2382.0,
+        "peak_allocated_mib": 2124.7,
+        "peak_reserved_mib": 2382.0,
+        "device_used_mib": 2623.6,
+        "process_used_mib": 2502.0
+      }
+    },
+    {
+      "image": "000000210273.jpg",
+      "prompt_id": "p4_green_bus",
+      "prompt_text": "green bus",
+      "prompt": "green bus .",
+      "phrases": [
+        "green bus"
+      ],
+      "image_size": [
+        640,
+        428
+      ],
+      "input_size": [
+        1196,
+        800
+      ],
+      "num_detections": 1,
+      "detections": [
+        {
+          "box_xyxy": [
+            93.74,
+            187.56,
+            223.92,
+            321.1
+          ],
+          "score": 0.9088,
+          "phrase_id": 0,
+          "phrase": "green bus",
+          "token_label": "green bus"
+        }
+      ],
+      "latency_ms": {
+        "total": {
+          "n": 10,
+          "mean": 459.432,
+          "std": 1.031,
+          "median": 459.041,
+          "p90": 460.73,
+          "min": 457.951,
+          "max": 461.231
+        },
+        "inference": {
+          "n": 10,
+          "mean": 450.786,
+          "std": 1.081,
+          "median": 450.817,
+          "p90": 452.047,
+          "min": 449.323,
+          "max": 452.671
+        },
+        "preprocess": {
+          "n": 10,
+          "mean": 7.826,
+          "std": 0.968,
+          "median": 7.439,
+          "p90": 9.054,
+          "min": 6.841,
+          "max": 10.03
+        },
+        "postprocess": {
+          "n": 10,
+          "mean": 0.819,
+          "std": 0.275,
+          "median": 0.717,
+          "p90": 1.343,
+          "min": 0.619,
+          "max": 1.379
+        }
+      },
+      "memory": {
+        "allocated_mib": 900.2,
+        "reserved_mib": 2382.0,
+        "peak_allocated_mib": 2124.7,
+        "peak_reserved_mib": 2382.0,
+        "device_used_mib": 2623.6,
+        "process_used_mib": 2502.0
+      }
+    },
+    {
+      "image": "000000210273.jpg",
+      "prompt_id": "p5_multi_class",
+      "prompt_text": "person . car . bus . truck",
+      "prompt": "person . car . bus . truck .",
+      "phrases": [
+        "person",
+        "car",
+        "bus",
+        "truck"
+      ],
+      "image_size": [
+        640,
+        428
+      ],
+      "input_size": [
+        1196,
+        800
+      ],
+      "num_detections": 53,
+      "detections": [
+        {
+          "box_xyxy": [
+            93.45,
+            187.73,
+            223.47,
+            320.9
+          ],
+          "score": 0.8223,
+          "phrase_id": 2,
+          "phrase": "bus",
+          "token_label": "bus"
+        },
+        {
+          "box_xyxy": [
+            221.29,
+            133.41,
+            295.92,
+            219.29
+          ],
+          "score": 0.7745,
+          "phrase_id": 2,
+          "phrase": "bus",
+          "token_label": "bus"
+        },
+        {
+          "box_xyxy": [
+            530.47,
+            154.55,
+            548.63,
+            193.41
+          ],
+          "score": 0.7555,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            177.89,
+            299.01,
+            254.27,
+            368.17
+          ],
+          "score": 0.7418,
+          "phrase_id": 1,
+          "phrase": "car",
+          "token_label": "car"
+        },
+        {
+          "box_xyxy": [
+            419.03,
+            263.5,
+            499.32,
+            338.95
+          ],
+          "score": 0.6969,
+          "phrase_id": 1,
+          "phrase": "car",
+          "token_label": "car"
+        },
+        {
+          "box_xyxy": [
+            267.96,
+            217.42,
+            325.11,
+            266.33
+          ],
+          "score": 0.6769,
+          "phrase_id": 1,
+          "phrase": "car",
+          "token_label": "car"
+        },
+        {
+          "box_xyxy": [
+            470.92,
+            158.45,
+            488.08,
+            197.99
+          ],
+          "score": 0.6724,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            306.44,
+            140.75,
+            377.19,
+            222.88
+          ],
+          "score": 0.6698,
+          "phrase_id": 2,
+          "phrase": "bus",
+          "token_label": "bus"
+        },
+        {
+          "box_xyxy": [
+            504.46,
+            136.51,
+            540.49,
+            164.69
+          ],
+          "score": 0.6589,
+          "phrase_id": 1,
+          "phrase": "car",
+          "token_label": "car"
+        },
+        {
+          "box_xyxy": [
+            570.63,
+            70.66,
+            610.72,
+            111.66
+          ],
+          "score": 0.6568,
+          "phrase_id": 2,
+          "phrase": "bus",
+          "token_label": "bus"
+        },
+        {
+          "box_xyxy": [
+            318.39,
+            309.08,
+            394.16,
+            370.46
+          ],
+          "score": 0.6544,
+          "phrase_id": 1,
+          "phrase": "car",
+          "token_label": "car"
+        },
+        {
+          "box_xyxy": [
+            0.26,
+            255.33,
+            17.81,
+            311.9
+          ],
+          "score": 0.6505,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            520.59,
+            113.99,
+            548.72,
+            135.59
+          ],
+          "score": 0.639,
+          "phrase_id": 1,
+          "phrase": "car",
+          "token_label": "car"
+        },
+        {
+          "box_xyxy": [
+            574.25,
+            161.14,
+            639.72,
+            237.49
+          ],
+          "score": 0.6351,
+          "phrase_id": 2,
+          "phrase": "bus",
+          "token_label": "bus"
+        },
+        {
+          "box_xyxy": [
+            299.33,
+            251.41,
+            372.86,
+            319.23
+          ],
+          "score": 0.615,
+          "phrase_id": 1,
+          "phrase": "car",
+          "token_label": "car"
+        },
+        {
+          "box_xyxy": [
+            449.51,
+            72.72,
+            480.01,
+            109.56
+          ],
+          "score": 0.6128,
+          "phrase_id": 2,
+          "phrase": "bus",
+          "token_label": "bus"
+        },
+        {
+          "box_xyxy": [
+            362.48,
+            118.92,
+            424.96,
+            192.68
+          ],
+          "score": 0.6116,
+          "phrase_id": 2,
+          "phrase": "bus",
+          "token_label": "bus"
+        },
+        {
+          "box_xyxy": [
+            295.17,
+            101.77,
+            340.44,
+            163.14
+          ],
+          "score": 0.5941,
+          "phrase_id": 2,
+          "phrase": "bus",
+          "token_label": "bus"
+        },
+        {
+          "box_xyxy": [
+            408.93,
+            173.26,
+            454.73,
+            208.7
+          ],
+          "score": 0.5869,
+          "phrase_id": 1,
+          "phrase": "car",
+          "token_label": "car"
+        },
+        {
+          "box_xyxy": [
+            330.6,
+            199.54,
+            380.19,
+            241.31
+          ],
+          "score": 0.5714,
+          "phrase_id": 1,
+          "phrase": "car",
+          "token_label": "car"
+        },
+        {
+          "box_xyxy": [
+            339.24,
+            91.97,
+            382.72,
+            142.2
+          ],
+          "score": 0.5663,
+          "phrase_id": 2,
+          "phrase": "bus",
+          "token_label": "bus"
+        },
+        {
+          "box_xyxy": [
+            323.33,
+            71.25,
+            348.81,
+            101.52
+          ],
+          "score": 0.5661,
+          "phrase_id": 2,
+          "phrase": "bus",
+          "token_label": "bus"
+        },
+        {
+          "box_xyxy": [
+            307.0,
+            228.03,
+            373.5,
+            270.95
+          ],
+          "score": 0.5537,
+          "phrase_id": 1,
+          "phrase": "car",
+          "token_label": "car"
+        },
+        {
+          "box_xyxy": [
+            583.31,
+            122.46,
+            622.11,
+            157.94
+          ],
+          "score": 0.5513,
+          "phrase_id": 1,
+          "phrase": "car",
+          "token_label": "car"
+        },
+        {
+          "box_xyxy": [
+            512.62,
+            85.81,
+            531.48,
+            102.29
+          ],
+          "score": 0.544,
+          "phrase_id": 1,
+          "phrase": "car",
+          "token_label": "car"
+        },
+        {
+          "box_xyxy": [
+            529.09,
+            96.51,
+            552.3,
+            113.44
+          ],
+          "score": 0.5346,
+          "phrase_id": 1,
+          "phrase": "car",
+          "token_label": "car"
+        },
+        {
+          "box_xyxy": [
+            360.15,
+            332.03,
+            382.82,
+            354.47
+          ],
+          "score": 0.5286,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            594.65,
+            80.31,
+            631.91,
+            121.66
+          ],
+          "score": 0.5257,
+          "phrase_id": 2,
+          "phrase": "bus",
+          "token_label": "bus"
+        },
+        {
+          "box_xyxy": [
+            627.7,
+            132.69,
+            639.73,
+            165.24
+          ],
+          "score": 0.5206,
+          "phrase_id": 1,
+          "phrase": "car",
+          "token_label": "car"
+        },
+        {
+          "box_xyxy": [
+            67.25,
+            210.04,
+            80.62,
+            248.68
+          ],
+          "score": 0.5173,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            190.53,
+            137.66,
+            200.67,
+            166.31
+          ],
+          "score": 0.5084,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            204.35,
+            124.79,
+            212.59,
+            152.28
+          ],
+          "score": 0.5062,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            455.1,
+            93.69,
+            477.21,
+            110.73
+          ],
+          "score": 0.4977,
+          "phrase_id": 1,
+          "phrase": "car",
+          "token_label": "car"
+        },
+        {
+          "box_xyxy": [
+            256.79,
+            124.33,
+            268.86,
+            134.41
+          ],
+          "score": 0.4959,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            479.36,
+            85.04,
+            491.47,
+            99.06
+          ],
+          "score": 0.4924,
+          "phrase_id": 1,
+          "phrase": "car",
+          "token_label": "car"
+        },
+        {
+          "box_xyxy": [
+            358.21,
+            71.17,
+            384.15,
+            88.86
+          ],
+          "score": 0.4902,
+          "phrase_id": 2,
+          "phrase": "bus",
+          "token_label": "bus"
+        },
+        {
+          "box_xyxy": [
+            286.81,
+            89.54,
+            304.4,
+            102.17
+          ],
+          "score": 0.4788,
+          "phrase_id": 1,
+          "phrase": "car",
+          "token_label": "car"
+        },
+        {
+          "box_xyxy": [
+            404.48,
+            99.23,
+            424.96,
+            117.43
+          ],
+          "score": 0.4764,
+          "phrase_id": 1,
+          "phrase": "car",
+          "token_label": "car"
+        },
+        {
+          "box_xyxy": [
+            392.73,
+            89.38,
+            412.85,
+            106.71
+          ],
+          "score": 0.4744,
+          "phrase_id": 1,
+          "phrase": "car",
+          "token_label": "car"
+        },
+        {
+          "box_xyxy": [
+            632.44,
+            87.29,
+            639.84,
+            120.26
+          ],
+          "score": 0.4695,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            407.05,
+            193.8,
+            488.73,
+            290.88
+          ],
+          "score": 0.4672,
+          "phrase_id": 3,
+          "phrase": "truck",
+          "token_label": "truck"
+        },
+        {
+          "box_xyxy": [
+            420.72,
+            139.28,
+            451.78,
+            179.94
+          ],
+          "score": 0.4542,
+          "phrase_id": 1,
+          "phrase": "car",
+          "token_label": "car"
+        },
+        {
+          "box_xyxy": [
+            416.52,
+            124.36,
+            437.91,
+            140.04
+          ],
+          "score": 0.4495,
+          "phrase_id": 1,
+          "phrase": "car",
+          "token_label": "car"
+        },
+        {
+          "box_xyxy": [
+            331.78,
+            333.8,
+            352.15,
+            355.03
+          ],
+          "score": 0.4445,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            532.32,
+            84.23,
+            547.68,
+            97.02
+          ],
+          "score": 0.4377,
+          "phrase_id": 1,
+          "phrase": "car",
+          "token_label": "car"
+        },
+        {
+          "box_xyxy": [
+            491.39,
+            86.44,
+            508.4,
+            98.97
+          ],
+          "score": 0.4361,
+          "phrase_id": 1,
+          "phrase": "car",
+          "token_label": "car"
+        },
+        {
+          "box_xyxy": [
+            410.99,
+            111.11,
+            438.12,
+            125.8
+          ],
+          "score": 0.4135,
+          "phrase_id": 1,
+          "phrase": "car",
+          "token_label": "car"
+        },
+        {
+          "box_xyxy": [
+            383.77,
+            73.22,
+            398.0,
+            98.86
+          ],
+          "score": 0.4077,
+          "phrase_id": 2,
+          "phrase": "bus",
+          "token_label": "bus"
+        },
+        {
+          "box_xyxy": [
+            110.72,
+            182.29,
+            124.23,
+            207.45
+          ],
+          "score": 0.3875,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            455.96,
+            224.14,
+            475.67,
+            246.63
+          ],
+          "score": 0.3738,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            410.75,
+            83.47,
+            426.71,
+            98.8
+          ],
+          "score": 0.3605,
+          "phrase_id": 1,
+          "phrase": "car",
+          "token_label": "car"
+        },
+        {
+          "box_xyxy": [
+            235.27,
+            111.93,
+            242.89,
+            134.02
+          ],
+          "score": 0.3576,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            306.23,
+            91.01,
+            322.77,
+            101.2
+          ],
+          "score": 0.3517,
+          "phrase_id": 1,
+          "phrase": "car",
+          "token_label": "car"
+        }
+      ],
+      "latency_ms": {
+        "total": {
+          "n": 10,
+          "mean": 460.481,
+          "std": 1.514,
+          "median": 459.884,
+          "p90": 462.467,
+          "min": 458.441,
+          "max": 462.531
+        },
+        "inference": {
+          "n": 10,
+          "mean": 450.759,
+          "std": 1.175,
+          "median": 450.362,
+          "p90": 452.311,
+          "min": 449.416,
+          "max": 452.78
+        },
+        "preprocess": {
+          "n": 10,
+          "mean": 8.307,
+          "std": 0.686,
+          "median": 8.174,
+          "p90": 8.925,
+          "min": 7.457,
+          "max": 9.803
+        },
+        "postprocess": {
+          "n": 10,
+          "mean": 1.415,
+          "std": 0.201,
+          "median": 1.321,
+          "p90": 1.526,
+          "min": 1.292,
+          "max": 1.978
+        }
+      },
+      "memory": {
+        "allocated_mib": 900.2,
+        "reserved_mib": 2382.0,
+        "peak_allocated_mib": 2130.8,
+        "peak_reserved_mib": 2382.0,
+        "device_used_mib": 2623.6,
+        "process_used_mib": 2502.0
+      }
+    },
+    {
+      "image": "000000573943.jpg",
+      "prompt_id": "p1_white_truck",
+      "prompt_text": "white truck",
+      "prompt": "white truck .",
+      "phrases": [
+        "white truck"
+      ],
+      "image_size": [
+        640,
+        480
+      ],
+      "input_size": [
+        1066,
+        800
+      ],
+      "num_detections": 0,
+      "detections": [],
+      "latency_ms": {
+        "total": {
+          "n": 10,
+          "mean": 415.97,
+          "std": 1.459,
+          "median": 415.835,
+          "p90": 418.024,
+          "min": 413.682,
+          "max": 418.513
+        },
+        "inference": {
+          "n": 10,
+          "mean": 407.593,
+          "std": 1.27,
+          "median": 407.624,
+          "p90": 409.329,
+          "min": 405.431,
+          "max": 409.686
+        },
+        "preprocess": {
+          "n": 10,
+          "mean": 7.979,
+          "std": 1.307,
+          "median": 7.758,
+          "p90": 9.962,
+          "min": 6.491,
+          "max": 10.443
+        },
+        "postprocess": {
+          "n": 10,
+          "mean": 0.399,
+          "std": 0.027,
+          "median": 0.392,
+          "p90": 0.445,
+          "min": 0.36,
+          "max": 0.447
+        }
+      },
+      "memory": {
+        "allocated_mib": 900.2,
+        "reserved_mib": 2382.0,
+        "peak_allocated_mib": 1992.0,
+        "peak_reserved_mib": 2382.0,
+        "device_used_mib": 2623.6,
+        "process_used_mib": 2502.0
+      }
+    },
+    {
+      "image": "000000573943.jpg",
+      "prompt_id": "p2_blue_shirt_person",
+      "prompt_text": "person wearing a blue shirt",
+      "prompt": "person wearing a blue shirt .",
+      "phrases": [
+        "person wearing a blue shirt"
+      ],
+      "image_size": [
+        640,
+        480
+      ],
+      "input_size": [
+        1066,
+        800
+      ],
+      "num_detections": 0,
+      "detections": [],
+      "latency_ms": {
+        "total": {
+          "n": 10,
+          "mean": 415.866,
+          "std": 1.655,
+          "median": 415.834,
+          "p90": 417.858,
+          "min": 412.77,
+          "max": 418.016
+        },
+        "inference": {
+          "n": 10,
+          "mean": 408.074,
+          "std": 1.376,
+          "median": 407.469,
+          "p90": 409.548,
+          "min": 406.214,
+          "max": 410.801
+        },
+        "preprocess": {
+          "n": 10,
+          "mean": 7.35,
+          "std": 1.359,
+          "median": 6.624,
+          "p90": 9.608,
+          "min": 6.188,
+          "max": 10.028
+        },
+        "postprocess": {
+          "n": 10,
+          "mean": 0.441,
+          "std": 0.121,
+          "median": 0.392,
+          "p90": 0.534,
+          "min": 0.366,
+          "max": 0.776
+        }
+      },
+      "memory": {
+        "allocated_mib": 900.2,
+        "reserved_mib": 2382.0,
+        "peak_allocated_mib": 1994.0,
+        "peak_reserved_mib": 2382.0,
+        "device_used_mib": 2623.6,
+        "process_used_mib": 2502.0
+      }
+    },
+    {
+      "image": "000000573943.jpg",
+      "prompt_id": "p3_red_car",
+      "prompt_text": "red car",
+      "prompt": "red car .",
+      "phrases": [
+        "red car"
+      ],
+      "image_size": [
+        640,
+        480
+      ],
+      "input_size": [
+        1066,
+        800
+      ],
+      "num_detections": 0,
+      "detections": [],
+      "latency_ms": {
+        "total": {
+          "n": 10,
+          "mean": 415.509,
+          "std": 2.092,
+          "median": 416.072,
+          "p90": 417.949,
+          "min": 411.129,
+          "max": 418.139
+        },
+        "inference": {
+          "n": 10,
+          "mean": 408.014,
+          "std": 1.853,
+          "median": 408.72,
+          "p90": 409.947,
+          "min": 404.549,
+          "max": 409.982
+        },
+        "preprocess": {
+          "n": 10,
+          "mean": 7.117,
+          "std": 0.78,
+          "median": 6.904,
+          "p90": 8.366,
+          "min": 6.188,
+          "max": 8.548
+        },
+        "postprocess": {
+          "n": 10,
+          "mean": 0.378,
+          "std": 0.015,
+          "median": 0.376,
+          "p90": 0.396,
+          "min": 0.36,
+          "max": 0.408
+        }
+      },
+      "memory": {
+        "allocated_mib": 900.2,
+        "reserved_mib": 2382.0,
+        "peak_allocated_mib": 1992.0,
+        "peak_reserved_mib": 2382.0,
+        "device_used_mib": 2623.6,
+        "process_used_mib": 2502.0
+      }
+    },
+    {
+      "image": "000000573943.jpg",
+      "prompt_id": "p4_green_bus",
+      "prompt_text": "green bus",
+      "prompt": "green bus .",
+      "phrases": [
+        "green bus"
+      ],
+      "image_size": [
+        640,
+        480
+      ],
+      "input_size": [
+        1066,
+        800
+      ],
+      "num_detections": 1,
+      "detections": [
+        {
+          "box_xyxy": [
+            180.38,
+            246.99,
+            287.93,
+            291.84
+          ],
+          "score": 0.3599,
+          "phrase_id": 0,
+          "phrase": "green bus",
+          "token_label": "green bus"
+        }
+      ],
+      "latency_ms": {
+        "total": {
+          "n": 10,
+          "mean": 408.209,
+          "std": 4.22,
+          "median": 406.472,
+          "p90": 414.778,
+          "min": 403.776,
+          "max": 417.442
+        },
+        "inference": {
+          "n": 10,
+          "mean": 400.447,
+          "std": 4.64,
+          "median": 398.534,
+          "p90": 407.793,
+          "min": 395.756,
+          "max": 410.137
+        },
+        "preprocess": {
+          "n": 10,
+          "mean": 7.137,
+          "std": 1.248,
+          "median": 6.691,
+          "p90": 8.712,
+          "min": 5.998,
+          "max": 9.872
+        },
+        "postprocess": {
+          "n": 10,
+          "mean": 0.625,
+          "std": 0.028,
+          "median": 0.626,
+          "p90": 0.631,
+          "min": 0.583,
+          "max": 0.694
+        }
+      },
+      "memory": {
+        "allocated_mib": 900.2,
+        "reserved_mib": 2382.0,
+        "peak_allocated_mib": 1992.0,
+        "peak_reserved_mib": 2382.0,
+        "device_used_mib": 2623.6,
+        "process_used_mib": 2502.0
+      }
+    },
+    {
+      "image": "000000573943.jpg",
+      "prompt_id": "p5_multi_class",
+      "prompt_text": "person . car . bus . truck",
+      "prompt": "person . car . bus . truck .",
+      "phrases": [
+        "person",
+        "car",
+        "bus",
+        "truck"
+      ],
+      "image_size": [
+        640,
+        480
+      ],
+      "input_size": [
+        1066,
+        800
+      ],
+      "num_detections": 14,
+      "detections": [
+        {
+          "box_xyxy": [
+            468.65,
+            207.75,
+            516.02,
+            245.29
+          ],
+          "score": 0.479,
+          "phrase_id": 3,
+          "phrase": "truck",
+          "token_label": "truck"
+        },
+        {
+          "box_xyxy": [
+            548.37,
+            141.95,
+            600.3,
+            175.53
+          ],
+          "score": 0.4701,
+          "phrase_id": 3,
+          "phrase": "truck",
+          "token_label": "truck"
+        },
+        {
+          "box_xyxy": [
+            532.69,
+            201.46,
+            583.5,
+            240.56
+          ],
+          "score": 0.4641,
+          "phrase_id": 3,
+          "phrase": "truck",
+          "token_label": "truck"
+        },
+        {
+          "box_xyxy": [
+            162.84,
+            275.16,
+            170.52,
+            287.32
+          ],
+          "score": 0.4566,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            407.41,
+            204.64,
+            414.89,
+            224.92
+          ],
+          "score": 0.4544,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            589.01,
+            224.25,
+            639.48,
+            265.36
+          ],
+          "score": 0.4425,
+          "phrase_id": 3,
+          "phrase": "truck",
+          "token_label": "truck"
+        },
+        {
+          "box_xyxy": [
+            577.16,
+            199.32,
+            619.35,
+            235.41
+          ],
+          "score": 0.4021,
+          "phrase_id": 3,
+          "phrase": "truck",
+          "token_label": "truck"
+        },
+        {
+          "box_xyxy": [
+            129.84,
+            346.53,
+            163.2,
+            379.64
+          ],
+          "score": 0.3946,
+          "phrase_id": 3,
+          "phrase": "truck",
+          "token_label": "truck"
+        },
+        {
+          "box_xyxy": [
+            146.23,
+            39.74,
+            252.81,
+            62.13
+          ],
+          "score": 0.3896,
+          "phrase_id": 3,
+          "phrase": "truck",
+          "token_label": "truck"
+        },
+        {
+          "box_xyxy": [
+            311.43,
+            343.3,
+            360.21,
+            383.72
+          ],
+          "score": 0.3757,
+          "phrase_id": 3,
+          "phrase": "truck",
+          "token_label": "truck"
+        },
+        {
+          "box_xyxy": [
+            372.32,
+            333.25,
+            433.53,
+            382.66
+          ],
+          "score": 0.3747,
+          "phrase_id": 3,
+          "phrase": "truck",
+          "token_label": "truck"
+        },
+        {
+          "box_xyxy": [
+            76.9,
+            340.04,
+            115.15,
+            378.21
+          ],
+          "score": 0.3634,
+          "phrase_id": 3,
+          "phrase": "truck",
+          "token_label": "truck"
+        },
+        {
+          "box_xyxy": [
+            461.27,
+            343.42,
+            516.66,
+            382.32
+          ],
+          "score": 0.3521,
+          "phrase_id": 3,
+          "phrase": "truck",
+          "token_label": "truck"
+        },
+        {
+          "box_xyxy": [
+            450.65,
+            411.5,
+            494.98,
+            447.37
+          ],
+          "score": 0.3503,
+          "phrase_id": 3,
+          "phrase": "truck",
+          "token_label": "truck"
+        }
+      ],
+      "latency_ms": {
+        "total": {
+          "n": 10,
+          "mean": 408.353,
+          "std": 1.598,
+          "median": 407.725,
+          "p90": 410.497,
+          "min": 406.05,
+          "max": 410.793
+        },
+        "inference": {
+          "n": 10,
+          "mean": 400.014,
+          "std": 1.482,
+          "median": 399.926,
+          "p90": 402.022,
+          "min": 397.1,
+          "max": 402.249
+        },
+        "preprocess": {
+          "n": 10,
+          "mean": 7.422,
+          "std": 1.126,
+          "median": 7.046,
+          "p90": 9.233,
+          "min": 6.115,
+          "max": 9.526
+        },
+        "postprocess": {
+          "n": 10,
+          "mean": 0.917,
+          "std": 0.044,
+          "median": 0.916,
+          "p90": 0.975,
+          "min": 0.843,
+          "max": 0.985
+        }
+      },
+      "memory": {
+        "allocated_mib": 900.2,
+        "reserved_mib": 2382.0,
+        "peak_allocated_mib": 1997.5,
+        "peak_reserved_mib": 2382.0,
+        "device_used_mib": 2623.6,
+        "process_used_mib": 2502.0
+      }
+    },
+    {
+      "image": "000000401862.jpg",
+      "prompt_id": "p1_white_truck",
+      "prompt_text": "white truck",
+      "prompt": "white truck .",
+      "phrases": [
+        "white truck"
+      ],
+      "image_size": [
+        640,
+        480
+      ],
+      "input_size": [
+        1066,
+        800
+      ],
+      "num_detections": 1,
+      "detections": [
+        {
+          "box_xyxy": [
+            0.6,
+            96.56,
+            402.87,
+            380.36
+          ],
+          "score": 0.6602,
+          "phrase_id": 0,
+          "phrase": "white truck",
+          "token_label": "white truck"
+        }
+      ],
+      "latency_ms": {
+        "total": {
+          "n": 10,
+          "mean": 407.62,
+          "std": 2.956,
+          "median": 407.15,
+          "p90": 412.923,
+          "min": 404.541,
+          "max": 413.405
+        },
+        "inference": {
+          "n": 10,
+          "mean": 400.393,
+          "std": 2.664,
+          "median": 400.238,
+          "p90": 404.468,
+          "min": 397.592,
+          "max": 405.935
+        },
+        "preprocess": {
+          "n": 10,
+          "mean": 6.584,
+          "std": 0.573,
+          "median": 6.387,
+          "p90": 6.665,
+          "min": 6.147,
+          "max": 8.239
+        },
+        "postprocess": {
+          "n": 10,
+          "mean": 0.643,
+          "std": 0.026,
+          "median": 0.635,
+          "p90": 0.667,
+          "min": 0.607,
+          "max": 0.698
+        }
+      },
+      "memory": {
+        "allocated_mib": 900.2,
+        "reserved_mib": 2382.0,
+        "peak_allocated_mib": 1992.0,
+        "peak_reserved_mib": 2382.0,
+        "device_used_mib": 2623.6,
+        "process_used_mib": 2502.0
+      }
+    },
+    {
+      "image": "000000401862.jpg",
+      "prompt_id": "p2_blue_shirt_person",
+      "prompt_text": "person wearing a blue shirt",
+      "prompt": "person wearing a blue shirt .",
+      "phrases": [
+        "person wearing a blue shirt"
+      ],
+      "image_size": [
+        640,
+        480
+      ],
+      "input_size": [
+        1066,
+        800
+      ],
+      "num_detections": 2,
+      "detections": [
+        {
+          "box_xyxy": [
+            195.91,
+            200.3,
+            272.83,
+            429.84
+          ],
+          "score": 0.7883,
+          "phrase_id": 0,
+          "phrase": "person wearing a blue shirt",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            216.87,
+            228.8,
+            271.49,
+            298.71
+          ],
+          "score": 0.43,
+          "phrase_id": 0,
+          "phrase": "person wearing a blue shirt",
+          "token_label": "shirt"
+        }
+      ],
+      "latency_ms": {
+        "total": {
+          "n": 10,
+          "mean": 407.319,
+          "std": 3.793,
+          "median": 408.645,
+          "p90": 411.779,
+          "min": 400.501,
+          "max": 411.935
+        },
+        "inference": {
+          "n": 10,
+          "mean": 398.678,
+          "std": 4.064,
+          "median": 400.831,
+          "p90": 401.827,
+          "min": 391.849,
+          "max": 404.235
+        },
+        "preprocess": {
+          "n": 10,
+          "mean": 7.899,
+          "std": 1.107,
+          "median": 7.827,
+          "p90": 9.459,
+          "min": 6.215,
+          "max": 9.739
+        },
+        "postprocess": {
+          "n": 10,
+          "mean": 0.741,
+          "std": 0.184,
+          "median": 0.652,
+          "p90": 0.903,
+          "min": 0.632,
+          "max": 1.241
+        }
+      },
+      "memory": {
+        "allocated_mib": 900.2,
+        "reserved_mib": 2382.0,
+        "peak_allocated_mib": 1994.0,
+        "peak_reserved_mib": 2382.0,
+        "device_used_mib": 2623.6,
+        "process_used_mib": 2502.0
+      }
+    },
+    {
+      "image": "000000401862.jpg",
+      "prompt_id": "p3_red_car",
+      "prompt_text": "red car",
+      "prompt": "red car .",
+      "phrases": [
+        "red car"
+      ],
+      "image_size": [
+        640,
+        480
+      ],
+      "input_size": [
+        1066,
+        800
+      ],
+      "num_detections": 1,
+      "detections": [
+        {
+          "box_xyxy": [
+            0.16,
+            106.5,
+            403.4,
+            381.03
+          ],
+          "score": 0.8952,
+          "phrase_id": 0,
+          "phrase": "red car",
+          "token_label": "red car"
+        }
+      ],
+      "latency_ms": {
+        "total": {
+          "n": 10,
+          "mean": 409.045,
+          "std": 1.794,
+          "median": 408.73,
+          "p90": 411.955,
+          "min": 406.969,
+          "max": 412.251
+        },
+        "inference": {
+          "n": 10,
+          "mean": 401.591,
+          "std": 1.595,
+          "median": 401.279,
+          "p90": 404.099,
+          "min": 399.236,
+          "max": 404.604
+        },
+        "preprocess": {
+          "n": 10,
+          "mean": 6.785,
+          "std": 0.435,
+          "median": 6.725,
+          "p90": 7.218,
+          "min": 5.95,
+          "max": 7.579
+        },
+        "postprocess": {
+          "n": 10,
+          "mean": 0.669,
+          "std": 0.052,
+          "median": 0.647,
+          "p90": 0.748,
+          "min": 0.606,
+          "max": 0.764
+        }
+      },
+      "memory": {
+        "allocated_mib": 900.2,
+        "reserved_mib": 2382.0,
+        "peak_allocated_mib": 1992.0,
+        "peak_reserved_mib": 2382.0,
+        "device_used_mib": 2623.6,
+        "process_used_mib": 2502.0
+      }
+    },
+    {
+      "image": "000000401862.jpg",
+      "prompt_id": "p4_green_bus",
+      "prompt_text": "green bus",
+      "prompt": "green bus .",
+      "phrases": [
+        "green bus"
+      ],
+      "image_size": [
+        640,
+        480
+      ],
+      "input_size": [
+        1066,
+        800
+      ],
+      "num_detections": 1,
+      "detections": [
+        {
+          "box_xyxy": [
+            0.3,
+            102.48,
+            403.21,
+            380.17
+          ],
+          "score": 0.7699,
+          "phrase_id": 0,
+          "phrase": "green bus",
+          "token_label": "green bus"
+        }
+      ],
+      "latency_ms": {
+        "total": {
+          "n": 10,
+          "mean": 409.102,
+          "std": 1.578,
+          "median": 409.264,
+          "p90": 411.018,
+          "min": 406.246,
+          "max": 411.04
+        },
+        "inference": {
+          "n": 10,
+          "mean": 401.509,
+          "std": 1.168,
+          "median": 401.288,
+          "p90": 402.896,
+          "min": 399.715,
+          "max": 403.8
+        },
+        "preprocess": {
+          "n": 10,
+          "mean": 6.911,
+          "std": 0.712,
+          "median": 6.831,
+          "p90": 7.88,
+          "min": 5.93,
+          "max": 8.14
+        },
+        "postprocess": {
+          "n": 10,
+          "mean": 0.682,
+          "std": 0.126,
+          "median": 0.644,
+          "p90": 0.718,
+          "min": 0.579,
+          "max": 1.034
+        }
+      },
+      "memory": {
+        "allocated_mib": 900.2,
+        "reserved_mib": 2382.0,
+        "peak_allocated_mib": 1992.0,
+        "peak_reserved_mib": 2382.0,
+        "device_used_mib": 2623.6,
+        "process_used_mib": 2502.0
+      }
+    },
+    {
+      "image": "000000401862.jpg",
+      "prompt_id": "p5_multi_class",
+      "prompt_text": "person . car . bus . truck",
+      "prompt": "person . car . bus . truck .",
+      "phrases": [
+        "person",
+        "car",
+        "bus",
+        "truck"
+      ],
+      "image_size": [
+        640,
+        480
+      ],
+      "input_size": [
+        1066,
+        800
+      ],
+      "num_detections": 10,
+      "detections": [
+        {
+          "box_xyxy": [
+            196.65,
+            201.77,
+            270.63,
+            428.7
+          ],
+          "score": 0.7667,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            451.84,
+            144.55,
+            639.35,
+            477.89
+          ],
+          "score": 0.7641,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            307.6,
+            222.96,
+            350.72,
+            406.71
+          ],
+          "score": 0.7275,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            373.39,
+            231.77,
+            453.81,
+            461.39
+          ],
+          "score": 0.7071,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            261.44,
+            243.85,
+            306.27,
+            414.16
+          ],
+          "score": 0.6938,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            437.32,
+            226.92,
+            482.36,
+            445.86
+          ],
+          "score": 0.5649,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            0.19,
+            93.62,
+            402.21,
+            382.69
+          ],
+          "score": 0.5112,
+          "phrase_id": 3,
+          "phrase": "truck",
+          "token_label": "truck"
+        },
+        {
+          "box_xyxy": [
+            0.44,
+            92.95,
+            401.18,
+            379.73
+          ],
+          "score": 0.4748,
+          "phrase_id": 2,
+          "phrase": "bus",
+          "token_label": "bus"
+        },
+        {
+          "box_xyxy": [
+            263.38,
+            220.99,
+            284.23,
+            252.06
+          ],
+          "score": 0.3901,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            373.55,
+            227.87,
+            425.96,
+            426.25
+          ],
+          "score": 0.3614,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        }
+      ],
+      "latency_ms": {
+        "total": {
+          "n": 10,
+          "mean": 408.869,
+          "std": 2.242,
+          "median": 408.826,
+          "p90": 411.784,
+          "min": 404.524,
+          "max": 412.032
+        },
+        "inference": {
+          "n": 10,
+          "mean": 400.672,
+          "std": 1.798,
+          "median": 400.732,
+          "p90": 402.451,
+          "min": 397.067,
+          "max": 403.709
+        },
+        "preprocess": {
+          "n": 10,
+          "mean": 7.286,
+          "std": 0.877,
+          "median": 7.305,
+          "p90": 8.488,
+          "min": 6.093,
+          "max": 8.505
+        },
+        "postprocess": {
+          "n": 10,
+          "mean": 0.911,
+          "std": 0.233,
+          "median": 0.821,
+          "p90": 0.948,
+          "min": 0.778,
+          "max": 1.595
+        }
+      },
+      "memory": {
+        "allocated_mib": 900.2,
+        "reserved_mib": 2382.0,
+        "peak_allocated_mib": 1997.5,
+        "peak_reserved_mib": 2382.0,
+        "device_used_mib": 2623.6,
+        "process_used_mib": 2502.0
+      }
+    },
+    {
+      "image": "000000280710.jpg",
+      "prompt_id": "p1_white_truck",
+      "prompt_text": "white truck",
+      "prompt": "white truck .",
+      "phrases": [
+        "white truck"
+      ],
+      "image_size": [
+        640,
+        480
+      ],
+      "input_size": [
+        1066,
+        800
+      ],
+      "num_detections": 1,
+      "detections": [
+        {
+          "box_xyxy": [
+            161.27,
+            206.74,
+            499.66,
+            353.96
+          ],
+          "score": 0.5238,
+          "phrase_id": 0,
+          "phrase": "white truck",
+          "token_label": "white truck"
+        }
+      ],
+      "latency_ms": {
+        "total": {
+          "n": 10,
+          "mean": 407.704,
+          "std": 2.595,
+          "median": 408.371,
+          "p90": 410.537,
+          "min": 401.314,
+          "max": 410.597
+        },
+        "inference": {
+          "n": 10,
+          "mean": 399.229,
+          "std": 1.882,
+          "median": 400.03,
+          "p90": 400.213,
+          "min": 394.182,
+          "max": 400.744
+        },
+        "preprocess": {
+          "n": 10,
+          "mean": 7.814,
+          "std": 1.307,
+          "median": 7.425,
+          "p90": 9.697,
+          "min": 6.517,
+          "max": 10.565
+        },
+        "postprocess": {
+          "n": 10,
+          "mean": 0.661,
+          "std": 0.073,
+          "median": 0.64,
+          "p90": 0.681,
+          "min": 0.609,
+          "max": 0.872
+        }
+      },
+      "memory": {
+        "allocated_mib": 900.2,
+        "reserved_mib": 2382.0,
+        "peak_allocated_mib": 1992.0,
+        "peak_reserved_mib": 2382.0,
+        "device_used_mib": 2623.6,
+        "process_used_mib": 2502.0
+      }
+    },
+    {
+      "image": "000000280710.jpg",
+      "prompt_id": "p2_blue_shirt_person",
+      "prompt_text": "person wearing a blue shirt",
+      "prompt": "person wearing a blue shirt .",
+      "phrases": [
+        "person wearing a blue shirt"
+      ],
+      "image_size": [
+        640,
+        480
+      ],
+      "input_size": [
+        1066,
+        800
+      ],
+      "num_detections": 1,
+      "detections": [
+        {
+          "box_xyxy": [
+            273.74,
+            293.59,
+            342.93,
+            476.9
+          ],
+          "score": 0.3947,
+          "phrase_id": 0,
+          "phrase": "person wearing a blue shirt",
+          "token_label": "person"
+        }
+      ],
+      "latency_ms": {
+        "total": {
+          "n": 10,
+          "mean": 409.474,
+          "std": 2.257,
+          "median": 409.143,
+          "p90": 412.236,
+          "min": 405.988,
+          "max": 413.525
+        },
+        "inference": {
+          "n": 10,
+          "mean": 401.119,
+          "std": 1.768,
+          "median": 401.29,
+          "p90": 403.49,
+          "min": 398.48,
+          "max": 403.909
+        },
+        "preprocess": {
+          "n": 10,
+          "mean": 7.575,
+          "std": 0.941,
+          "median": 7.469,
+          "p90": 8.865,
+          "min": 6.536,
+          "max": 9.024
+        },
+        "postprocess": {
+          "n": 10,
+          "mean": 0.781,
+          "std": 0.286,
+          "median": 0.639,
+          "p90": 1.285,
+          "min": 0.592,
+          "max": 1.405
+        }
+      },
+      "memory": {
+        "allocated_mib": 900.2,
+        "reserved_mib": 2382.0,
+        "peak_allocated_mib": 1994.0,
+        "peak_reserved_mib": 2382.0,
+        "device_used_mib": 2623.6,
+        "process_used_mib": 2502.0
+      }
+    },
+    {
+      "image": "000000280710.jpg",
+      "prompt_id": "p3_red_car",
+      "prompt_text": "red car",
+      "prompt": "red car .",
+      "phrases": [
+        "red car"
+      ],
+      "image_size": [
+        640,
+        480
+      ],
+      "input_size": [
+        1066,
+        800
+      ],
+      "num_detections": 1,
+      "detections": [
+        {
+          "box_xyxy": [
+            162.71,
+            209.23,
+            500.12,
+            353.92
+          ],
+          "score": 0.4202,
+          "phrase_id": 0,
+          "phrase": "red car",
+          "token_label": "red car"
+        }
+      ],
+      "latency_ms": {
+        "total": {
+          "n": 10,
+          "mean": 407.001,
+          "std": 3.231,
+          "median": 407.487,
+          "p90": 409.118,
+          "min": 399.694,
+          "max": 412.526
+        },
+        "inference": {
+          "n": 10,
+          "mean": 399.475,
+          "std": 3.196,
+          "median": 399.832,
+          "p90": 401.786,
+          "min": 392.605,
+          "max": 405.578
+        },
+        "preprocess": {
+          "n": 10,
+          "mean": 6.85,
+          "std": 0.694,
+          "median": 6.433,
+          "p90": 7.764,
+          "min": 6.213,
+          "max": 8.139
+        },
+        "postprocess": {
+          "n": 10,
+          "mean": 0.676,
+          "std": 0.088,
+          "median": 0.64,
+          "p90": 0.736,
+          "min": 0.596,
+          "max": 0.904
+        }
+      },
+      "memory": {
+        "allocated_mib": 900.2,
+        "reserved_mib": 2382.0,
+        "peak_allocated_mib": 1992.0,
+        "peak_reserved_mib": 2382.0,
+        "device_used_mib": 2623.6,
+        "process_used_mib": 2502.0
+      }
+    },
+    {
+      "image": "000000280710.jpg",
+      "prompt_id": "p4_green_bus",
+      "prompt_text": "green bus",
+      "prompt": "green bus .",
+      "phrases": [
+        "green bus"
+      ],
+      "image_size": [
+        640,
+        480
+      ],
+      "input_size": [
+        1066,
+        800
+      ],
+      "num_detections": 1,
+      "detections": [
+        {
+          "box_xyxy": [
+            164.72,
+            209.79,
+            499.34,
+            354.11
+          ],
+          "score": 0.7857,
+          "phrase_id": 0,
+          "phrase": "green bus",
+          "token_label": "green bus"
+        }
+      ],
+      "latency_ms": {
+        "total": {
+          "n": 10,
+          "mean": 408.075,
+          "std": 1.369,
+          "median": 408.019,
+          "p90": 409.753,
+          "min": 405.672,
+          "max": 409.922
+        },
+        "inference": {
+          "n": 10,
+          "mean": 400.801,
+          "std": 1.568,
+          "median": 400.586,
+          "p90": 402.896,
+          "min": 397.54,
+          "max": 403.118
+        },
+        "preprocess": {
+          "n": 10,
+          "mean": 6.544,
+          "std": 0.499,
+          "median": 6.474,
+          "p90": 7.036,
+          "min": 5.826,
+          "max": 7.378
+        },
+        "postprocess": {
+          "n": 10,
+          "mean": 0.73,
+          "std": 0.224,
+          "median": 0.639,
+          "p90": 0.753,
+          "min": 0.606,
+          "max": 1.387
+        }
+      },
+      "memory": {
+        "allocated_mib": 900.2,
+        "reserved_mib": 2382.0,
+        "peak_allocated_mib": 1992.0,
+        "peak_reserved_mib": 2382.0,
+        "device_used_mib": 2623.6,
+        "process_used_mib": 2502.0
+      }
+    },
+    {
+      "image": "000000280710.jpg",
+      "prompt_id": "p5_multi_class",
+      "prompt_text": "person . car . bus . truck",
+      "prompt": "person . car . bus . truck .",
+      "phrases": [
+        "person",
+        "car",
+        "bus",
+        "truck"
+      ],
+      "image_size": [
+        640,
+        480
+      ],
+      "input_size": [
+        1066,
+        800
+      ],
+      "num_detections": 17,
+      "detections": [
+        {
+          "box_xyxy": [
+            158.62,
+            276.45,
+            251.63,
+            478.75
+          ],
+          "score": 0.8531,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            515.48,
+            272.2,
+            581.92,
+            441.64
+          ],
+          "score": 0.8463,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            276.85,
+            295.67,
+            338.97,
+            478.79
+          ],
+          "score": 0.8285,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            29.06,
+            273.64,
+            101.6,
+            478.45
+          ],
+          "score": 0.7916,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            600.08,
+            290.01,
+            633.78,
+            366.91
+          ],
+          "score": 0.7853,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            160.82,
+            209.17,
+            498.89,
+            352.73
+          ],
+          "score": 0.7277,
+          "phrase_id": 2,
+          "phrase": "bus",
+          "token_label": "bus"
+        },
+        {
+          "box_xyxy": [
+            334.45,
+            284.35,
+            363.58,
+            359.06
+          ],
+          "score": 0.7004,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            265.73,
+            288.94,
+            288.64,
+            353.05
+          ],
+          "score": 0.6844,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            441.74,
+            287.55,
+            466.54,
+            346.93
+          ],
+          "score": 0.5646,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            27.89,
+            289.56,
+            35.44,
+            310.86
+          ],
+          "score": 0.5599,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            83.72,
+            241.96,
+            141.94,
+            303.98
+          ],
+          "score": 0.4893,
+          "phrase_id": 2,
+          "phrase": "bus",
+          "token_label": "bus"
+        },
+        {
+          "box_xyxy": [
+            24.14,
+            269.2,
+            54.94,
+            296.19
+          ],
+          "score": 0.4506,
+          "phrase_id": 2,
+          "phrase": "bus",
+          "token_label": "bus"
+        },
+        {
+          "box_xyxy": [
+            359.39,
+            213.54,
+            371.39,
+            230.52
+          ],
+          "score": 0.4291,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            302.48,
+            288.05,
+            313.03,
+            298.15
+          ],
+          "score": 0.4258,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            47.24,
+            278.33,
+            60.01,
+            318.13
+          ],
+          "score": 0.4256,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            155.56,
+            202.95,
+            253.79,
+            306.62
+          ],
+          "score": 0.3654,
+          "phrase_id": 2,
+          "phrase": "bus",
+          "token_label": "bus"
+        },
+        {
+          "box_xyxy": [
+            495.94,
+            261.2,
+            520.35,
+            337.97
+          ],
+          "score": 0.3548,
+          "phrase_id": 2,
+          "phrase": "bus",
+          "token_label": "bus"
+        }
+      ],
+      "latency_ms": {
+        "total": {
+          "n": 10,
+          "mean": 410.15,
+          "std": 1.522,
+          "median": 410.152,
+          "p90": 412.231,
+          "min": 408.141,
+          "max": 412.878
+        },
+        "inference": {
+          "n": 10,
+          "mean": 401.671,
+          "std": 1.233,
+          "median": 401.375,
+          "p90": 403.745,
+          "min": 400.359,
+          "max": 404.214
+        },
+        "preprocess": {
+          "n": 10,
+          "mean": 7.527,
+          "std": 1.119,
+          "median": 7.339,
+          "p90": 8.684,
+          "min": 6.033,
+          "max": 9.757
+        },
+        "postprocess": {
+          "n": 10,
+          "mean": 0.951,
+          "std": 0.063,
+          "median": 0.934,
+          "p90": 1.041,
+          "min": 0.889,
+          "max": 1.08
+        }
+      },
+      "memory": {
+        "allocated_mib": 900.2,
+        "reserved_mib": 2382.0,
+        "peak_allocated_mib": 1997.5,
+        "peak_reserved_mib": 2382.0,
+        "device_used_mib": 2623.6,
+        "process_used_mib": 2502.0
+      }
+    },
+    {
+      "image": "000000377723.jpg",
+      "prompt_id": "p1_white_truck",
+      "prompt_text": "white truck",
+      "prompt": "white truck .",
+      "phrases": [
+        "white truck"
+      ],
+      "image_size": [
+        640,
+        427
+      ],
+      "input_size": [
+        1199,
+        800
+      ],
+      "num_detections": 1,
+      "detections": [
+        {
+          "box_xyxy": [
+            372.6,
+            146.1,
+            611.77,
+            341.57
+          ],
+          "score": 0.6716,
+          "phrase_id": 0,
+          "phrase": "white truck",
+          "token_label": "white truck"
+        }
+      ],
+      "latency_ms": {
+        "total": {
+          "n": 10,
+          "mean": 451.607,
+          "std": 2.345,
+          "median": 451.783,
+          "p90": 453.919,
+          "min": 447.516,
+          "max": 454.299
+        },
+        "inference": {
+          "n": 10,
+          "mean": 443.296,
+          "std": 2.19,
+          "median": 443.914,
+          "p90": 445.335,
+          "min": 439.315,
+          "max": 446.39
+        },
+        "preprocess": {
+          "n": 10,
+          "mean": 7.591,
+          "std": 0.79,
+          "median": 7.381,
+          "p90": 8.683,
+          "min": 6.677,
+          "max": 9.055
+        },
+        "postprocess": {
+          "n": 10,
+          "mean": 0.72,
+          "std": 0.148,
+          "median": 0.681,
+          "p90": 0.773,
+          "min": 0.598,
+          "max": 1.136
+        }
+      },
+      "memory": {
+        "allocated_mib": 900.2,
+        "reserved_mib": 2382.0,
+        "peak_allocated_mib": 2124.7,
+        "peak_reserved_mib": 2382.0,
+        "device_used_mib": 2623.6,
+        "process_used_mib": 2502.0
+      }
+    },
+    {
+      "image": "000000377723.jpg",
+      "prompt_id": "p2_blue_shirt_person",
+      "prompt_text": "person wearing a blue shirt",
+      "prompt": "person wearing a blue shirt .",
+      "phrases": [
+        "person wearing a blue shirt"
+      ],
+      "image_size": [
+        640,
+        427
+      ],
+      "input_size": [
+        1199,
+        800
+      ],
+      "num_detections": 0,
+      "detections": [],
+      "latency_ms": {
+        "total": {
+          "n": 10,
+          "mean": 452.335,
+          "std": 1.398,
+          "median": 452.438,
+          "p90": 453.383,
+          "min": 449.244,
+          "max": 454.647
+        },
+        "inference": {
+          "n": 10,
+          "mean": 443.726,
+          "std": 1.564,
+          "median": 443.666,
+          "p90": 445.538,
+          "min": 440.734,
+          "max": 445.778
+        },
+        "preprocess": {
+          "n": 10,
+          "mean": 8.216,
+          "std": 1.453,
+          "median": 7.844,
+          "p90": 8.975,
+          "min": 6.728,
+          "max": 11.983
+        },
+        "postprocess": {
+          "n": 10,
+          "mean": 0.393,
+          "std": 0.022,
+          "median": 0.392,
+          "p90": 0.419,
+          "min": 0.358,
+          "max": 0.43
+        }
+      },
+      "memory": {
+        "allocated_mib": 900.2,
+        "reserved_mib": 2382.0,
+        "peak_allocated_mib": 2129.3,
+        "peak_reserved_mib": 2382.0,
+        "device_used_mib": 2623.6,
+        "process_used_mib": 2502.0
+      }
+    },
+    {
+      "image": "000000377723.jpg",
+      "prompt_id": "p3_red_car",
+      "prompt_text": "red car",
+      "prompt": "red car .",
+      "phrases": [
+        "red car"
+      ],
+      "image_size": [
+        640,
+        427
+      ],
+      "input_size": [
+        1199,
+        800
+      ],
+      "num_detections": 1,
+      "detections": [
+        {
+          "box_xyxy": [
+            372.85,
+            146.21,
+            611.75,
+            342.35
+          ],
+          "score": 0.843,
+          "phrase_id": 0,
+          "phrase": "red car",
+          "token_label": "red car"
+        }
+      ],
+      "latency_ms": {
+        "total": {
+          "n": 10,
+          "mean": 451.764,
+          "std": 2.371,
+          "median": 452.237,
+          "p90": 453.999,
+          "min": 447.205,
+          "max": 455.905
+        },
+        "inference": {
+          "n": 10,
+          "mean": 443.32,
+          "std": 2.919,
+          "median": 443.723,
+          "p90": 445.547,
+          "min": 437.675,
+          "max": 447.583
+        },
+        "preprocess": {
+          "n": 10,
+          "mean": 7.753,
+          "std": 1.174,
+          "median": 7.762,
+          "p90": 8.234,
+          "min": 6.532,
+          "max": 10.78
+        },
+        "postprocess": {
+          "n": 10,
+          "mean": 0.692,
+          "std": 0.099,
+          "median": 0.659,
+          "p90": 0.774,
+          "min": 0.607,
+          "max": 0.934
+        }
+      },
+      "memory": {
+        "allocated_mib": 900.2,
+        "reserved_mib": 2382.0,
+        "peak_allocated_mib": 2124.7,
+        "peak_reserved_mib": 2382.0,
+        "device_used_mib": 2623.6,
+        "process_used_mib": 2502.0
+      }
+    },
+    {
+      "image": "000000377723.jpg",
+      "prompt_id": "p4_green_bus",
+      "prompt_text": "green bus",
+      "prompt": "green bus .",
+      "phrases": [
+        "green bus"
+      ],
+      "image_size": [
+        640,
+        427
+      ],
+      "input_size": [
+        1199,
+        800
+      ],
+      "num_detections": 1,
+      "detections": [
+        {
+          "box_xyxy": [
+            373.22,
+            146.39,
+            611.97,
+            342.74
+          ],
+          "score": 0.9358,
+          "phrase_id": 0,
+          "phrase": "green bus",
+          "token_label": "green bus"
+        }
+      ],
+      "latency_ms": {
+        "total": {
+          "n": 10,
+          "mean": 452.467,
+          "std": 3.132,
+          "median": 452.288,
+          "p90": 456.678,
+          "min": 447.494,
+          "max": 458.173
+        },
+        "inference": {
+          "n": 10,
+          "mean": 444.1,
+          "std": 3.047,
+          "median": 443.994,
+          "p90": 448.355,
+          "min": 439.867,
+          "max": 449.523
+        },
+        "preprocess": {
+          "n": 10,
+          "mean": 7.685,
+          "std": 0.504,
+          "median": 7.695,
+          "p90": 8.253,
+          "min": 6.972,
+          "max": 8.6
+        },
+        "postprocess": {
+          "n": 10,
+          "mean": 0.682,
+          "std": 0.087,
+          "median": 0.649,
+          "p90": 0.726,
+          "min": 0.614,
+          "max": 0.922
+        }
+      },
+      "memory": {
+        "allocated_mib": 900.2,
+        "reserved_mib": 2382.0,
+        "peak_allocated_mib": 2124.7,
+        "peak_reserved_mib": 2382.0,
+        "device_used_mib": 2623.6,
+        "process_used_mib": 2502.0
+      }
+    },
+    {
+      "image": "000000377723.jpg",
+      "prompt_id": "p5_multi_class",
+      "prompt_text": "person . car . bus . truck",
+      "prompt": "person . car . bus . truck .",
+      "phrases": [
+        "person",
+        "car",
+        "bus",
+        "truck"
+      ],
+      "image_size": [
+        640,
+        427
+      ],
+      "input_size": [
+        1199,
+        800
+      ],
+      "num_detections": 14,
+      "detections": [
+        {
+          "box_xyxy": [
+            371.64,
+            146.35,
+            611.23,
+            342.64
+          ],
+          "score": 0.8578,
+          "phrase_id": 2,
+          "phrase": "bus",
+          "token_label": "bus"
+        },
+        {
+          "box_xyxy": [
+            131.31,
+            230.27,
+            163.3,
+            351.08
+          ],
+          "score": 0.7124,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            88.72,
+            235.07,
+            115.3,
+            339.01
+          ],
+          "score": 0.6825,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            69.19,
+            227.61,
+            96.27,
+            335.57
+          ],
+          "score": 0.6749,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            184.95,
+            233.47,
+            222.21,
+            339.41
+          ],
+          "score": 0.5776,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            351.02,
+            228.48,
+            373.05,
+            340.33
+          ],
+          "score": 0.5718,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            294.03,
+            234.14,
+            329.97,
+            343.2
+          ],
+          "score": 0.5492,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            236.68,
+            230.52,
+            270.51,
+            338.59
+          ],
+          "score": 0.5313,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            486.9,
+            228.87,
+            519.06,
+            255.86
+          ],
+          "score": 0.514,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            326.77,
+            235.31,
+            352.97,
+            338.75
+          ],
+          "score": 0.5122,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            270.63,
+            233.16,
+            294.1,
+            337.72
+          ],
+          "score": 0.5054,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            220.23,
+            236.18,
+            240.37,
+            335.54
+          ],
+          "score": 0.4094,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            259.53,
+            229.61,
+            277.58,
+            336.47
+          ],
+          "score": 0.3897,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        },
+        {
+          "box_xyxy": [
+            314.58,
+            225.53,
+            330.75,
+            256.79
+          ],
+          "score": 0.3746,
+          "phrase_id": 0,
+          "phrase": "person",
+          "token_label": "person"
+        }
+      ],
+      "latency_ms": {
+        "total": {
+          "n": 10,
+          "mean": 454.526,
+          "std": 1.903,
+          "median": 455.072,
+          "p90": 456.287,
+          "min": 451.405,
+          "max": 457.37
+        },
+        "inference": {
+          "n": 10,
+          "mean": 444.923,
+          "std": 1.765,
+          "median": 444.554,
+          "p90": 447.112,
+          "min": 442.787,
+          "max": 447.444
+        },
+        "preprocess": {
+          "n": 10,
+          "mean": 8.679,
+          "std": 1.068,
+          "median": 8.34,
+          "p90": 10.291,
+          "min": 7.361,
+          "max": 10.622
+        },
+        "postprocess": {
+          "n": 10,
+          "mean": 0.924,
+          "std": 0.084,
+          "median": 0.896,
+          "p90": 0.974,
+          "min": 0.865,
+          "max": 1.159
+        }
+      },
+      "memory": {
+        "allocated_mib": 900.2,
+        "reserved_mib": 2382.0,
+        "peak_allocated_mib": 2130.9,
+        "peak_reserved_mib": 2382.0,
+        "device_used_mib": 2623.6,
+        "process_used_mib": 2502.0
+      }
+    }
+  ],
+  "wall_seconds": 145.5
+}

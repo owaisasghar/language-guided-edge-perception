@@ -1,0 +1,51 @@
+# Milestone 1 — Grounding DINO image baseline (inference + latency/VRAM benchmark).
+# Every prompt is run on every image (5 x 5 matrix) so each prompt is also tested on
+# images where the target is absent: false positives matter as much as hits.
+#
+# Override anything from the CLI, e.g.
+#   python scripts/run_grounding_dino.py --config configs/milestone1_grounding_dino.yaml \
+#       --override device=cpu benchmark.warmup_runs=0 benchmark.timed_runs=1
+
+run_name: m1_gdino_tiny_fp32
+device: cuda          # cuda | cpu | auto  (explicit cuda fails loudly instead of falling back)
+log_level: INFO
+output_dir: outputs/milestone1     # annotated images + raw JSON (git-ignored)
+benchmark_dir: benchmarks/milestone1  # small committed summaries (only written for GPU runs unless forced)
+
+model:
+  backend: hf_transformers
+  model_id: IDEA-Research/grounding-dino-tiny
+  revision: a2bb814dd30d776dcf7e30523b00659f4f141c71   # Hub commit, pinned for reproducibility
+  dtype: float32                 # float16 is evaluated in Milestone 8
+  box_threshold: 0.35            # IDEA-Research demo defaults
+  text_threshold: 0.25
+  phrase_score_reduction: max    # max = official demo behaviour, mean = official COCO-eval behaviour
+  shortest_edge: 800             # processor default resize (800 / 1333)
+  longest_edge: 1333
+  nms_iou: null                  # Grounding DINO is DETR-style: no NMS by default
+  max_detections: 100
+  local_files_only: false
+
+benchmark:
+  warmup_runs: 3      # per (image, prompt) pair; excluded from statistics
+  timed_runs: 10      # per pair
+
+data:
+  manifest: configs/samples/milestone1_coco.yaml
+
+prompts:
+  - id: p1_white_truck
+    text: "white truck"
+    tests: "colour attribute + vehicle class; positives in 573943 (+ partial in 401862); hard negatives: white bus/cars in 210273, red/yellow cabs in 573943"
+  - id: p2_blue_shirt_person
+    text: "person wearing a blue shirt"
+    tests: "clothing attribute + relation; single positive in 401862; hard negative: navy jacket in 401862"
+  - id: p3_red_car
+    text: "red car"
+    tests: "colour + class; small positive in 210273; hard negatives: red buses (210273, 280710), red food truck (401862), red cabs (573943)"
+  - id: p4_green_bus
+    text: "green bus"
+    tests: "colour + class; positives in 210273; hard negative: blue bus (377723), red buses (280710)"
+  - id: p5_multi_class
+    text: "person . car . bus . truck"
+    tests: "multi-phrase prompt (COCO-style classes); checks one-box-one-phrase assignment"

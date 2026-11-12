@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lgep"
+version = "0.1.0"
+description = "Language-Guided Multi-Camera Edge Perception: open-vocabulary detection, tracking and cross-camera retrieval."
+readme = "README.md"
+requires-python = ">=3.10"  # 3.10 kept for Jetson (JetPack 6 ships Python 3.10)
+# torch / torchvision are intentionally NOT listed: they must be installed from the
+# PyTorch index matching your CUDA driver (see docs/installation.md).
+dependencies = [
+    "transformers>=5.0,<6",
+    "huggingface-hub>=1.0",
+    "pillow>=10.1",
+    "numpy>=1.26",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "gpu: needs a working CUDA device",
+    "weights: needs model weights in the local Hugging Face cache",
+]
+addopts = "-ra"

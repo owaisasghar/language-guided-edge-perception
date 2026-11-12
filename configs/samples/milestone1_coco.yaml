@@ -1,0 +1,42 @@
+# Milestone 1 sample images (COCO 2017 val).
+#
+# Selection method: filtered from COCO ground-truth annotations (NOT from detector output,
+# to avoid selection bias), restricted to licences that allow derivatives (CC BY / CC BY-SA),
+# then checked by eye for colour/attribute content. COCO has no colour attributes, so the
+# `contents` notes are manual observations used for qualitative review only.
+#
+# Images are downloaded by scripts/download_samples.py and are never committed to Git.
+# Attribution: see each image's flickr_url and licence when publishing derived images.
+source: "COCO 2017 val — https://cocodataset.org (annotations CC BY 4.0; images under the Flickr licence listed per image)"
+target_dir: data/samples/milestone1
+images:
+  - file: 000000210273.jpg
+    url: http://images.cocodataset.org/val2017/000000210273.jpg
+    flickr_url: http://farm6.staticflickr.com/5163/5336041838_1a09008014_z.jpg
+    license: CC BY 2.0 (http://creativecommons.org/licenses/by/2.0/)
+    sha256: 3ec23de63592c1eef86740fd46fed2cb66170fca02b695d37e6ae379dcee4355
+    contents: "Elevated, CCTV-like view of a congested road: three green buses, one white bus, red buses at the right edge and far back, many white/silver/black cars, one small red car in the right lane, a pedestrian and a cyclist."
+  - file: 000000573943.jpg
+    url: http://images.cocodataset.org/val2017/000000573943.jpg
+    flickr_url: http://farm9.staticflickr.com/8050/8089769426_0ae26e7732_z.jpg
+    license: CC BY-SA 2.0 (http://creativecommons.org/licenses/by-sa/2.0/)
+    sha256: 927f0d87b928f0eafda8b437a3ddbe7c79f30eb4a61d76f75f512bbb0c35aa55
+    contents: "Distant view of a truck depot: dozens of small truck cabs (white, red, yellow, blue) parked in rows, plus white box trucks / trailers near the warehouse. Small, dense, overlapping objects."
+  - file: 000000401862.jpg
+    url: http://images.cocodataset.org/val2017/000000401862.jpg
+    flickr_url: http://farm9.staticflickr.com/8540/8698627837_6d1fb59ce4_z.jpg
+    license: CC BY 2.0 (http://creativecommons.org/licenses/by/2.0/)
+    sha256: 82e64d65eb79042a20684d83a09c4aa90b98dd4616eab25c8bb1d40d45fa4cef
+    contents: "Red food truck with a queue of people. Exactly one man wears a bright blue T-shirt (left of centre). A man in a dark navy jacket in the right foreground is a hard negative for 'blue shirt'. A white truck is partly visible behind the red one."
+  - file: 000000280710.jpg
+    url: http://images.cocodataset.org/val2017/000000280710.jpg
+    flickr_url: http://farm8.staticflickr.com/7320/9655397508_cf2472680c_z.jpg
+    license: CC BY 2.0 (http://creativecommons.org/licenses/by/2.0/)
+    sha256: 1a76947fe2c8d39ae21d346118c413bfe06817dda5424e3451ef870db487fe49
+    contents: "London street: red open-top sightseeing double-decker bus, another red double-decker on the left, pedestrians in dark coats, one with a red backpack."
+  - file: 000000377723.jpg
+    url: http://images.cocodataset.org/val2017/000000377723.jpg
+    flickr_url: http://farm9.staticflickr.com/8354/8303563388_c0b3b1939a_z.jpg
+    license: CC BY 2.0 (http://creativecommons.org/licenses/by/2.0/)
+    sha256: 47a58184ee83f6c0c483a2ca1f2ce4550b08170a9576c8e78bda16693a591786
+    contents: "Blue city bus at a stop with a queue of people in dark clothing under an arcade. Hard negative for 'green bus' / 'red bus'."

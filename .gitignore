@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.venv/
+venv/
+
+# Data, weights and run outputs never go to GitHub
+data/*
+!data/.gitkeep
+models/*
+!models/.gitkeep
+outputs/
+*.pt
+*.pth
+*.onnx
+*.engine
+*.safetensors
+*.bin
+*.mp4
+*.avi
+*.mkv
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
