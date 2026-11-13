@@ -3,7 +3,9 @@
 Target system (12 stages). Milestones 1–2 implement the **text-guided detector** (two backends,
 Grounding DINO and YOLO-World, behind one interface); Milestone 3 adds **per-camera tracking** with
 persistent local track IDs; Milestone 4 adds **multi-camera RTSP ingestion** with asynchronous processing
-and reconnection. Everything else is planned and will be designed in detail at the start of its milestone.
+and reconnection; Milestone 5 adds **Re-ID components** (appearance embeddings, global identity manager;
+CityFlow evaluation pending). Everything else is planned and will be designed in detail at the start of its
+milestone.
 
 ```mermaid
 flowchart LR
@@ -98,7 +100,7 @@ camera N ──RTSP──> CameraReader thread ─┘
 | `lgep.tracking` | 3 | `CameraTracker` (per-camera, per-phrase ByteTrack), `IdAllocator` (persistent local IDs), vendored official ByteTrack; BoT-SORT/OC-SORT compared in Milestone 9 |
 | `lgep.ingestion` | 4 | `CameraReader` (capture thread, newest-frame slot, reconnection with backoff), `StreamManager`, `CameraConfig` (URL redaction, `${ENV}` credentials), simulated RTSP cameras for tests |
 | `lgep.pipeline` | 4 | `PerceptionPipeline`: round-robin over cameras, per-camera rate limit, shared detector, per-camera trackers reset on reconnect, latency statistics |
-| `lgep.reid` | 5 | appearance embeddings, spatio-temporal association, global IDs |
+| `lgep.reid` | 5 | `ClipEmbedder` (images + texts), `TrackFeatureBank` (crop sampling, per-camera mean-centring), `CameraTopology` (transit windows), `IdentityManager` (global IDs, association records, merge / split), `ReIDService` (online, plugs into the pipeline), Re-ID and MTMC metrics |
 | `lgep.query` | 6 | natural-language → structured query (class, attributes, camera, time) |
 | `lgep.database` | 7 | SQLite schema for detections, tracks, identities and events |
 | `lgep.api` | 7 | FastAPI service |

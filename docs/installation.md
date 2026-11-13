@@ -137,6 +137,9 @@ Without these packages the RTSP tests are skipped.
 Real cameras: copy `configs/milestone4_cameras.yaml` to `configs/cameras.local.yaml` (git-ignored), list
 your cameras there and keep passwords in environment variables (`url: "rtsp://admin:${CAM01_PASSWORD}@..."`).
 
+From Milestone 5 on: the CLIP image/text encoder (`laion/CLIP-ViT-B-32-laion2B-s34B-b79K`, MIT, pinned
+commit, safetensors, 577 MiB) is downloaded into the Hugging Face cache on first use, like Grounding DINO.
+
 For fully offline Grounding DINO runs after the first download:
 
 ```bash

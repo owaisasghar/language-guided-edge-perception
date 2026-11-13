@@ -1,0 +1,164 @@
+{
+  "measured": true,
+  "environment": {
+    "timestamp_utc": "2026-11-12T12:16:56+00:00",
+    "os": "Linux-6.8.0-138-generic-x86_64-with-glibc2.35",
+    "python": "3.12.16",
+    "cpu": "AMD Ryzen 7 8845HS w/ Radeon 780M Graphics",
+    "cpu_logical_cores": 16,
+    "ram_gib": 30.6,
+    "packages": {
+      "torch": "2.13.0+cu130",
+      "torchvision": "0.28.0+cu130",
+      "transformers": "5.22.2",
+      "huggingface-hub": "2.4.0",
+      "tokenizers": "0.23.3",
+      "safetensors": "0.8.0",
+      "numpy": "2.5.4",
+      "pillow": "13.0.0",
+      "lgep": "0.1.0",
+      "ultralytics": "8.4.211",
+      "clip": "1.0",
+      "opencv-python": "5.0.0.93",
+      "pycocotools": "2.0.11",
+      "scipy": "1.18.1",
+      "lap": "0.5.14",
+      "trackeval": "1.0.dev1"
+    },
+    "torch_cuda_build": "13.0",
+    "cudnn": 92000,
+    "torch_arch_list": [
+      "sm_75",
+      "sm_80",
+      "sm_86",
+      "sm_90",
+      "sm_100",
+      "sm_120"
+    ],
+    "gpu": {
+      "name": "NVIDIA GeForce RTX 4060 Laptop GPU",
+      "driver": "580.178.04",
+      "memory_total": "8188 MiB",
+      "compute_capability": "8.9",
+      "power_limit": "55.00 W"
+    }
+  },
+  "other_gpu_processes": [
+    {
+      "pid": 888,
+      "name": "./rtservice",
+      "used_mib": 94.0
+    },
+    {
+      "pid": 386145,
+      "name": "python",
+      "used_mib": 736.0
+    }
+  ],
+  "embedder": {
+    "backend": "hf_clip",
+    "model_id": "laion/CLIP-ViT-B-32-laion2B-s34B-b79K",
+    "revision": "1a25a446712ba5ee05982a381eed697ef9b435cf",
+    "vision_parameters_millions": 87.85,
+    "dim": 512,
+    "input_size": 224,
+    "crop_mode": "stretch",
+    "device": "cuda",
+    "dtype": "float32",
+    "load_seconds": 0.29
+  },
+  "crops": {
+    "n": 127,
+    "height_px_median": 297.0,
+    "height_px_min": 128,
+    "height_px_max": 1080
+  },
+  "images": [
+    {
+      "batch": 1,
+      "ms_per_call": {
+        "n": 30,
+        "mean": 4.129,
+        "std": 1.921,
+        "median": 3.71,
+        "p90": 3.991,
+        "min": 3.602,
+        "max": 14.419
+      },
+      "ms_per_crop_median": 3.71,
+      "crops_per_second": 269.5,
+      "peak_allocated_mib": 595.6
+    },
+    {
+      "batch": 8,
+      "ms_per_call": {
+        "n": 30,
+        "mean": 15.844,
+        "std": 0.719,
+        "median": 15.96,
+        "p90": 16.451,
+        "min": 13.021,
+        "max": 16.728
+      },
+      "ms_per_crop_median": 1.995,
+      "crops_per_second": 501.3,
+      "peak_allocated_mib": 606.9
+    },
+    {
+      "batch": 32,
+      "ms_per_call": {
+        "n": 30,
+        "mean": 57.235,
+        "std": 1.906,
+        "median": 57.053,
+        "p90": 58.892,
+        "min": 52.903,
+        "max": 62.749
+      },
+      "ms_per_crop_median": 1.783,
+      "crops_per_second": 560.9,
+      "peak_allocated_mib": 660.7
+    },
+    {
+      "batch": 64,
+      "ms_per_call": {
+        "n": 30,
+        "mean": 110.013,
+        "std": 1.749,
+        "median": 110.006,
+        "p90": 112.133,
+        "min": 104.618,
+        "max": 113.5
+      },
+      "ms_per_crop_median": 1.719,
+      "crops_per_second": 581.8,
+      "peak_allocated_mib": 735.5
+    }
+  ],
+  "texts": [
+    {
+      "texts": 1,
+      "ms_per_call": {
+        "n": 30,
+        "mean": 4.414,
+        "std": 12.617,
+        "median": 2.029,
+        "p90": 2.235,
+        "min": 1.986,
+        "max": 72.354
+      }
+    },
+    {
+      "texts": 16,
+      "ms_per_call": {
+        "n": 30,
+        "mean": 3.3,
+        "std": 0.208,
+        "median": 3.205,
+        "p90": 3.533,
+        "min": 3.08,
+        "max": 3.817
+      }
+    }
+  ]
+}

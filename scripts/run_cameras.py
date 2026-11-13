@@ -8,11 +8,13 @@ Outputs in outputs/milestone4/<run_name>_<timestamp>/:
   status.json         live status, rewritten every --status-every seconds (cameras + pipeline)
   tracks/<cam>.txt    MOTChallenge rows per camera (frame = capture index, IDs = local track IDs)
   summary.json        final status, CPU / GPU use, wall time
+  identities.json     with --reid: global identities and every association decision with its evidence
 Stop with Ctrl+C (or --duration).
 
 Usage:
     python scripts/run_cameras.py --simulate --duration 60
     python scripts/run_cameras.py --config configs/cameras.local.yaml
+    python scripts/run_cameras.py --simulate --duration 120 --reid configs/milestone5_reid.yaml
 """
 
 from __future__ import annotations
@@ -34,6 +36,9 @@ from lgep.ingestion import StreamManager, cameras_from_config
 from lgep.ingestion.simulate import gstreamer_rtsp_available, simulated_cameras
 from lgep.perception.factory import build_detector
 from lgep.pipeline import PerceptionPipeline, PipelineConfig
+from lgep.reid import AssociationConfig, CameraTopology, SamplingConfig
+from lgep.reid.embedder import build_embedder
+from lgep.reid.service import ReIDService
 from lgep.utils.config import load_config
 from lgep.utils.env import collect_environment
 from lgep.utils.logging import setup_logging
@@ -62,6 +67,27 @@ class TrackWriter:
     def close(self) -> None:
         for f in self.files.values():
             f.close()
+
+
+def build_reid(path: Path) -> ReIDService:
+    r = load_config(path)["reid"]
+    return ReIDService(build_embedder(r["embedder"]), SamplingConfig.from_dict(r["sampling"]),
+                       AssociationConfig.from_dict(r["association"]), CameraTopology.from_dict(r.get("topology")),
+                       close_after_s=r.get("close_after_s", 3.0))
+
+
+def identities_json(reid: ReIDService) -> dict:
+    mgr = reid.identities
+    return {"identities": [{"global_id": g.global_id, "cameras": g.cameras,
+                            "members": [{"track": m.key, "t_start": round(m.t_start, 2), "t_end": round(m.t_end, 2)}
+                                        for m in g.members]} for g in mgr.identities.values()],
+            "associations": [{"track": r.track_key, "global_id": r.global_id, "decision": r.decision, "score": r.score,
+                              "evidence": r.evidence} for r in mgr.records]}
+
+
+def chain(*callbacks):
+    callbacks = [c for c in callbacks if c]
+    return (lambda f, d, t: [c(f, d, t) for c in callbacks]) if callbacks else None
 
 
 def build_pipeline_config(cfg: dict) -> PipelineConfig:
@@ -97,6 +123,7 @@ def main() -> int:
     ap.add_argument("--duration", type=float, default=None, help="seconds (default: until Ctrl+C)")
     ap.add_argument("--status-every", type=float, default=5.0)
     ap.add_argument("--no-tracks", action="store_true", help="do not write per-camera track files")
+    ap.add_argument("--reid", default=None, metavar="CONFIG", help="enable Re-ID with this config's `reid:` block")
     args = ap.parse_args()
 
     cfg = load_config(REPO_ROOT / args.config, args.override)
@@ -109,6 +136,7 @@ def main() -> int:
 
     sims = {}
     writer = None if args.no_tracks else TrackWriter(out / "tracks")
+    reid = None
     try:
         cams = cameras_from_config(cfg)
         if args.simulate:
@@ -123,8 +151,11 @@ def main() -> int:
                                   base_dir=REPO_ROOT)
         for _ in range(3):  # warm-up so the first camera frames do not pay for CUDA initialisation
             detector.detect(np.zeros((720, 1280, 3), np.uint8), pcfg.prompt)
+        if args.reid:
+            reid = build_reid(REPO_ROOT / args.reid)
+            reid.embedder.embed_images([np.zeros((128, 64, 3), np.uint8)] * 8)  # warm-up
         manager = StreamManager(cams)
-        pipeline = PerceptionPipeline(manager, detector, pcfg, on_result=writer)
+        pipeline = PerceptionPipeline(manager, detector, pcfg, on_result=chain(writer, reid.on_result if reid else None))
         cpu = CpuMeter()
         t0 = time.monotonic()
         with manager, GpuSampler() as gpu:
@@ -132,16 +163,24 @@ def main() -> int:
             worker.start()
             while not stop.wait(args.status_every):
                 cam_status, pipe_status = manager.status(), pipeline.stats()
-                write_json(out / "status.json", {"time": datetime.now().isoformat(timespec="seconds"),
-                                                 "cameras": cam_status, "pipeline": pipe_status})
-                log.info("status after %.0f s\n%s", time.monotonic() - t0, status_table(cam_status, pipe_status))
+                status = {"time": datetime.now().isoformat(timespec="seconds"), "cameras": cam_status,
+                          "pipeline": pipe_status}
+                if reid:
+                    status["reid"] = reid.stats()
+                write_json(out / "status.json", status)
+                log.info("status after %.0f s\n%s%s", time.monotonic() - t0, status_table(cam_status, pipe_status),
+                         f"\nre-id: {status['reid']}" if reid else "")
                 if args.duration and time.monotonic() - t0 >= args.duration:
                     stop.set()
             worker.join(10)
+            if reid:
+                reid.close_all()
+                write_json(out / "identities.json", identities_json(reid))
             final = {"measured": True, "environment": collect_environment(), "config": cfg,
                      "model": detector.describe(), "wall_seconds": round(time.monotonic() - t0, 1),
                      "process_cpu_percent": round(cpu.percent(), 1), "gpu": gpu.summary(),
-                     "cameras": manager.status(), "pipeline": pipeline.stats()}
+                     "cameras": manager.status(), "pipeline": pipeline.stats(),
+                     "reid": None if reid is None else {**reid.stats(), "embedder": reid.embedder.describe()}}
     except Exception:
         log.exception("run_cameras failed (log: %s)", out / "run.log")
         return 1

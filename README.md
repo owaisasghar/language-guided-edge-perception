@@ -8,7 +8,8 @@ a single 8 GB GPU first and for NVIDIA Jetson Orin NX later.
 **Status:** Milestones 1–4 of 10 are done (measured 2026-11-12): the Grounding DINO baseline,
 YOLO-World integration with a full COCO val2017 comparison of six detectors, per-camera tracking
 (official ByteTrack, persistent IDs) evaluated on MOT17, and multi-camera RTSP ingestion with
-asynchronous processing and automatic reconnection. Nothing in this repository
+asynchronous processing and automatic reconnection. Milestone 5 (cross-camera Re-ID) is built and
+evaluated on MOT17 in the interim; its CityFlow evaluation waits for data access. Nothing in this repository
 reports a number that was not measured; planned targets are labelled as targets.
 
 ## Milestones
@@ -19,7 +20,7 @@ reports a number that was not measured; planned targets are labelled as targets.
 | 2 | YOLO-World integration and detector comparison | ✅ 6 detectors on COCO val2017, published AP reproduced |
 | 3 | Single-camera tracking (ByteTrack) | ✅ official ByteTrack (equality-tested), persistent IDs, MOT17 HOTA/IDF1/MOTA for 6 detectors |
 | 4 | Multi-camera RTSP ingestion | ✅ capture thread per camera, newest-frame buffers, reconnection with backoff, shared detector; outages measured |
-| 5 | Cross-camera Re-ID (CityFlow) | – |
+| 5 | Cross-camera Re-ID (CityFlow) | 🟡 built + interim MOT17 results; CityFlow evaluation pending (data access) |
 | 6 | Language-guided retrieval (CityFlow-NL) | – |
 | 7 | FastAPI backend + React dashboard | – |
 | 8 | Optimisation and 1/2/4/8-stream benchmarks | – |
@@ -115,6 +116,21 @@ shared YOLO-World-M → ByteTrack per camera:
 * One worker saturates at ~67 frames/s while the GPU is half idle: batching across cameras is Milestone 8.
 
 Details: [docs/milestone4.md](docs/milestone4.md); tables: [benchmarks/milestone4/](benchmarks/milestone4/README.md).
+
+## Re-ID (Milestone 5, interim results on MOT17)
+
+CLIP appearance embeddings (LAION ViT-B/32) per track, a camera-layout model with transit-time windows, and
+a global identity manager that records the evidence for every link. CityFlow, the cross-camera benchmark,
+needs a data-access request first; until then:
+
+* Re-linking ByteTrack's fragmented tracks within a camera improves MOT17 val-half only slightly (HOTA
+  50.8 → 51.1 with Grounding DINO-T, 43.5 → 43.7 with YOLO-World-M; 7–9 fewer ID switches).
+* **CLIP is a weak person Re-ID feature** (same-vs-different AUROC 0.80–0.92). Two things measurably help:
+  stretching crops to a square (letterboxing them was worst) and subtracting each camera's mean embedding.
+* In the live pipeline, appearance alone merged people across four *unrelated* simulated cameras (41 of 710
+  identities): camera-layout and time constraints are required, not optional.
+
+Details: [docs/milestone5.md](docs/milestone5.md); tables: [benchmarks/milestone5/](benchmarks/milestone5/README.md).
 
 ## Quick start (Ubuntu 22.04, NVIDIA driver ≥ 580)
 
