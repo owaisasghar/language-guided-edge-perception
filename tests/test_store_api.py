@@ -329,3 +329,37 @@ def test_api_token(server):
     assert httpx.get(base + "/api/health").status_code == 401
     assert httpx.get(base + "/api/health", params={"token": "s3cret"}).status_code == 200
     assert httpx.get(base + "/api/health", params={"token": "wrong"}).status_code == 401
+
+
+def test_async_reid_uses_segment_keys_fixed_at_frame_time(tmp_path):
+    """Re-ID in its own thread lags behind the recorder. A frame Re-ID processes after the recorder already
+    ended the track must keep the key it had at frame time (no phantom 'cam01/1~2' unknown to the store), and a
+    track Re-ID finished early (dropped frames) is ignored when seen again, not assigned twice."""
+    from lgep.reid import AssociationConfig, SamplingConfig
+    from lgep.reid.service import ReIDService
+
+    class Emb:
+        def embed_images(self, crops):
+            return np.array([[1.0, 0.0]] * len(crops), np.float32)
+
+    store, _ = make_store(tmp_path)
+    store.start_run()
+    rec = Recorder(store)
+    svc = ReIDService(Emb(), SamplingConfig(every_n_frames=1, min_score=0.0, center=False),
+                      AssociationConfig(appearance_threshold=0.9), close_after_s=3.0, segments=rec.segments,
+                      assign_segments=False)
+    img = np.zeros((480, 640, 3), np.uint8)
+    f0, f1 = frame("cam01", 0.0, img), frame("cam01", 4.0, img)
+    seg0 = rec.observe(f0, tracks(tr("cam01", 1)))  # perception worker: frame 0, then frame 1 ends track 1
+    seg1 = rec.observe(f1, tracks())
+    records = svc.on_result(f0, None, SimpleNamespace(tracks=seg0))  # Re-ID catches up later
+    records += svc.on_result(f1, None, SimpleNamespace(tracks=seg1))
+    assert [r.track_key for r in records] == ["cam01/1"]
+    rec.associations(records)
+    assert svc.on_result(frame("cam01", 4.5, img), None, SimpleNamespace(tracks=[tr("cam01", 1)])) == []
+    assert svc.ignored_after_finish == 1 and svc.close_all() == []
+    store.flush()
+    assert store.failed_ops == 0
+    with store.reader() as conn:
+        assert [r["key"] for r in queries.list_tracks(conn)] == ["cam01/1"]
+    store.close()

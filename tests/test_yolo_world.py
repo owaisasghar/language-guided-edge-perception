@@ -99,3 +99,22 @@ def test_letterbox_modes_map_boxes_back_to_the_image(detector, mode):
     for d in confident:
         same = [g.box_xyxy for g in got.detections if g.phrase_id == d.phrase_id]
         assert max((_iou(d.box_xyxy, g) for g in same), default=0.0) > 0.85, d
+
+
+def test_batch_equals_one_image_at_a_time(detector):
+    """Cross-camera batching (Milestone 8): same boxes as single-image detection, also with mixed image sizes
+    (two shape groups in one call)."""
+    import numpy as np
+
+    big = np.asarray(Image.open(IMAGE).convert("RGB"))
+    flipped = np.ascontiguousarray(big[:, ::-1])
+    small = np.asarray(Image.open(IMAGE).convert("RGB").resize((480, 320)))
+    images = [big, flipped, small]
+    single = [detector.detect(im, PHRASES).detections for im in images]
+    batch = [r.detections for r in detector.detect_batch(images, PHRASES)]
+    for one, many in zip(single, batch):  # batch kernels differ slightly: near-tied boxes may swap order
+        assert len(one) == len(many) > 3
+        for a in one:
+            b = max((x for x in many if x.phrase_id == a.phrase_id), key=lambda x: _iou(a.box_xyxy, x.box_xyxy))
+            assert _iou(a.box_xyxy, b.box_xyxy) > 0.98
+            assert a.score == pytest.approx(b.score, abs=5e-3)

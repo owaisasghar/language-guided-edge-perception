@@ -6,11 +6,14 @@ slows down (a busy CPU, fewer frames per second than configured), a track can be
 after it was already ended downstream. Its key then comes back. Such a key starts a new segment,
 ``cam01/17~2``, so every finished tracklet has a unique key (needed by the identity manager and the store).
 
-Shared by the Re-ID service and the recorder (both run in the perception worker), so both use the same
-segment keys. ``close`` is idempotent: closing a segment that is not current does nothing.
+Shared by the Re-ID service and the recorder, so both use the same segment keys (thread-safe: with Re-ID in
+its own worker, Milestone 8, they run in different threads). ``close`` is idempotent: closing a segment that is
+not current does nothing.
 """
 
 from __future__ import annotations
+
+import threading
 
 
 class TrackSegments:
@@ -18,22 +21,25 @@ class TrackSegments:
         self._current: dict[str, str] = {}  # tracker key -> open segment key
         self._count: dict[str, int] = {}  # tracker key -> segments started
         self.reopened = 0
+        self._lock = threading.Lock()
 
     def current(self, key: str) -> str:
         """The open segment of tracker ``key`` (a new one if its last segment was closed)."""
-        seg = self._current.get(key)
-        if seg is None:
-            n = self._count.get(key, 0) + 1
-            self._count[key] = n
-            seg = self._current[key] = key if n == 1 else f"{key}~{n}"
-            if n > 1:
-                self.reopened += 1
-        return seg
+        with self._lock:
+            seg = self._current.get(key)
+            if seg is None:
+                n = self._count.get(key, 0) + 1
+                self._count[key] = n
+                seg = self._current[key] = key if n == 1 else f"{key}~{n}"
+                if n > 1:
+                    self.reopened += 1
+            return seg
 
     def close(self, segment: str) -> None:
         base = segment.split("~", 1)[0]
-        if self._current.get(base) == segment:
-            del self._current[base]
+        with self._lock:
+            if self._current.get(base) == segment:
+                del self._current[base]
 
 
 class SegmentTrack:

@@ -310,3 +310,39 @@ def test_pipeline_runs_on_live_readers_in_a_thread():
     s = p.stats()["cameras"]
     assert s["a"]["processed"] > 5 and s["b"]["processed"] > 5
     assert s["a"]["latency_ms_p50"] is not None and s["a"]["processed_fps"] <= 55
+
+
+class BatchDetector(FakeDetector):
+    def __init__(self):
+        super().__init__()
+        self.batches = []
+
+    def detect_batch(self, images, phrases):
+        self.batches.append(len(images))
+        return [self.detect(im, phrases) for im in images]
+
+
+def test_batching_takes_every_ready_camera_without_waiting():
+    clock = FakeClock()
+    mgr = FakeManager({c: [(i, 1) for i in range(1, 11)] for c in ("a", "b", "c", "d")}, clock)
+    det = BatchDetector()
+    p = PerceptionPipeline(mgr, det, PipelineConfig(process_fps=10, batch_size=3), clock=clock)
+    seen = []
+    p.on_result = lambda f, d, t: seen.append(f.camera_id)
+    assert p.step() and p.step()  # 4 ready cameras, batches of at most 3
+    assert det.batches == [3, 1] and sorted(seen) == ["a", "b", "c", "d"]
+    assert not p.step()  # every camera is rate-limited now: nothing waits, nothing is processed
+    clock.t += 0.11
+    assert p.step() and det.batches[-1] == 3
+    st = p.stats()
+    assert st["batch_size"] == 3 and st["cameras"]["a"]["batch_mean"] == 3.0 and st["cameras"]["d"]["processed"] == 1
+
+
+def test_batching_falls_back_to_single_detection():
+    clock = FakeClock()
+    mgr = FakeManager({c: [(1, 1)] for c in ("a", "b")}, clock)
+    det = FakeDetector()  # no detect_batch
+    p = PerceptionPipeline(mgr, det, PipelineConfig(process_fps=0, batch_size=4), clock=clock)
+    assert p.step() and len(det.calls) == 2
+    p.clear_stats()
+    assert p.stats()["cameras"]["a"]["latency_ms_p50"] is None and p.stats()["cameras"]["a"]["processed"] == 1

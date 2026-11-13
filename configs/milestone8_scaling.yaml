@@ -1,0 +1,84 @@
+# Milestone 8 — optimisation and scaling: 1, 2, 4 and 8 camera streams; FP16; scheduling; frame sampling.
+#
+#   python scripts/benchmark_scaling.py                 # the whole matrix below (~25 min, GPU)
+#   python scripts/benchmark_scaling.py --only full     # one variant
+#   python scripts/serve.py --config configs/milestone8_scaling.yaml --simulate   # the optimised server, 8 cameras
+#
+# The server and benchmark run the full edge application (cameras -> YOLO-World-M -> ByteTrack -> CLIP Re-ID
+# -> SQLite store), as in Milestone 7. This file turns on every optimisation by default; the benchmark
+# switches them off one by one (`variants`).
+
+extends: milestone7_server.yaml
+
+run_name: m8_scaling
+output_dir: outputs/milestone8
+benchmark_dir: benchmarks/milestone8
+
+# --- optimisations (each measured in benchmarks/milestone8) ---------------------------------------------
+opencv_threads: 1          # explicit: Ultralytics sets 1 on import anyway, other backends would get OpenCV's
+                           # default pool, which spins on small jobs (55 % instead of 10 % of a core per 1080p30 stream)
+reid_async: true           # Re-ID in its own thread; the perception worker only hands frames over
+reid_queue: 16             # frames waiting for Re-ID; when full the oldest is dropped (counted)
+reid_overrides:
+  embedder: {dtype: float16}   # CLIP in FP16: same embeddings (cosine >= 0.99998), ~3x faster
+pipeline:
+  batch_size: 8            # detect the frames of all ready cameras in one call
+models:
+  yoloworld_m: {dtype: float16}  # COCO AP 42.56 vs 42.60 in FP32, 37 % faster
+
+store:
+  path: outputs/milestone8/lgep.sqlite
+
+# --- eight simulated cameras (MOT17 train sequences at 1080p30; Milestone 4 simulator) --------------------
+# Six sequences are 1080p; MOT17-05 (640x480) is scaled up, MOT17-04 is used twice (cam08 starts it again).
+cameras:
+  - {camera_id: cam01, url: "rtsp://127.0.0.1:8601/cam"}
+  - {camera_id: cam02, url: "rtsp://127.0.0.1:8602/cam"}
+  - {camera_id: cam03, url: "rtsp://127.0.0.1:8603/cam"}
+  - {camera_id: cam04, url: "rtsp://127.0.0.1:8604/cam"}
+  - {camera_id: cam05, url: "rtsp://127.0.0.1:8605/cam"}
+  - {camera_id: cam06, url: "rtsp://127.0.0.1:8606/cam"}
+  - {camera_id: cam07, url: "rtsp://127.0.0.1:8607/cam"}
+  - {camera_id: cam08, url: "rtsp://127.0.0.1:8608/cam"}
+simulation:
+  fps: 30
+  bitrate_kbps: 4000
+  cameras:
+    - {camera_id: cam01, port: 8601, source: data/mot17/train/MOT17-02/img1}
+    - {camera_id: cam02, port: 8602, source: data/mot17/train/MOT17-04/img1}
+    - {camera_id: cam03, port: 8603, source: data/mot17/train/MOT17-09/img1}
+    - {camera_id: cam04, port: 8604, source: data/mot17/train/MOT17-11/img1}
+    - {camera_id: cam05, port: 8605, source: data/mot17/train/MOT17-10/img1}
+    - {camera_id: cam06, port: 8606, source: data/mot17/train/MOT17-13/img1}
+    - {camera_id: cam07, port: 8607, source: data/mot17/train/MOT17-05/img1, size: 1920x1080}
+    - {camera_id: cam08, port: 8608, source: data/mot17/train/MOT17-04/img1}
+
+# --- benchmark matrix (scripts/benchmark_scaling.py) -------------------------------------------------------
+benchmark:
+  warmup_s: 15
+  window_s: 40
+  variants:                # applied on top of this file; thread counts are always explicit (see opencv_threads)
+    # The Milestone 7 server as it ran: YOLO-World (Ultralytics) had made OpenCV single-threaded on import.
+    m7: {opencv_threads: 1, reid_async: false, pipeline: {batch_size: 1}, models: {yoloworld_m: {dtype: float32}},
+         reid_overrides: {embedder: {dtype: float32}}}
+    m7_async: {opencv_threads: 1, pipeline: {batch_size: 1}, models: {yoloworld_m: {dtype: float32}},
+               reid_overrides: {embedder: {dtype: float32}}}
+    m7_async_batch: {opencv_threads: 1, models: {yoloworld_m: {dtype: float32}}, reid_overrides: {embedder: {dtype: float32}}}
+    full: {opencv_threads: 1}
+    full_no_async: {opencv_threads: 1, reid_async: false}
+    full_no_batch: {opencv_threads: 1, pipeline: {batch_size: 1}}
+    # OpenCV's default thread pool (what a process without Ultralytics, e.g. the Grounding DINO backend, gets)
+    m7_cv16: {opencv_threads: 16, reid_async: false, pipeline: {batch_size: 1}, models: {yoloworld_m: {dtype: float32}},
+              reid_overrides: {embedder: {dtype: float32}}}
+    full_cv16: {opencv_threads: 16}
+  runs:                    # variant x number of streams x frames processed per second per camera (0 = all)
+    - {variant: m7, streams: [1, 2, 4, 8], process_fps: [10]}
+    - {variant: full, streams: [1, 2, 4, 8], process_fps: [10]}
+    - {variant: m7_async, streams: [8], process_fps: [10]}
+    - {variant: m7_async_batch, streams: [8], process_fps: [10]}
+    - {variant: full_no_async, streams: [8], process_fps: [10]}
+    - {variant: full_no_batch, streams: [8], process_fps: [10]}
+    - {variant: m7_cv16, streams: [8], process_fps: [10]}
+    - {variant: full_cv16, streams: [8], process_fps: [10]}
+    - {variant: full, streams: [8], process_fps: [2, 5, 15, 0]}
+    - {variant: full, streams: [1, 2, 4], process_fps: [0]}

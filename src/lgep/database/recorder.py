@@ -47,10 +47,12 @@ class Recorder:
     def open_tracks(self) -> int:
         return len(self._open)
 
-    def observe(self, frame, tracking) -> None:
+    def observe(self, frame, tracking) -> list:
+        """Record one processed frame; returns its tracks under their segment keys (assigned now, at frame time)."""
         now, wall = frame.t_capture, frame.t_wall
         every = self.cfg.points_every_s
-        for t in as_segments(self.segments, tracking.tracks):
+        tracks = as_segments(self.segments, tracking.tracks)
+        for t in tracks:
             o = self._open.get(t.key)
             if o is None:
                 o = self._open[t.key] = _OpenTrack(t.camera_id, now, wall, 0, t.score, -1e18)
@@ -67,6 +69,7 @@ class Recorder:
                  if o.camera_id == frame.camera_id and now - o.last_seen > self.cfg.close_after_s]
         for k in stale:
             self._close(k)
+        return tracks
 
     def _close(self, key: str) -> None:
         o = self._open.pop(key)

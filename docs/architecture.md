@@ -6,7 +6,8 @@ persistent local track IDs; Milestone 4 adds **multi-camera RTSP ingestion** wit
 and reconnection; Milestone 5 adds **cross-camera Re-ID** (appearance embeddings, time / camera-layout / colour
 constraints, global identity manager; evaluated on CityFlowV2); Milestone 6 adds **language queries** (parsing, attribute verification, a
 searchable track index); Milestone 7 adds the **metadata store, the HTTP API and the React dashboard**, running
-in the same edge process. Optimisation (Milestone 8) and the research experiments (Milestone 9) build on this.
+in the same edge process; Milestone 8 adds **cross-camera batching, Re-ID in its own thread and FP16**, measured
+from 1 to 8 streams. The research experiments (Milestone 9) build on this.
 
 ```mermaid
 flowchart LR
@@ -126,6 +127,17 @@ FastAPI (uvicorn, same process) ── reads (own connection per request) ──
 * **Track segments.** A tracker key re-found after the Re-ID service ended it (frame-based vs time-based
   "lost" rules, see `lgep.tracking.segments`) becomes a new tracklet `cam01/17~2`, in Re-ID and the store alike.
 * **Replay mode** serves a stored database without cameras (browse, timeline, search).
+
+## Scheduling and precision (Milestone 8)
+
+* **Cross-camera batching:** each step the perception worker takes every camera whose frame is due and ready
+  (up to `pipeline.batch_size`) and runs one `detect_batch` call; it never waits for a camera that is not ready.
+* **Re-ID in its own thread** (`reid_async`): the perception worker records the frame (fixing its tracklet keys)
+  and hands it to a bounded queue; when the queue is full the oldest frame is dropped and counted.
+* **FP16** for YOLO-World and CLIP (accuracy checked: docs/milestone8.md §4.4).
+* **`opencv_threads`** is applied after the models are loaded (Ultralytics changes it on import).
+* Measured ceiling of one process: about 105-114 frames/s with the GPU half idle. Several processes, GPU
+  preprocessing or TensorRT come next (Jetson stage).
 
 ## GPU budget principles (8 GB)
 

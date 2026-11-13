@@ -1,0 +1,162 @@
+{
+ "measured": true,
+ "crops": 600,
+ "people": 111,
+ "sequences": [
+  "MOT17-02",
+  "MOT17-04",
+  "MOT17-09"
+ ],
+ "environment": {
+  "timestamp_utc": "2026-11-13T10:46:54+00:00",
+  "os": "Linux-6.8.0-138-generic-x86_64-with-glibc2.35",
+  "python": "3.12.16",
+  "cpu": "AMD Ryzen 7 8845HS w/ Radeon 780M Graphics",
+  "cpu_logical_cores": 16,
+  "ram_gib": 30.6,
+  "packages": {
+   "torch": "2.13.0+cu130",
+   "torchvision": "0.28.0+cu130",
+   "transformers": "5.22.2",
+   "huggingface-hub": "2.4.0",
+   "tokenizers": "0.23.3",
+   "safetensors": "0.8.0",
+   "numpy": "2.5.4",
+   "pillow": "13.0.0",
+   "lgep": "0.1.0",
+   "ultralytics": "8.4.211",
+   "clip": "1.0",
+   "opencv-python": "5.0.0.93",
+   "pycocotools": "2.0.11",
+   "scipy": "1.18.1",
+   "lap": "0.5.14",
+   "trackeval": "1.0.dev1"
+  },
+  "torch_cuda_build": "13.0",
+  "cudnn": 92000,
+  "torch_arch_list": [
+   "sm_75",
+   "sm_80",
+   "sm_86",
+   "sm_90",
+   "sm_100",
+   "sm_120"
+  ],
+  "gpu": {
+   "name": "NVIDIA GeForce RTX 4060 Laptop GPU",
+   "driver": "580.178.04",
+   "memory_total": "8188 MiB",
+   "compute_capability": "8.9",
+   "power_limit": "55.00 W"
+  }
+ },
+ "precisions": {
+  "float32": {
+   "auroc_same_vs_different": {
+    "pairs_same": 2202,
+    "pairs_different": 57498,
+    "auroc": 0.8531636799182274,
+    "similarity_same_median": 0.8496968150138855,
+    "similarity_different_median": 0.6951875686645508
+   },
+   "speed": [
+    {
+     "batch": 1,
+     "ms_per_call": 3.48,
+     "ms_per_crop": 3.478,
+     "crops_per_s": 287,
+     "peak_allocated_mib": 596
+    },
+    {
+     "batch": 8,
+     "ms_per_call": 15.18,
+     "ms_per_crop": 1.898,
+     "crops_per_s": 527,
+     "peak_allocated_mib": 607
+    },
+    {
+     "batch": 32,
+     "ms_per_call": 55.0,
+     "ms_per_crop": 1.719,
+     "crops_per_s": 582,
+     "peak_allocated_mib": 660
+    },
+    {
+     "batch": 64,
+     "ms_per_call": 107.29,
+     "ms_per_crop": 1.676,
+     "crops_per_s": 597,
+     "peak_allocated_mib": 735
+    }
+   ],
+   "embedder": {
+    "backend": "hf_clip",
+    "model_id": "laion/CLIP-ViT-B-32-laion2B-s34B-b79K",
+    "revision": "1a25a446712ba5ee05982a381eed697ef9b435cf",
+    "vision_parameters_millions": 87.85,
+    "dim": 512,
+    "input_size": 224,
+    "crop_mode": "stretch",
+    "device": "cuda",
+    "dtype": "float32",
+    "load_seconds": 0.27
+   }
+  },
+  "float16": {
+   "auroc_same_vs_different": {
+    "pairs_same": 2202,
+    "pairs_different": 57498,
+    "auroc": 0.8530371739186822,
+    "similarity_same_median": 0.8499915599822998,
+    "similarity_different_median": 0.6953566074371338
+   },
+   "speed": [
+    {
+     "batch": 1,
+     "ms_per_call": 2.39,
+     "ms_per_crop": 2.395,
+     "crops_per_s": 418,
+     "peak_allocated_mib": 310
+    },
+    {
+     "batch": 8,
+     "ms_per_call": 5.37,
+     "ms_per_crop": 0.672,
+     "crops_per_s": 1489,
+     "peak_allocated_mib": 319
+    },
+    {
+     "batch": 32,
+     "ms_per_call": 18.34,
+     "ms_per_crop": 0.573,
+     "crops_per_s": 1745,
+     "peak_allocated_mib": 360
+    },
+    {
+     "batch": 64,
+     "ms_per_call": 37.33,
+     "ms_per_crop": 0.583,
+     "crops_per_s": 1714,
+     "peak_allocated_mib": 415
+    }
+   ],
+   "embedder": {
+    "backend": "hf_clip",
+    "model_id": "laion/CLIP-ViT-B-32-laion2B-s34B-b79K",
+    "revision": "1a25a446712ba5ee05982a381eed697ef9b435cf",
+    "vision_parameters_millions": 87.85,
+    "dim": 512,
+    "input_size": 224,
+    "crop_mode": "stretch",
+    "device": "cuda",
+    "dtype": "float16",
+    "load_seconds": 0.35
+   }
+  }
+ },
+ "agreement_cosine": {
+  "mean": 0.999996,
+  "min": 0.999977,
+  "p01": 0.999988
+ }
+}

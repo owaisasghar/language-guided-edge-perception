@@ -22,6 +22,7 @@ import os
 import threading
 import time
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 
@@ -125,18 +126,31 @@ class LiveSystem(_Base):
         if cfg.get("reid_enabled", True):
             from lgep.reid import AssociationConfig, CameraTopology, SamplingConfig
             from lgep.reid.embedder import build_embedder
-            from lgep.reid.service import ReIDService
+            from lgep.reid.service import ReIDService, ReIDWorker
+            from lgep.utils.config import deep_merge
 
-            r = load_config(base_dir / "configs" / cfg["reid_config"])["reid"]
+            r = deep_merge(load_config(base_dir / "configs" / cfg["reid_config"])["reid"], cfg.get("reid_overrides") or {})
             self.index = PersistentTrackIndex(self.store)
             self.reid = ReIDService(build_embedder(r["embedder"]), SamplingConfig.from_dict(r["sampling"]),
                                     AssociationConfig.from_dict(r["association"]),
                                     CameraTopology.from_dict(r.get("topology")),
-                                    close_after_s=r.get("close_after_s", 3.0), index=self.index)
+                                    close_after_s=r.get("close_after_s", 3.0), index=self.index,
+                                    assign_segments=not cfg.get("reid_async", False))
             self.reid.embedder.embed_images([np.zeros((128, 64, 3), np.uint8)] * 8)  # warm-up
             self.scorer = _scorer(self.reid.embedder, cfg, base_dir)
             self.store.cfg.close_after_s = self.reid.close_after_s  # one rule for "track ended"
         self.recorder = Recorder(self.store, self.reid.segments if self.reid is not None else None)
+        if cfg.get("opencv_threads") is not None:
+            # Milestone 8. OpenCV's thread pool spins around tiny jobs (each frame's BGR->RGB conversion): 55 % vs
+            # 10 % of a core per 1080p30 stream. Importing Ultralytics (YOLO-World) already sets cv2.setNumThreads(0)
+            # as a side effect; other backends (Grounding DINO) do not. Applied after the models are loaded, so the
+            # configured value is the one in effect.
+            import cv2
+
+            cv2.setNumThreads(int(cfg["opencv_threads"]))
+        self.reid_worker = None
+        if self.reid is not None and cfg.get("reid_async", False):  # Milestone 8: Re-ID in its own thread
+            self.reid_worker = ReIDWorker(self.reid, self.recorder.associations, int(cfg.get("reid_queue", 16)))
         self.manager = StreamManager(self.cameras)
         self.pipeline = PerceptionPipeline(self.manager, self.detector, pcfg, on_result=self.on_result)
         self._camera_states: dict[str, str] = {}
@@ -150,14 +164,20 @@ class LiveSystem(_Base):
     def on_result(self, frame, det, trk) -> None:
         t0 = time.perf_counter()
         prov = {}
-        if self.reid is not None:
+        tracks = trk.tracks
+        if self.reid_worker is not None:  # segment keys are fixed here, at frame time, and travel with the frame
+            tracks = self.recorder.observe(frame, trk)
+            self.reid_worker.submit(frame, det, SimpleNamespace(camera_id=trk.camera_id, frame_index=trk.frame_index,
+                                                                tracks=tracks, tracker_ms=trk.tracker_ms))
+            prov = self.reid_worker.provisional(frame.camera_id)
+        elif self.reid is not None:  # same thread, same moment: Re-ID and the recorder get the same segment keys
             records = self.reid.on_result(frame, det, trk)
             prov = self.reid.provisional(frame.camera_id, frame.t_capture)
-            self.recorder.observe(frame, trk)
+            tracks = self.recorder.observe(frame, trk)
             self.recorder.associations(records)
         else:
-            self.recorder.observe(frame, trk)
-        self.hub.update(frame, trk.tracks, prov)
+            tracks = self.recorder.observe(frame, trk)
+        self.hub.update(frame, tracks, prov)
         self.callback_ms_total += (time.perf_counter() - t0) * 1e3
         self.callback_frames += 1
 
@@ -175,6 +195,8 @@ class LiveSystem(_Base):
             s.start()
             log.info("simulated camera %s at %s", cid, s.url)
         self.gpu = GpuSampler(interval_ms=1000).__enter__()
+        if self.reid_worker is not None:
+            self.reid_worker.start()
         self.manager.start()
         for target, name in ((self._perception, "perception"), (self._status_loop, "status")):
             t = threading.Thread(target=target, name=name, daemon=True)
@@ -191,7 +213,9 @@ class LiveSystem(_Base):
         self._stop.set()
         for t in self._threads:
             t.join(15)
-        if self.reid is not None:
+        if self.reid_worker is not None:
+            self.recorder.associations(self.reid_worker.stop())
+        elif self.reid is not None:
             self.recorder.associations(self.reid.close_all())
         self.recorder.close_all()
         self.store.close()
@@ -247,7 +271,7 @@ class LiveSystem(_Base):
         return {**base, "time": time.time(), "cameras": cams,
                 "pipeline": {"target_process_fps": pipe["target_process_fps"], "phrases": pipe["phrases"],
                              "callback_ms_mean": round(self.callback_ms_total / max(self.callback_frames, 1), 2)},
-                "reid": None if self.reid is None else self.reid.stats(), "live_hub": self.hub.stats(),
+                "reid": None if self.reid is None else (self.reid_worker or self.reid).stats(), "live_hub": self.hub.stats(),
                 "recorder_open_tracks": self.recorder.open_tracks, "gpu": self.gpu.latest(),
                 "last_hour": self._summary,
                 "process_cpu_percent": round(self.cpu_percent, 1)}

@@ -1,0 +1,1112 @@
+{
+ "measured": true,
+ "date": "2026-11-13T16:41:43",
+ "config": "configs/milestone8_scaling.yaml",
+ "warmup_s": 15,
+ "window_s": 40,
+ "variants": {
+  "m7": {
+   "opencv_threads": 1,
+   "reid_async": false,
+   "pipeline": {
+    "batch_size": 1
+   },
+   "models": {
+    "yoloworld_m": {
+     "dtype": "float32"
+    }
+   },
+   "reid_overrides": {
+    "embedder": {
+     "dtype": "float32"
+    }
+   }
+  },
+  "m7_async": {
+   "opencv_threads": 1,
+   "pipeline": {
+    "batch_size": 1
+   },
+   "models": {
+    "yoloworld_m": {
+     "dtype": "float32"
+    }
+   },
+   "reid_overrides": {
+    "embedder": {
+     "dtype": "float32"
+    }
+   }
+  },
+  "m7_async_batch": {
+   "opencv_threads": 1,
+   "models": {
+    "yoloworld_m": {
+     "dtype": "float32"
+    }
+   },
+   "reid_overrides": {
+    "embedder": {
+     "dtype": "float32"
+    }
+   }
+  },
+  "full": {
+   "opencv_threads": 1
+  },
+  "full_no_async": {
+   "opencv_threads": 1,
+   "reid_async": false
+  },
+  "full_no_batch": {
+   "opencv_threads": 1,
+   "pipeline": {
+    "batch_size": 1
+   }
+  },
+  "m7_cv16": {
+   "opencv_threads": 16,
+   "reid_async": false,
+   "pipeline": {
+    "batch_size": 1
+   },
+   "models": {
+    "yoloworld_m": {
+     "dtype": "float32"
+    }
+   },
+   "reid_overrides": {
+    "embedder": {
+     "dtype": "float32"
+    }
+   }
+  },
+  "full_cv16": {
+   "opencv_threads": 16
+  }
+ },
+ "environment": {
+  "timestamp_utc": "2026-11-13T11:41:43+00:00",
+  "os": "Linux-6.8.0-138-generic-x86_64-with-glibc2.35",
+  "python": "3.12.16",
+  "cpu": "AMD Ryzen 7 8845HS w/ Radeon 780M Graphics",
+  "cpu_logical_cores": 16,
+  "ram_gib": 30.6,
+  "packages": {
+   "torch": "2.13.0+cu130",
+   "torchvision": "0.28.0+cu130",
+   "transformers": "5.22.2",
+   "huggingface-hub": "2.4.0",
+   "tokenizers": "0.23.3",
+   "safetensors": "0.8.0",
+   "numpy": "2.5.4",
+   "pillow": "13.0.0",
+   "lgep": "0.1.0",
+   "ultralytics": "8.4.211",
+   "clip": "1.0",
+   "opencv-python": "5.0.0.93",
+   "pycocotools": "2.0.11",
+   "scipy": "1.18.1",
+   "lap": "0.5.14",
+   "trackeval": "1.0.dev1"
+  },
+  "torch_cuda_build": "13.0",
+  "cudnn": 92000,
+  "torch_arch_list": [
+   "sm_75",
+   "sm_80",
+   "sm_86",
+   "sm_90",
+   "sm_100",
+   "sm_120"
+  ],
+  "gpu": {
+   "name": "NVIDIA GeForce RTX 4060 Laptop GPU",
+   "driver": "580.178.04",
+   "memory_total": "8188 MiB",
+   "compute_capability": "8.9",
+   "power_limit": "55.00 W"
+  }
+ },
+ "runs": [
+  {
+   "opencv_threads": 1,
+   "window_s": 40.1,
+   "processed_fps_per_camera": {
+    "cam01": 10.02
+   },
+   "processed_fps_mean": 10.02,
+   "processed_fps_min": 10.02,
+   "processed_fps_total": 10.0,
+   "decoded_fps_mean": 30.0,
+   "latency_ms_p50": 13.7,
+   "latency_ms_p90": 14.4,
+   "latency_ms_p99": 15.2,
+   "detector_ms_p50": 12.2,
+   "batch_mean": 1.0,
+   "gpu_util_percent_mean": 18.7,
+   "gpu_memory_used_mib_max": 1206.0,
+   "gpu_power_w_mean": 20.8,
+   "gpu_energy_mj_per_frame": 2075.7,
+   "torch_peak_allocated_mib": 807,
+   "app_cpu_percent": 34.2,
+   "simulators_cpu_percent": 50.9,
+   "machine_cpu_busy_percent": 6.6,
+   "reid": {
+    "crops_per_s": 26.9,
+    "frames_dropped": null,
+    "frames_submitted": null,
+    "lag_ms_p50": null,
+    "lag_ms_p90": null,
+    "embed_ms_per_frame": 6.83,
+    "tracks_refound_after_end": 0
+   },
+   "store": {
+    "dropped": 0,
+    "failed": 0
+   },
+   "callback_ms_mean": 8.44,
+   "camera_errors": 0,
+   "variant": "m7",
+   "streams": 1,
+   "process_fps": 10
+  },
+  {
+   "opencv_threads": 1,
+   "window_s": 40.1,
+   "processed_fps_per_camera": {
+    "cam01": 9.98,
+    "cam02": 10.01
+   },
+   "processed_fps_mean": 10.0,
+   "processed_fps_min": 9.98,
+   "processed_fps_total": 20.0,
+   "decoded_fps_mean": 30.0,
+   "latency_ms_p50": 13.4,
+   "latency_ms_p90": 15.0,
+   "latency_ms_p99": 16.4,
+   "detector_ms_p50": 11.7,
+   "batch_mean": 1.0,
+   "gpu_util_percent_mean": 35.9,
+   "gpu_memory_used_mib_max": 1938.0,
+   "gpu_power_w_mean": 35.92,
+   "gpu_energy_mj_per_frame": 1796.7,
+   "torch_peak_allocated_mib": 1529,
+   "app_cpu_percent": 71.3,
+   "simulators_cpu_percent": 106.2,
+   "machine_cpu_busy_percent": 12.0,
+   "reid": {
+    "crops_per_s": 84.6,
+    "frames_dropped": null,
+    "frames_submitted": null,
+    "lag_ms_p50": null,
+    "lag_ms_p90": null,
+    "embed_ms_per_frame": 8.5,
+    "tracks_refound_after_end": 0
+   },
+   "store": {
+    "dropped": 0,
+    "failed": 0
+   },
+   "callback_ms_mean": 10.2,
+   "camera_errors": 0,
+   "variant": "m7",
+   "streams": 2,
+   "process_fps": 10
+  },
+  {
+   "opencv_threads": 1,
+   "window_s": 40.1,
+   "processed_fps_per_camera": {
+    "cam01": 9.96,
+    "cam02": 10.01,
+    "cam03": 10.01,
+    "cam04": 9.96
+   },
+   "processed_fps_mean": 9.98,
+   "processed_fps_min": 9.96,
+   "processed_fps_total": 39.9,
+   "decoded_fps_mean": 30.0,
+   "latency_ms_p50": 15.7,
+   "latency_ms_p90": 29.0,
+   "latency_ms_p99": 42.4,
+   "detector_ms_p50": 11.3,
+   "batch_mean": 1.0,
+   "gpu_util_percent_mean": 66.0,
+   "gpu_memory_used_mib_max": 1934.0,
+   "gpu_power_w_mean": 54.18,
+   "gpu_energy_mj_per_frame": 1356.7,
+   "torch_peak_allocated_mib": 1542,
+   "app_cpu_percent": 133.8,
+   "simulators_cpu_percent": 193.5,
+   "machine_cpu_busy_percent": 21.1,
+   "reid": {
+    "crops_per_s": 132.3,
+    "frames_dropped": null,
+    "frames_submitted": null,
+    "lag_ms_p50": null,
+    "lag_ms_p90": null,
+    "embed_ms_per_frame": 7.5,
+    "tracks_refound_after_end": 0
+   },
+   "store": {
+    "dropped": 0,
+    "failed": 0
+   },
+   "callback_ms_mean": 9.33,
+   "camera_errors": 0,
+   "variant": "m7",
+   "streams": 4,
+   "process_fps": 10
+  },
+  {
+   "opencv_threads": 1,
+   "window_s": 40.1,
+   "processed_fps_per_camera": {
+    "cam01": 4.34,
+    "cam02": 4.34,
+    "cam03": 4.34,
+    "cam04": 4.34,
+    "cam05": 4.34,
+    "cam06": 4.34,
+    "cam07": 4.34,
+    "cam08": 4.37
+   },
+   "processed_fps_mean": 4.35,
+   "processed_fps_min": 4.34,
+   "processed_fps_total": 34.8,
+   "decoded_fps_mean": 30.0,
+   "latency_ms_p50": 31.7,
+   "latency_ms_p90": 45.1,
+   "latency_ms_p99": 50.1,
+   "detector_ms_p50": 12.7,
+   "batch_mean": 1.0,
+   "gpu_util_percent_mean": 66.0,
+   "gpu_memory_used_mib_max": 1928.0,
+   "gpu_power_w_mean": 54.58,
+   "gpu_energy_mj_per_frame": 1569.8,
+   "torch_peak_allocated_mib": 1535,
+   "app_cpu_percent": 199.5,
+   "simulators_cpu_percent": 402.9,
+   "machine_cpu_busy_percent": 38.8,
+   "reid": {
+    "crops_per_s": 169.4,
+    "frames_dropped": null,
+    "frames_submitted": null,
+    "lag_ms_p50": null,
+    "lag_ms_p90": null,
+    "embed_ms_per_frame": 10.2,
+    "tracks_refound_after_end": 0
+   },
+   "store": {
+    "dropped": 0,
+    "failed": 0
+   },
+   "callback_ms_mean": 13.31,
+   "camera_errors": 0,
+   "variant": "m7",
+   "streams": 8,
+   "process_fps": 10
+  },
+  {
+   "opencv_threads": 1,
+   "window_s": 40.1,
+   "processed_fps_per_camera": {
+    "cam01": 10.0
+   },
+   "processed_fps_mean": 10.0,
+   "processed_fps_min": 10.0,
+   "processed_fps_total": 10.0,
+   "decoded_fps_mean": 30.0,
+   "latency_ms_p50": 10.0,
+   "latency_ms_p90": 10.8,
+   "latency_ms_p99": 11.4,
+   "detector_ms_p50": 8.6,
+   "batch_mean": 1.0,
+   "gpu_util_percent_mean": 9.6,
+   "gpu_memory_used_mib_max": 1838.0,
+   "gpu_power_w_mean": 16.84,
+   "gpu_energy_mj_per_frame": 1684.8,
+   "torch_peak_allocated_mib": 1195,
+   "app_cpu_percent": 26.0,
+   "simulators_cpu_percent": 50.2,
+   "machine_cpu_busy_percent": 5.7,
+   "reid": {
+    "crops_per_s": 26.9,
+    "frames_dropped": 0,
+    "frames_submitted": 401,
+    "lag_ms_p50": 14.4,
+    "lag_ms_p90": 17.8,
+    "embed_ms_per_frame": 3.44,
+    "tracks_refound_after_end": 0
+   },
+   "store": {
+    "dropped": 0,
+    "failed": 0
+   },
+   "callback_ms_mean": 0.06,
+   "camera_errors": 0,
+   "variant": "full",
+   "streams": 1,
+   "process_fps": 10
+  },
+  {
+   "opencv_threads": 1,
+   "window_s": 40.1,
+   "processed_fps_per_camera": {
+    "cam01": 10.0,
+    "cam02": 10.0
+   },
+   "processed_fps_mean": 10.0,
+   "processed_fps_min": 10.0,
+   "processed_fps_total": 20.0,
+   "decoded_fps_mean": 30.0,
+   "latency_ms_p50": 10.8,
+   "latency_ms_p90": 12.5,
+   "latency_ms_p99": 15.2,
+   "detector_ms_p50": 8.8,
+   "batch_mean": 1.0,
+   "gpu_util_percent_mean": 21.6,
+   "gpu_memory_used_mib_max": 1486.0,
+   "gpu_power_w_mean": 19.81,
+   "gpu_energy_mj_per_frame": 990.9,
+   "torch_peak_allocated_mib": 862,
+   "app_cpu_percent": 57.5,
+   "simulators_cpu_percent": 104.2,
+   "machine_cpu_busy_percent": 11.0,
+   "reid": {
+    "crops_per_s": 84.8,
+    "frames_dropped": 0,
+    "frames_submitted": 802,
+    "lag_ms_p50": 16.4,
+    "lag_ms_p90": 21.0,
+    "embed_ms_per_frame": 4.72,
+    "tracks_refound_after_end": 0
+   },
+   "store": {
+    "dropped": 0,
+    "failed": 0
+   },
+   "callback_ms_mean": 0.1,
+   "camera_errors": 0,
+   "variant": "full",
+   "streams": 2,
+   "process_fps": 10
+  },
+  {
+   "opencv_threads": 1,
+   "window_s": 40.1,
+   "processed_fps_per_camera": {
+    "cam01": 9.98,
+    "cam02": 10.01,
+    "cam03": 10.01,
+    "cam04": 9.98
+   },
+   "processed_fps_mean": 10.0,
+   "processed_fps_min": 9.98,
+   "processed_fps_total": 40.0,
+   "decoded_fps_mean": 30.0,
+   "latency_ms_p50": 10.1,
+   "latency_ms_p90": 11.6,
+   "latency_ms_p99": 16.9,
+   "detector_ms_p50": 8.5,
+   "batch_mean": 1.0,
+   "gpu_util_percent_mean": 37.6,
+   "gpu_memory_used_mib_max": 1274.0,
+   "gpu_power_w_mean": 28.9,
+   "gpu_energy_mj_per_frame": 722.8,
+   "torch_peak_allocated_mib": 860,
+   "app_cpu_percent": 106.5,
+   "simulators_cpu_percent": 192.1,
+   "machine_cpu_busy_percent": 19.3,
+   "reid": {
+    "crops_per_s": 132.8,
+    "frames_dropped": 0,
+    "frames_submitted": 1602,
+    "lag_ms_p50": 15.6,
+    "lag_ms_p90": 20.5,
+    "embed_ms_per_frame": 4.48,
+    "tracks_refound_after_end": 0
+   },
+   "store": {
+    "dropped": 0,
+    "failed": 0
+   },
+   "callback_ms_mean": 0.09,
+   "camera_errors": 0,
+   "variant": "full",
+   "streams": 4,
+   "process_fps": 10
+  },
+  {
+   "opencv_threads": 1,
+   "window_s": 40.1,
+   "processed_fps_per_camera": {
+    "cam01": 9.98,
+    "cam02": 9.98,
+    "cam03": 10.01,
+    "cam04": 10.01,
+    "cam05": 9.98,
+    "cam06": 9.98,
+    "cam07": 10.01,
+    "cam08": 10.01
+   },
+   "processed_fps_mean": 10.0,
+   "processed_fps_min": 9.98,
+   "processed_fps_total": 80.0,
+   "decoded_fps_mean": 30.0,
+   "latency_ms_p50": 48.5,
+   "latency_ms_p90": 64.0,
+   "latency_ms_p99": 79.4,
+   "detector_ms_p50": 29.7,
+   "batch_mean": 3.29,
+   "gpu_util_percent_mean": 51.0,
+   "gpu_memory_used_mib_max": 1442.0,
+   "gpu_power_w_mean": 52.48,
+   "gpu_energy_mj_per_frame": 656.3,
+   "torch_peak_allocated_mib": 916,
+   "app_cpu_percent": 265.6,
+   "simulators_cpu_percent": 406.0,
+   "machine_cpu_busy_percent": 43.5,
+   "reid": {
+    "crops_per_s": 207.7,
+    "frames_dropped": 304,
+    "frames_submitted": 3204,
+    "lag_ms_p50": 216.0,
+    "lag_ms_p90": 259.0,
+    "embed_ms_per_frame": 10.09,
+    "tracks_refound_after_end": 0
+   },
+   "store": {
+    "dropped": 0,
+    "failed": 0
+   },
+   "callback_ms_mean": 0.09,
+   "camera_errors": 0,
+   "variant": "full",
+   "streams": 8,
+   "process_fps": 10
+  },
+  {
+   "opencv_threads": 1,
+   "window_s": 40.1,
+   "processed_fps_per_camera": {
+    "cam01": 4.54,
+    "cam02": 4.54,
+    "cam03": 4.52,
+    "cam04": 4.52,
+    "cam05": 4.54,
+    "cam06": 4.54,
+    "cam07": 4.54,
+    "cam08": 4.54
+   },
+   "processed_fps_mean": 4.54,
+   "processed_fps_min": 4.52,
+   "processed_fps_total": 36.3,
+   "decoded_fps_mean": 30.0,
+   "latency_ms_p50": 45.3,
+   "latency_ms_p90": 61.1,
+   "latency_ms_p99": 73.9,
+   "detector_ms_p50": 23.5,
+   "batch_mean": 1.0,
+   "gpu_util_percent_mean": 71.7,
+   "gpu_memory_used_mib_max": 1674.0,
+   "gpu_power_w_mean": 54.37,
+   "gpu_energy_mj_per_frame": 1498.2,
+   "torch_peak_allocated_mib": 1246,
+   "app_cpu_percent": 266.9,
+   "simulators_cpu_percent": 414.1,
+   "machine_cpu_busy_percent": 44.1,
+   "reid": {
+    "crops_per_s": 177.7,
+    "frames_dropped": 0,
+    "frames_submitted": 1454,
+    "lag_ms_p50": 76.7,
+    "lag_ms_p90": 109.4,
+    "embed_ms_per_frame": 18.16,
+    "tracks_refound_after_end": 0
+   },
+   "store": {
+    "dropped": 0,
+    "failed": 0
+   },
+   "callback_ms_mean": 0.11,
+   "camera_errors": 0,
+   "variant": "m7_async",
+   "streams": 8,
+   "process_fps": 10
+  },
+  {
+   "opencv_threads": 1,
+   "window_s": 40.1,
+   "processed_fps_per_camera": {
+    "cam01": 7.56,
+    "cam02": 7.19,
+    "cam03": 7.09,
+    "cam04": 7.26,
+    "cam05": 7.31,
+    "cam06": 7.56,
+    "cam07": 7.51,
+    "cam08": 7.54
+   },
+   "processed_fps_mean": 7.38,
+   "processed_fps_min": 7.09,
+   "processed_fps_total": 59.0,
+   "decoded_fps_mean": 30.0,
+   "latency_ms_p50": 141.6,
+   "latency_ms_p90": 164.0,
+   "latency_ms_p99": 186.9,
+   "detector_ms_p50": 112.5,
+   "batch_mean": 7.67,
+   "gpu_util_percent_mean": 76.6,
+   "gpu_memory_used_mib_max": 2360.0,
+   "gpu_power_w_mean": 54.2,
+   "gpu_energy_mj_per_frame": 918.2,
+   "torch_peak_allocated_mib": 1817,
+   "app_cpu_percent": 297.2,
+   "simulators_cpu_percent": 435.5,
+   "machine_cpu_busy_percent": 47.9,
+   "reid": {
+    "crops_per_s": 101.7,
+    "frames_dropped": 1326,
+    "frames_submitted": 2365,
+    "lag_ms_p50": 403.7,
+    "lag_ms_p90": 481.9,
+    "embed_ms_per_frame": 25.17,
+    "tracks_refound_after_end": 0
+   },
+   "store": {
+    "dropped": 0,
+    "failed": 0
+   },
+   "callback_ms_mean": 0.11,
+   "camera_errors": 0,
+   "variant": "m7_async_batch",
+   "streams": 8,
+   "process_fps": 10
+  },
+  {
+   "opencv_threads": 1,
+   "window_s": 40.1,
+   "processed_fps_per_camera": {
+    "cam01": 8.59,
+    "cam02": 8.29,
+    "cam03": 8.14,
+    "cam04": 8.31,
+    "cam05": 8.31,
+    "cam06": 8.66,
+    "cam07": 8.66,
+    "cam08": 8.66
+   },
+   "processed_fps_mean": 8.45,
+   "processed_fps_min": 8.14,
+   "processed_fps_total": 67.6,
+   "decoded_fps_mean": 30.0,
+   "latency_ms_p50": 87.5,
+   "latency_ms_p90": 125.4,
+   "latency_ms_p99": 150.6,
+   "detector_ms_p50": 43.6,
+   "batch_mean": 7.36,
+   "gpu_util_percent_mean": 40.8,
+   "gpu_memory_used_mib_max": 2054.0,
+   "gpu_power_w_mean": 50.81,
+   "gpu_energy_mj_per_frame": 751.5,
+   "torch_peak_allocated_mib": 1299,
+   "app_cpu_percent": 208.5,
+   "simulators_cpu_percent": 421.9,
+   "machine_cpu_busy_percent": 41.7,
+   "reid": {
+    "crops_per_s": 194.5,
+    "frames_dropped": null,
+    "frames_submitted": null,
+    "lag_ms_p50": null,
+    "lag_ms_p90": null,
+    "embed_ms_per_frame": 4.92,
+    "tracks_refound_after_end": 0
+   },
+   "store": {
+    "dropped": 0,
+    "failed": 0
+   },
+   "callback_ms_mean": 6.83,
+   "camera_errors": 0,
+   "variant": "full_no_async",
+   "streams": 8,
+   "process_fps": 10
+  },
+  {
+   "opencv_threads": 1,
+   "window_s": 40.1,
+   "processed_fps_per_camera": {
+    "cam01": 6.49,
+    "cam02": 6.49,
+    "cam03": 6.51,
+    "cam04": 6.51,
+    "cam05": 6.49,
+    "cam06": 6.46,
+    "cam07": 6.49,
+    "cam08": 6.41
+   },
+   "processed_fps_mean": 6.48,
+   "processed_fps_min": 6.41,
+   "processed_fps_total": 51.9,
+   "decoded_fps_mean": 30.0,
+   "latency_ms_p50": 37.0,
+   "latency_ms_p90": 50.7,
+   "latency_ms_p99": 57.0,
+   "detector_ms_p50": 17.0,
+   "batch_mean": 1.0,
+   "gpu_util_percent_mean": 38.1,
+   "gpu_memory_used_mib_max": 1494.0,
+   "gpu_power_w_mean": 51.86,
+   "gpu_energy_mj_per_frame": 999.9,
+   "torch_peak_allocated_mib": 868,
+   "app_cpu_percent": 244.6,
+   "simulators_cpu_percent": 420.3,
+   "machine_cpu_busy_percent": 43.8,
+   "reid": {
+    "crops_per_s": 191.7,
+    "frames_dropped": 0,
+    "frames_submitted": 2078,
+    "lag_ms_p50": 48.1,
+    "lag_ms_p90": 65.1,
+    "embed_ms_per_frame": 7.5,
+    "tracks_refound_after_end": 0
+   },
+   "store": {
+    "dropped": 0,
+    "failed": 0
+   },
+   "callback_ms_mean": 0.12,
+   "camera_errors": 0,
+   "variant": "full_no_batch",
+   "streams": 8,
+   "process_fps": 10
+  },
+  {
+   "opencv_threads": 16,
+   "window_s": 40.1,
+   "processed_fps_per_camera": {
+    "cam01": 3.56,
+    "cam02": 3.56,
+    "cam03": 3.56,
+    "cam04": 3.56,
+    "cam05": 3.56,
+    "cam06": 3.54,
+    "cam07": 3.54,
+    "cam08": 3.56
+   },
+   "processed_fps_mean": 3.56,
+   "processed_fps_min": 3.54,
+   "processed_fps_total": 28.5,
+   "decoded_fps_mean": 30.0,
+   "latency_ms_p50": 34.8,
+   "latency_ms_p90": 49.5,
+   "latency_ms_p99": 57.3,
+   "detector_ms_p50": 15.8,
+   "batch_mean": 1.0,
+   "gpu_util_percent_mean": 51.5,
+   "gpu_memory_used_mib_max": 1660.0,
+   "gpu_power_w_mean": 53.33,
+   "gpu_energy_mj_per_frame": 1873.5,
+   "torch_peak_allocated_mib": 1201,
+   "app_cpu_percent": 511.6,
+   "simulators_cpu_percent": 504.8,
+   "machine_cpu_busy_percent": 66.9,
+   "reid": {
+    "crops_per_s": 134.7,
+    "frames_dropped": null,
+    "frames_submitted": null,
+    "lag_ms_p50": null,
+    "lag_ms_p90": null,
+    "embed_ms_per_frame": 10.9,
+    "tracks_refound_after_end": 10
+   },
+   "store": {
+    "dropped": 0,
+    "failed": 0
+   },
+   "callback_ms_mean": 15.04,
+   "camera_errors": 0,
+   "variant": "m7_cv16",
+   "streams": 8,
+   "process_fps": 10
+  },
+  {
+   "opencv_threads": 16,
+   "window_s": 40.1,
+   "processed_fps_per_camera": {
+    "cam01": 9.8,
+    "cam02": 9.87,
+    "cam03": 9.87,
+    "cam04": 9.57,
+    "cam05": 9.5,
+    "cam06": 9.5,
+    "cam07": 9.87,
+    "cam08": 9.75
+   },
+   "processed_fps_mean": 9.71,
+   "processed_fps_min": 9.5,
+   "processed_fps_total": 77.7,
+   "decoded_fps_mean": 30.0,
+   "latency_ms_p50": 79.5,
+   "latency_ms_p90": 109.9,
+   "latency_ms_p99": 149.6,
+   "detector_ms_p50": 53.1,
+   "batch_mean": 5.92,
+   "gpu_util_percent_mean": 37.4,
+   "gpu_memory_used_mib_max": 1846.0,
+   "gpu_power_w_mean": 49.07,
+   "gpu_energy_mj_per_frame": 631.4,
+   "torch_peak_allocated_mib": 1307,
+   "app_cpu_percent": 580.5,
+   "simulators_cpu_percent": 489.4,
+   "machine_cpu_busy_percent": 70.4,
+   "reid": {
+    "crops_per_s": 129.8,
+    "frames_dropped": 1668,
+    "frames_submitted": 3118,
+    "lag_ms_p50": 282.5,
+    "lag_ms_p90": 348.9,
+    "embed_ms_per_frame": 16.24,
+    "tracks_refound_after_end": 0
+   },
+   "store": {
+    "dropped": 0,
+    "failed": 0
+   },
+   "callback_ms_mean": 0.13,
+   "camera_errors": 0,
+   "variant": "full_cv16",
+   "streams": 8,
+   "process_fps": 10
+  },
+  {
+   "opencv_threads": 1,
+   "window_s": 40.1,
+   "processed_fps_per_camera": {
+    "cam01": 2.0,
+    "cam02": 2.0,
+    "cam03": 2.0,
+    "cam04": 2.02,
+    "cam05": 2.02,
+    "cam06": 2.0,
+    "cam07": 2.0,
+    "cam08": 2.0
+   },
+   "processed_fps_mean": 2.0,
+   "processed_fps_min": 2.0,
+   "processed_fps_total": 16.0,
+   "decoded_fps_mean": 30.0,
+   "latency_ms_p50": 14.2,
+   "latency_ms_p90": 18.0,
+   "latency_ms_p99": 20.9,
+   "detector_ms_p50": 12.3,
+   "batch_mean": 1.0,
+   "gpu_util_percent_mean": 26.1,
+   "gpu_memory_used_mib_max": 1494.0,
+   "gpu_power_w_mean": 21.61,
+   "gpu_energy_mj_per_frame": 1348.6,
+   "torch_peak_allocated_mib": 842,
+   "app_cpu_percent": 132.4,
+   "simulators_cpu_percent": 395.2,
+   "machine_cpu_busy_percent": 34.5,
+   "reid": {
+    "crops_per_s": 68.1,
+    "frames_dropped": 0,
+    "frames_submitted": 642,
+    "lag_ms_p50": 22.6,
+    "lag_ms_p90": 32.9,
+    "embed_ms_per_frame": 5.61,
+    "tracks_refound_after_end": 0
+   },
+   "store": {
+    "dropped": 0,
+    "failed": 0
+   },
+   "callback_ms_mean": 0.11,
+   "camera_errors": 0,
+   "variant": "full",
+   "streams": 8,
+   "process_fps": 2
+  },
+  {
+   "opencv_threads": 1,
+   "window_s": 40.1,
+   "processed_fps_per_camera": {
+    "cam01": 4.99,
+    "cam02": 4.99,
+    "cam03": 4.99,
+    "cam04": 5.02,
+    "cam05": 5.02,
+    "cam06": 4.99,
+    "cam07": 4.99,
+    "cam08": 4.99
+   },
+   "processed_fps_mean": 5.0,
+   "processed_fps_min": 4.99,
+   "processed_fps_total": 40.0,
+   "decoded_fps_mean": 30.0,
+   "latency_ms_p50": 19.2,
+   "latency_ms_p90": 36.2,
+   "latency_ms_p99": 51.3,
+   "detector_ms_p50": 13.9,
+   "batch_mean": 1.06,
+   "gpu_util_percent_mean": 32.5,
+   "gpu_memory_used_mib_max": 1292.0,
+   "gpu_power_w_mean": 42.19,
+   "gpu_energy_mj_per_frame": 1055.2,
+   "torch_peak_allocated_mib": 868,
+   "app_cpu_percent": 197.0,
+   "simulators_cpu_percent": 393.8,
+   "machine_cpu_busy_percent": 39.0,
+   "reid": {
+    "crops_per_s": 199.0,
+    "frames_dropped": 0,
+    "frames_submitted": 1602,
+    "lag_ms_p50": 31.4,
+    "lag_ms_p90": 54.5,
+    "embed_ms_per_frame": 7.82,
+    "tracks_refound_after_end": 0
+   },
+   "store": {
+    "dropped": 0,
+    "failed": 0
+   },
+   "callback_ms_mean": 0.14,
+   "camera_errors": 0,
+   "variant": "full",
+   "streams": 8,
+   "process_fps": 5
+  },
+  {
+   "opencv_threads": 1,
+   "window_s": 40.1,
+   "processed_fps_per_camera": {
+    "cam01": 12.8,
+    "cam02": 12.38,
+    "cam03": 12.25,
+    "cam04": 12.35,
+    "cam05": 12.15,
+    "cam06": 12.95,
+    "cam07": 13.1,
+    "cam08": 12.73
+   },
+   "processed_fps_mean": 12.59,
+   "processed_fps_min": 12.15,
+   "processed_fps_total": 100.7,
+   "decoded_fps_mean": 30.0,
+   "latency_ms_p50": 81.9,
+   "latency_ms_p90": 99.1,
+   "latency_ms_p99": 115.3,
+   "detector_ms_p50": 56.6,
+   "batch_mean": 7.14,
+   "gpu_util_percent_mean": 53.3,
+   "gpu_memory_used_mib_max": 1488.0,
+   "gpu_power_w_mean": 51.16,
+   "gpu_energy_mj_per_frame": 507.9,
+   "torch_peak_allocated_mib": 968,
+   "app_cpu_percent": 277.4,
+   "simulators_cpu_percent": 430.3,
+   "machine_cpu_busy_percent": 46.7,
+   "reid": {
+    "crops_per_s": 150.9,
+    "frames_dropped": 2056,
+    "frames_submitted": 4036,
+    "lag_ms_p50": 232.7,
+    "lag_ms_p90": 282.5,
+    "embed_ms_per_frame": 14.03,
+    "tracks_refound_after_end": 0
+   },
+   "store": {
+    "dropped": 0,
+    "failed": 0
+   },
+   "callback_ms_mean": 0.1,
+   "camera_errors": 0,
+   "variant": "full",
+   "streams": 8,
+   "process_fps": 15
+  },
+  {
+   "opencv_threads": 1,
+   "window_s": 40.1,
+   "processed_fps_per_camera": {
+    "cam01": 13.15,
+    "cam02": 13.15,
+    "cam03": 13.15,
+    "cam04": 13.15,
+    "cam05": 13.15,
+    "cam06": 13.15,
+    "cam07": 13.15,
+    "cam08": 13.15
+   },
+   "processed_fps_mean": 13.15,
+   "processed_fps_min": 13.15,
+   "processed_fps_total": 105.2,
+   "decoded_fps_mean": 30.0,
+   "latency_ms_p50": 84.4,
+   "latency_ms_p90": 100.1,
+   "latency_ms_p99": 112.7,
+   "detector_ms_p50": 57.6,
+   "batch_mean": 8.0,
+   "gpu_util_percent_mean": 50.5,
+   "gpu_memory_used_mib_max": 1534.0,
+   "gpu_power_w_mean": 50.99,
+   "gpu_energy_mj_per_frame": 484.6,
+   "torch_peak_allocated_mib": 976,
+   "app_cpu_percent": 270.8,
+   "simulators_cpu_percent": 422.6,
+   "machine_cpu_busy_percent": 45.6,
+   "reid": {
+    "crops_per_s": 108.0,
+    "frames_dropped": 2266,
+    "frames_submitted": 4216,
+    "lag_ms_p50": 221.9,
+    "lag_ms_p90": 261.1,
+    "embed_ms_per_frame": 14.0,
+    "tracks_refound_after_end": 0
+   },
+   "store": {
+    "dropped": 0,
+    "failed": 0
+   },
+   "callback_ms_mean": 0.11,
+   "camera_errors": 0,
+   "variant": "full",
+   "streams": 8,
+   "process_fps": 0
+  },
+  {
+   "opencv_threads": 1,
+   "window_s": 40.1,
+   "processed_fps_per_camera": {
+    "cam01": 29.99
+   },
+   "processed_fps_mean": 29.99,
+   "processed_fps_min": 29.99,
+   "processed_fps_total": 30.0,
+   "decoded_fps_mean": 30.0,
+   "latency_ms_p50": 10.0,
+   "latency_ms_p90": 10.8,
+   "latency_ms_p99": 13.8,
+   "detector_ms_p50": 8.6,
+   "batch_mean": 1.0,
+   "gpu_util_percent_mean": 24.4,
+   "gpu_memory_used_mib_max": 1240.0,
+   "gpu_power_w_mean": 21.68,
+   "gpu_energy_mj_per_frame": 723.0,
+   "torch_peak_allocated_mib": 849,
+   "app_cpu_percent": 51.0,
+   "simulators_cpu_percent": 50.2,
+   "machine_cpu_busy_percent": 7.7,
+   "reid": {
+    "crops_per_s": 34.5,
+    "frames_dropped": 0,
+    "frames_submitted": 1203,
+    "lag_ms_p50": 13.4,
+    "lag_ms_p90": 15.6,
+    "embed_ms_per_frame": 2.25,
+    "tracks_refound_after_end": 0
+   },
+   "store": {
+    "dropped": 0,
+    "failed": 0
+   },
+   "callback_ms_mean": 0.06,
+   "camera_errors": 0,
+   "variant": "full",
+   "streams": 1,
+   "process_fps": 0
+  },
+  {
+   "opencv_threads": 1,
+   "window_s": 40.1,
+   "processed_fps_per_camera": {
+    "cam01": 30.02,
+    "cam02": 30.0
+   },
+   "processed_fps_mean": 30.01,
+   "processed_fps_min": 30.0,
+   "processed_fps_total": 60.0,
+   "decoded_fps_mean": 30.0,
+   "latency_ms_p50": 12.6,
+   "latency_ms_p90": 16.4,
+   "latency_ms_p99": 19.5,
+   "detector_ms_p50": 9.1,
+   "batch_mean": 1.0,
+   "gpu_util_percent_mean": 39.7,
+   "gpu_memory_used_mib_max": 1284.0,
+   "gpu_power_w_mean": 48.33,
+   "gpu_energy_mj_per_frame": 805.2,
+   "torch_peak_allocated_mib": 860,
+   "app_cpu_percent": 114.2,
+   "simulators_cpu_percent": 104.1,
+   "machine_cpu_busy_percent": 15.0,
+   "reid": {
+    "crops_per_s": 106.9,
+    "frames_dropped": 0,
+    "frames_submitted": 2405,
+    "lag_ms_p50": 17.7,
+    "lag_ms_p90": 21.8,
+    "embed_ms_per_frame": 4.12,
+    "tracks_refound_after_end": 0
+   },
+   "store": {
+    "dropped": 0,
+    "failed": 0
+   },
+   "callback_ms_mean": 0.09,
+   "camera_errors": 0,
+   "variant": "full",
+   "streams": 2,
+   "process_fps": 0
+  },
+  {
+   "opencv_threads": 1,
+   "window_s": 40.1,
+   "processed_fps_per_camera": {
+    "cam01": 28.43,
+    "cam02": 28.38,
+    "cam03": 28.58,
+    "cam04": 28.35
+   },
+   "processed_fps_mean": 28.43,
+   "processed_fps_min": 28.35,
+   "processed_fps_total": 113.7,
+   "decoded_fps_mean": 30.0,
+   "latency_ms_p50": 50.0,
+   "latency_ms_p90": 63.8,
+   "latency_ms_p99": 70.7,
+   "detector_ms_p50": 27.6,
+   "batch_mean": 3.98,
+   "gpu_util_percent_mean": 63.9,
+   "gpu_memory_used_mib_max": 1324.0,
+   "gpu_power_w_mean": 53.37,
+   "gpu_energy_mj_per_frame": 469.2,
+   "torch_peak_allocated_mib": 924,
+   "app_cpu_percent": 211.2,
+   "simulators_cpu_percent": 193.1,
+   "machine_cpu_busy_percent": 26.8,
+   "reid": {
+    "crops_per_s": 156.8,
+    "frames_dropped": 689,
+    "frames_submitted": 4557,
+    "lag_ms_p50": 175.4,
+    "lag_ms_p90": 201.3,
+    "embed_ms_per_frame": 8.47,
+    "tracks_refound_after_end": 0
+   },
+   "store": {
+    "dropped": 0,
+    "failed": 0
+   },
+   "callback_ms_mean": 0.06,
+   "camera_errors": 0,
+   "variant": "full",
+   "streams": 4,
+   "process_fps": 0
+  }
+ ],
+ "seconds": 1362
+}

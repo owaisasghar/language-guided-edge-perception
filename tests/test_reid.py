@@ -273,3 +273,31 @@ def test_service_gives_a_track_refound_after_it_ended_a_new_segment():
     final = svc.close_all()
     assert [r.track_key for r in final] == ["cam01/1~2"] and final[0].decision == "matched"
     assert svc.segments.reopened == 1 and svc.stats()["tracks_refound_after_end"] == 1
+
+
+def test_reid_worker_never_blocks_and_closes_on_stop():
+    import threading
+
+    from lgep.reid.service import ReIDWorker
+    from lgep.tracking.tracker import Track
+
+    gate = threading.Event()
+
+    class SlowEmb:
+        def embed_images(self, crops):
+            gate.wait(5)
+            return np.array([unit(1, 0)] * len(crops), np.float32)
+
+    svc = ReIDService(SlowEmb(), SamplingConfig(every_n_frames=1, min_score=0.0, center=False),
+                      AssociationConfig(appearance_threshold=0.9), close_after_s=1.0)
+    got = []
+    w = ReIDWorker(svc, on_records=got.extend, queue_size=2).start()
+    img = np.zeros((480, 640, 3), np.uint8)
+    t1 = Track("cam01", 1, "person", (100.0, 100.0, 150.0, 300.0), 0.9, 1)
+    for i in range(6):  # the worker is stuck in the first embedding: the queue overflows
+        w.submit(SimpleNamespace(camera_id="cam01", index=i + 1, t_capture=0.1 * i, image=img), None,
+                 SimpleNamespace(tracks=[t1]))
+    assert w.submitted == 6 and w.dropped >= 3  # oldest frames dropped, submit returned immediately
+    gate.set()
+    final = w.stop()
+    assert [r.track_key for r in final] == ["cam01/1"] and w.stats()["processed"] >= 2

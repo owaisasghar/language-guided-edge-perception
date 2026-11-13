@@ -188,20 +188,27 @@ class YoloWorldDetector:
         self._phrases = list(phrases)
         self.text_encode_ms.append(t["text"])
 
+    @staticmethod
+    def _rgb(image: Image.Image | np.ndarray) -> np.ndarray:
+        """RGB HxWx3 uint8 array; an array in that form is used as is (no PIL round trip, same values)."""
+        if isinstance(image, np.ndarray) and image.dtype == np.uint8 and image.ndim == 3 and image.shape[2] == 3:
+            return image
+        if isinstance(image, np.ndarray):
+            image = Image.fromarray(image)
+        return np.asarray(image.convert("RGB"))
+
     @torch.inference_mode()
     def detect(self, image: Image.Image | np.ndarray, phrases: str | list[str]) -> DetectionResult:
-        if isinstance(image, np.ndarray):  # assume RGB HxWx3 uint8
-            image = Image.fromarray(image)
-        image = image.convert("RGB")
+        rgb = self._rgb(image)
         phrases = normalize_phrases(phrases)
         self.set_phrases(phrases)
-        w, h = image.size
+        h, w = rgb.shape[:2]
         cfg = self.cfg
         t: dict[str, float] = {}
 
         with timed(self.device, t, "pre"):
             # Letterboxing RGB directly equals Ultralytics' BGR letterbox followed by its BGR->RGB flip.
-            lb, ratio_pad = self._fit(np.asarray(image))
+            lb, ratio_pad = self._fit(rgb)
             x = torch.from_numpy(lb).to(self.device).permute(2, 0, 1).unsqueeze(0).contiguous()
             x = (x.half() if self.dtype == torch.float16 else x.float()).div_(255)
 
@@ -222,3 +229,56 @@ class YoloWorldDetector:
             input_size=(int(x.shape[3]), int(x.shape[2])), detections=detections,
             timings=StageTimings(preprocess_ms=t["pre"], inference_ms=t["infer"], postprocess_ms=t["post"]),
         )
+
+    @torch.inference_mode()
+    def detect_batch(self, images: list, phrases: str | list[str]) -> list[DetectionResult]:
+        """Several images (e.g. one frame per camera) in as few forward passes as possible: images whose
+        letterboxed shape is equal share one batch. Same boxes as ``detect`` per image (up to floating-point
+        differences between batch sizes). Timings: each result carries the whole call's stage times."""
+        if len(images) == 1:
+            return [self.detect(images[0], phrases)]
+        phrases = normalize_phrases(phrases)
+        self.set_phrases(phrases)
+        cfg = self.cfg
+        t: dict[str, float] = {"pre": 0.0, "infer": 0.0, "post": 0.0}
+        rgbs = [self._rgb(im) for im in images]
+        groups: dict[tuple, list[int]] = {}
+        fitted = []
+        part: dict[str, float] = {}
+        with timed(self.device, part, "pre"):
+            for i, rgb in enumerate(rgbs):
+                lb, ratio_pad = self._fit(rgb)
+                fitted.append((lb, ratio_pad))
+                groups.setdefault(lb.shape, []).append(i)
+        t["pre"] += part["pre"]
+        out_rows: list = [None] * len(images)
+        in_sizes: list = [None] * len(images)
+        for shape, idx in groups.items():
+            part = {}
+            with timed(self.device, part, "pre"):
+                x = torch.from_numpy(np.stack([fitted[i][0] for i in idx])).to(self.device).permute(0, 3, 1, 2)
+                x = (x.half() if self.dtype == torch.float16 else x.float()).contiguous().div_(255)
+            with timed(self.device, part, "infer"):
+                preds = self.model(x)
+            with timed(self.device, part, "post"):
+                res = self._nms(preds, cfg.conf, cfg.iou, None, cfg.agnostic_nms, multi_label=cfg.multi_label,
+                                max_det=cfg.max_det, nc=0, end2end=self.end2end)
+                for k, i in enumerate(idx):
+                    o = res[k]
+                    if len(o):
+                        h, w = rgbs[i].shape[:2]
+                        o[:, :4] = self._scale_boxes(x.shape[2:], o[:, :4], (h, w), ratio_pad=fitted[i][1])
+                    out_rows[i] = o.float().cpu()
+                    in_sizes[i] = (int(x.shape[3]), int(x.shape[2]))
+            for k in ("pre", "infer", "post"):
+                t[k] += part.get(k, 0.0)
+        results = []
+        for i, rows in enumerate(out_rows):
+            h, w = rgbs[i].shape[:2]
+            dets = [Detection(box_xyxy=tuple(r[:4]), score=r[4], phrase_id=int(r[5]), phrase=phrases[int(r[5])])
+                    for r in rows[:, :6].tolist()]
+            results.append(DetectionResult(phrases=phrases, prompt=" . ".join(phrases), image_size=(w, h),
+                                           input_size=in_sizes[i], detections=dets,
+                                           timings=StageTimings(preprocess_ms=t["pre"], inference_ms=t["infer"],
+                                                                postprocess_ms=t["post"])))
+        return results

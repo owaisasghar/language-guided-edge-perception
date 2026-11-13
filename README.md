@@ -5,14 +5,15 @@ blue shirt"* or *"which cameras saw this vehicle?"*. The system detects matching
 tracks them, links the same object across cameras, and retrieves its earlier appearances. It is built for
 a single 8 GB GPU first and for NVIDIA Jetson Orin NX later.
 
-**Status:** Milestones 1–7 of 10 are done (measured 2026-11-12 / 13):
+**Status:** Milestones 1–8 of 10 are done (measured 2026-11-12 / 13):
 1. the Grounding DINO baseline;
 2. YOLO-World integration with a full COCO val2017 comparison of six detectors;
 3. per-camera tracking (official ByteTrack, persistent IDs) evaluated on MOT17;
 4. multi-camera RTSP ingestion with asynchronous processing and automatic reconnection;
 5. cross-camera Re-ID, evaluated on CityFlowV2 with the official AI City evaluator;
 6. language-guided retrieval, evaluated on RefCOCO+ and CityFlow-NL;
-7. a SQLite metadata store, a FastAPI backend and a React dashboard (live view, search, timeline).
+7. a SQLite metadata store, a FastAPI backend and a React dashboard (live view, search, timeline);
+8. optimisation and scaling: 1-8 camera streams, FP16, batching, Re-ID in its own thread, frame sampling.
 
 Nothing in this repository reports a number that was not measured; planned targets are labelled as targets.
 
@@ -27,7 +28,7 @@ Nothing in this repository reports a number that was not measured; planned targe
 | 5 | Cross-camera Re-ID (CityFlow) | ✅ CLIP appearance + time + camera layout + colour; CityFlowV2 official IDF1 with a cue ablation (RQ4) and an oracle bound |
 | 6 | Language-guided retrieval (CityFlow-NL) | ✅ query parser, CLIP attribute checks, track index; RefCOCO+ and CityFlow-NL (RQ2) |
 | 7 | FastAPI backend + React dashboard | ✅ one edge process: store (SQLite), REST + live frames + Server-Sent Events, dashboard; costs measured |
-| 8 | Optimisation and 1/2/4/8-stream benchmarks | – |
+| 8 | Optimisation and 1/2/4/8-stream benchmarks | ✅ 8 streams at 10 fps each (was 4.35); FP16 without accuracy loss; per-optimisation ablation, sampling, saturation, GPU energy |
 | 9 | Research experiments and ablations | – |
 | 10 | Report, diagrams, demo video | – |
 
@@ -204,6 +205,30 @@ the React dashboard on one port.
 
 Details: [docs/milestone7.md](docs/milestone7.md); tables: [benchmarks/milestone7/](benchmarks/milestone7/README.md).
 
+## Optimisation and scaling (Milestone 8, measured)
+
+The full application (simulated 1080p30 RTSP cameras → YOLO-World-M → ByteTrack → CLIP Re-ID → SQLite) at 10 frames
+per second per camera:
+
+| streams | Milestone 7 settings: fps / camera, latency p50, GPU power | all optimisations: fps / camera, latency p50, GPU power |
+|---|---|---|
+| 1 | 10.0, 13.7 ms, 20.8 W | **10.0, 10.0 ms, 16.8 W** |
+| 4 | 10.0, 15.7 ms, 54.2 W | **10.0, 10.1 ms, 28.9 W** |
+| 8 | **4.35**, 31.7 ms, 54.6 W | **10.0**, 48.5 ms, 52.5 W |
+
+* **FP16 costs no measured accuracy.**
+  * YOLO-World-M: COCO AP 42.56 against 42.60 in FP32, at 37 % lower latency.
+  * CLIP: cosine ≥ 0.99998 with the FP32 embeddings, the same identity separation, about 3× faster.
+* **Batching across cameras is the largest throughput lever, and FP16 is what makes it work.** At 8 streams it
+  gives +54 % frames and −34 % GPU energy per frame; under light load it costs nothing. Re-ID in its own thread
+  keeps detection at full rate, at 0.2 s more lag for global IDs.
+* **Together:** 8 streams go from 4.35 to 10 fps per camera, with 58 % less GPU energy per frame.
+* **The next limit is not the GPU.** One process tops out at about 105-114 frames/s with the GPU half idle.
+* **Two bugs found by benchmarking, both fixed and tested.** Ultralytics silently makes OpenCV single-threaded on
+  import, which fooled my first baseline. Asynchronous Re-ID asked for tracklet keys at the wrong moment.
+
+Details: [docs/milestone8.md](docs/milestone8.md); tables: [benchmarks/milestone8/](benchmarks/milestone8/README.md).
+
 ## Quick start (Ubuntu 22.04, NVIDIA driver ≥ 580)
 
 ```bash
@@ -257,6 +282,12 @@ pip install -e ".[yolo,video,server]" && (cd dashboard && npm ci && npm run buil
 
 ```bash
 python scripts/serve.py --simulate
+```
+
+The optimised configuration (Milestone 8: FP16, batching, Re-ID thread) with eight simulated cameras:
+
+```bash
+python scripts/serve.py --config configs/milestone8_scaling.yaml --simulate
 ```
 
 Browse and search the stored runs without cameras:
