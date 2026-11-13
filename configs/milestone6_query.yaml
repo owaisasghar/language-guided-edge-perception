@@ -1,0 +1,62 @@
+# Milestone 6 — language-guided retrieval: query parsing, attribute verification, track retrieval.
+#
+#   python scripts/download_refcocoplus.py      # once: RefCOCO+ val/testA/testB annotations + ~3,000 COCO images
+#   python scripts/eval_refcoco.py              # interim evaluation (zero-shot referring-expression comprehension)
+#   python scripts/query_tracks.py RUN_DIR "white truck"   # query a recorded run (run_cameras.py --reid)
+#
+# CityFlow-NL (the brief's retrieval benchmark) needs the AI City Challenge data request; until then the
+# retrieval core is evaluated on RefCOCO+: for each expression ("man in red shirt", "white car"), is the
+# top-ranked box the described object (IoU >= 0.5)? This is Rank-1 retrieval among the objects of an image.
+
+extends: milestone5_reid.yaml    # CLIP embedder (reid.embedder) and the detector presets (models:)
+
+run_name: m6_refcoco
+output_dir: outputs/milestone6
+benchmark_dir: benchmarks/milestone6
+
+query:
+  candidates: 10                 # boxes per detector call that are re-ranked
+  weights: {detection: 0.5, text: 4.0, attributes: 0.25}  # tuned on RefCOCO+ val with YOLO-World-M candidates (benchmarks/milestone6)
+
+cityflow_nl:                     # python scripts/eval_cityflow_nl.py (after scripts/process_aicity.py)
+  processing_config: milestone5_cityflow.yaml   # where process_aicity.py cached the NL-track crop embeddings
+  tune_scenario: S02             # the attribute weight is chosen here (vehicle-gallery MRR) ...
+  eval_scenario: S05             # ... and reported here
+  attribute_weights: [0.0, 0.05, 0.1, 0.5, 1.0, 2.0, 4.0]   # text weight fixed at query.weights.text
+  sampled_gallery: 184           # size of the official CityFlow-NL test set
+  sampled_draws: 20
+  seed: 0
+
+refcoco:
+  root: data/refcocoplus
+  tune_split: val
+  tune_limit: 2000               # val expressions used to tune the weights (fixed order, first N)
+  eval_splits: [testA, testB]    # testA: people, testB: other objects
+  candidate_detectors: [yoloworld_m_rec, gdino_t_rec]
+  sentence_baselines: [yoloworld_m_rec, gdino_t_rec]   # the whole expression as the detector prompt
+  grid:
+    detection: [0.0, 0.5, 1.0, 2.0]
+    text: [0.0, 1.0, 2.0, 4.0, 8.0, 16.0]
+    attributes: [0.0, 0.25, 0.5, 1.0, 2.0]
+
+models:
+  yoloworld_m_rec:               # all boxes above 0.001, best 10 after NMS
+    backend: ultralytics_yolo_world
+    weights: models/yolo_world/yolov8m-worldv2.pt
+    dtype: float32
+    imgsz: 640
+    conf: 0.001
+    iou: 0.5
+    max_det: 10
+    multi_label: false
+    letterbox: minimal
+  gdino_t_rec:
+    backend: hf_transformers
+    model_id: IDEA-Research/grounding-dino-tiny
+    revision: a2bb814dd30d776dcf7e30523b00659f4f141c71
+    dtype: float32
+    box_threshold: 0.0
+    phrase_score_reduction: max
+    nms_iou: 0.7                 # so the 10 candidates are not near-duplicates (top-1 is unaffected)
+    max_detections: 10
+    token_labels: false

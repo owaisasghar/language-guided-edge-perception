@@ -1,6 +1,24 @@
-# Milestone 5 benchmark results — Re-ID (interim, MOT17)
+# Milestone 5 benchmark results — Re-ID
 
-**Actual measurements**, 2026-11-12, from the JSON files in this folder (`scripts/eval_reid_mot17.py`, `scripts/benchmark_embedder.py`). CityFlow (cross-camera) is not evaluated yet; see docs/milestone5.md.
+**Actual measurements**, from the JSON files in this folder:
+* MOT17 interim results, 2026-11-12 (`scripts/eval_reid_mot17.py`, `scripts/benchmark_embedder.py`);
+* **CityFlowV2 multi-camera vehicle tracking**, 2026-11-13 (`scripts/process_aicity.py`,
+  `scripts/eval_aicity_mtmc.py`; official AI City evaluator).
+
+## CityFlowV2 (validation S02 + S05, official IDF1) — RQ4
+
+Thresholds tuned on train (S01, S03, S04); validation evaluated once per cue set. Generated table with all columns:
+[`m5_cityflow.md`](m5_cityflow.md); tuning and post-hoc curves in `m5_cityflow.json`.
+
+| cues | threshold | validation IDF1 | IDP | IDR | S02 | S05 |
+|---|---|---|---|---|---|---|
+| appearance | 0.55 | 0.141 | 0.107 | 0.207 | 0.200 | 0.136 |
+| + time | 0.55 | **0.200** | 0.146 | 0.315 | 0.240 | 0.196 |
+| + learned transit windows | 0.40 | 0.173 | 0.115 | 0.355 | 0.262 | 0.166 |
+| + colour consistency | 0.40 / 0.3 | 0.180 | 0.120 | 0.361 | 0.280 | 0.171 |
+| oracle association | – | 0.597 | 0.483 | 0.782 | 0.462 | 0.613 |
+
+Interpretation (post-hoc equal-threshold comparison, detection limits): docs/milestone5.md §5.
 
 ## Re-linking fragmented tracks within a camera (MOT17 val-half)
 

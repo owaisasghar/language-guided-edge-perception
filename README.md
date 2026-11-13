@@ -5,12 +5,15 @@ blue shirt"* or *"which cameras saw this vehicle?"*. The system detects matching
 tracks them, links the same object across cameras, and retrieves its earlier appearances. It is built for
 a single 8 GB GPU first and for NVIDIA Jetson Orin NX later.
 
-**Status:** Milestones 1–4 of 10 are done (measured 2026-11-12): the Grounding DINO baseline,
-YOLO-World integration with a full COCO val2017 comparison of six detectors, per-camera tracking
-(official ByteTrack, persistent IDs) evaluated on MOT17, and multi-camera RTSP ingestion with
-asynchronous processing and automatic reconnection. Milestone 5 (cross-camera Re-ID) is built and
-evaluated on MOT17 in the interim; its CityFlow evaluation waits for data access. Nothing in this repository
-reports a number that was not measured; planned targets are labelled as targets.
+**Status:** Milestones 1–6 of 10 are done (measured 2026-11-12 / 13):
+1. the Grounding DINO baseline;
+2. YOLO-World integration with a full COCO val2017 comparison of six detectors;
+3. per-camera tracking (official ByteTrack, persistent IDs) evaluated on MOT17;
+4. multi-camera RTSP ingestion with asynchronous processing and automatic reconnection;
+5. cross-camera Re-ID, evaluated on CityFlowV2 with the official AI City evaluator;
+6. language-guided retrieval, evaluated on RefCOCO+ and CityFlow-NL.
+
+Nothing in this repository reports a number that was not measured; planned targets are labelled as targets.
 
 ## Milestones
 
@@ -20,8 +23,8 @@ reports a number that was not measured; planned targets are labelled as targets.
 | 2 | YOLO-World integration and detector comparison | ✅ 6 detectors on COCO val2017, published AP reproduced |
 | 3 | Single-camera tracking (ByteTrack) | ✅ official ByteTrack (equality-tested), persistent IDs, MOT17 HOTA/IDF1/MOTA for 6 detectors |
 | 4 | Multi-camera RTSP ingestion | ✅ capture thread per camera, newest-frame buffers, reconnection with backoff, shared detector; outages measured |
-| 5 | Cross-camera Re-ID (CityFlow) | 🟡 built + interim MOT17 results; CityFlow evaluation pending (data access) |
-| 6 | Language-guided retrieval (CityFlow-NL) | – |
+| 5 | Cross-camera Re-ID (CityFlow) | ✅ CLIP appearance + time + camera layout + colour; CityFlowV2 official IDF1 with a cue ablation (RQ4) and an oracle bound |
+| 6 | Language-guided retrieval (CityFlow-NL) | ✅ query parser, CLIP attribute checks, track index; RefCOCO+ and CityFlow-NL (RQ2) |
 | 7 | FastAPI backend + React dashboard | – |
 | 8 | Optimisation and 1/2/4/8-stream benchmarks | – |
 | 9 | Research experiments and ablations | – |
@@ -117,11 +120,30 @@ shared YOLO-World-M → ByteTrack per camera:
 
 Details: [docs/milestone4.md](docs/milestone4.md); tables: [benchmarks/milestone4/](benchmarks/milestone4/README.md).
 
-## Re-ID (Milestone 5, interim results on MOT17)
+## Cross-camera Re-ID (Milestone 5, measured)
 
-CLIP appearance embeddings (LAION ViT-B/32) per track, a camera-layout model with transit-time windows, and
-a global identity manager that records the evidence for every link. CityFlow, the cross-camera benchmark,
-needs a data-access request first; until then:
+CLIP appearance embeddings (LAION ViT-B/32) per track, a camera-layout model with transit-time windows, an
+optional colour-consistency check, and a global identity manager that records the evidence for every link.
+
+**CityFlowV2**: official AI City Challenge evaluator; validation S02 + S05 (23 cameras); thresholds tuned on
+the train scenarios; YOLO-World-M + ByteTrack.
+
+| cues (research question 4) | validation IDF1 |
+|---|---|
+| appearance only | 0.141 |
+| + time rules (one place at a time, transit ≤ 300 s) | **0.200** |
+| + transit windows learned from the train ground truth | 0.173 |
+| + colour consistency | 0.180 |
+| oracle association (same tracks, perfect linking) | 0.597 |
+
+* **Time constraints matter most**: +41 % IDF1 over appearance alone, and never worse at any threshold.
+  Colour adds a small, consistent gain (+0.007 at the same threshold).
+* **Learned transit windows are not a reliable gain.** At equal thresholds they help up to 0.60 and hurt above
+  it. In the planned comparison, the threshold tuned on train was too low for the dense 19-camera scenario.
+* **Zero-shot CLIP is the bottleneck**: 0.20 against 0.60 with perfect linking of the same tracks. A dedicated
+  vehicle Re-ID model is the next step.
+
+Interim results on MOT17 (people):
 
 * Re-linking ByteTrack's fragmented tracks within a camera improves MOT17 val-half only slightly (HOTA
   50.8 → 51.1 with Grounding DINO-T, 43.5 → 43.7 with YOLO-World-M; 7–9 fewer ID switches).
@@ -131,6 +153,28 @@ needs a data-access request first; until then:
   identities): camera-layout and time constraints are required, not optional.
 
 Details: [docs/milestone5.md](docs/milestone5.md); tables: [benchmarks/milestone5/](benchmarks/milestone5/README.md).
+
+## Language-guided retrieval (Milestone 6, measured)
+
+A rule-based parser turns a question into a structured query (categories, colours, clothing per body
+region, cameras, time). Candidates are checked with CLIP: description similarity, plus zero-shot colour on
+the right body region. Every finished track is indexed with its global identity.
+
+| benchmark (zero-shot) | ours | baseline |
+|---|---|---|
+| RefCOCO+ testA (people), Rank-1 box | **0.645** (Grounding DINO-T candidates), 0.625 (YOLO-World-M) | Grounding DINO-T prompted with the sentence: 0.568 |
+| RefCOCO+ testB (objects), Rank-1 box | **0.488**, 0.465 | 0.468 |
+| CityFlow-NL, S05, 337 vehicles: MRR / R@10 | 0.143 / 0.29-0.30 | random: 0.019 |
+
+* **On still images, parsing + CLIP re-ranking beats prompting the detector with the whole sentence**, for
+  both detectors. With YOLO-World-M it is more accurate than Grounding DINO on people, at a fraction of the
+  cost.
+* **On vehicle tracks it is weak, and the descriptions are the reason.** A vehicle shares its described
+  colour and type with a median of 72 others. Knowing colour and type perfectly would give MRR 0.131, the level
+  the system reaches. Motion ("turns left") and relations ("followed by a van") are not modelled yet.
+* Queries take 2-3 ms on 337 tracks and 15 ms on 10,000 (CPU scan; 149 ms at 100,000).
+
+Details: [docs/milestone6.md](docs/milestone6.md); tables: [benchmarks/milestone6/](benchmarks/milestone6/README.md).
 
 ## Quick start (Ubuntu 22.04, NVIDIA driver ≥ 580)
 
@@ -178,6 +222,42 @@ Run the multi-camera application on the simulated cameras (or your own: `--confi
 python scripts/run_cameras.py --simulate --duration 60
 ```
 
+With Re-ID and the track index (Milestones 5–6), then ask the recording a question:
+
+```bash
+python scripts/run_cameras.py --simulate --duration 120 --reid configs/milestone5_reid.yaml
+```
+
+```bash
+python scripts/query_tracks.py outputs/milestone4/<run_dir> "person in a white shirt on cam02"
+```
+
+Milestone 5 on CityFlowV2 and Milestone 6 on CityFlow-NL. First read and accept NVIDIA's AI City Challenge
+dataset licence (non-commercial research only; see [docs/references.md](docs/references.md)). This downloads
+~15 GB and needs about 1 h on the GPU:
+
+```bash
+python scripts/download_aicity.py cityflowv2 --accept-license --include "train/*/*/vdo.avi" "train/*/*/gt/gt.txt" "train/*/*/calibration.txt" "train/*/*/roi.jpg" "validation/*/*/vdo.avi" "validation/*/*/gt/gt.txt" "validation/*/*/calibration.txt" "validation/*/*/roi.jpg" "cam_*/*" "eval/*" "list_cam.txt" "ReadMe.txt" "Dataset License*.pdf"
+```
+
+```bash
+python scripts/download_aicity.py cityflow_nl --accept-license --include "data/*.json" "README.md" "Dataset-License*.pdf" "data/extract_vdo_frms.py"
+```
+
+```bash
+systemd-inhibit --what=sleep:idle python scripts/process_aicity.py
+```
+
+```bash
+python scripts/eval_aicity_mtmc.py && python scripts/eval_cityflow_nl.py
+```
+
+Milestone 6 on RefCOCO+ (annotations + ~3,000 COCO train2014 images):
+
+```bash
+python scripts/download_refcocoplus.py && python scripts/eval_refcoco.py
+```
+
 Track any prompt in your own video (annotated video + MOT file in `outputs/milestone3/demo/`):
 
 ```bash
@@ -217,6 +297,8 @@ data/, models/, outputs/   local only: git-ignored
 No datasets, private footage or model weights are committed. Sample data comes from manifest-driven
 download scripts with SHA-256 checksums. The Milestone 1 images are COCO val2017 images under CC BY / CC
 BY-SA; their attribution is in `configs/samples/milestone1_coco.yaml`. Third-party licences are listed in
-[docs/references.md](docs/references.md). The `yolo` extra (Ultralytics and its CLIP fork) is
+[docs/references.md](docs/references.md). CityFlowV2 and CityFlow-NL are used under NVIDIA's AI City Challenge
+licence (non-commercial research; no redistribution). Only derived numbers are published, never frames,
+crops or annotations. The `yolo` extra (Ultralytics and its CLIP fork) is
 AGPL-3.0 and the official YOLO-World code is GPL-3.0, so the repository licence must be chosen before the
 repository is made public; see [docs/milestone2.md](docs/milestone2.md#licence).

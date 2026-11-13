@@ -90,7 +90,8 @@ class ClipEmbedder:
     # ----------------------------------------------------------------------------------------- images
     def _prepare(self, crop: np.ndarray) -> torch.Tensor:
         """H x W x 3 uint8 RGB -> 3 x S x S float in [0, 1] on the device, per ``crop_mode``."""
-        x = torch.from_numpy(np.ascontiguousarray(crop)).to(self.device).permute(2, 0, 1).float().div_(255)
+        crop = np.require(crop, requirements=["C", "W"])  # contiguous and writable (PIL arrays are read-only)
+        x = torch.from_numpy(crop).to(self.device).permute(2, 0, 1).float().div_(255)
         s = self.input_size
         _, h, w = x.shape
         mode = self.cfg.crop_mode

@@ -3,8 +3,9 @@
 Target system (12 stages). Milestones 1–2 implement the **text-guided detector** (two backends,
 Grounding DINO and YOLO-World, behind one interface); Milestone 3 adds **per-camera tracking** with
 persistent local track IDs; Milestone 4 adds **multi-camera RTSP ingestion** with asynchronous processing
-and reconnection; Milestone 5 adds **Re-ID components** (appearance embeddings, global identity manager;
-CityFlow evaluation pending). Everything else is planned and will be designed in detail at the start of its
+and reconnection; Milestone 5 adds **cross-camera Re-ID** (appearance embeddings, time / camera-layout / colour
+constraints, global identity manager; evaluated on CityFlowV2); Milestone 6 adds **language queries** (parsing, attribute verification, a
+searchable track index). Everything else is planned and will be designed in detail at the start of its
 milestone.
 
 ```mermaid
@@ -23,7 +24,7 @@ flowchart LR
   I --> J[11. FastAPI]
   J --> K[12. React dashboard]
   classDef done fill:#0b7,stroke:#063,color:#fff;
-  class A,B,C,E done;
+  class A,B,C,D,E,I,Q done;
 ```
 
 ## Identity model (fixed from day one)
@@ -82,6 +83,20 @@ camera N ──RTSP──> CameraReader thread ─┘
   (`rtsp://***@host/...`) in logs, status and results; local camera configs are git-ignored.
 * Batching several cameras into one detector call, and GPU (NVDEC / Jetson) decoding, are Milestone 8.
 
+## Language queries (Milestone 6)
+
+```
+"man in a blue shirt on cam02 in the last 10 minutes"
+  -> parse_query -> StructuredQuery(categories=[person], clothing=[(shirt, upper, blue)], cameras=[cam02], time=600 s)
+  -> TrackIndex.search: filter (category, camera, time) -> QueryScorer (CLIP: description similarity +
+     colour probability on the upper-body region) -> rank -> one hit per global identity + the cameras it was seen in
+```
+
+* The index is filled online by the Re-ID service as tracks close (mean CLIP embedding, body-region
+  embeddings of the best crop, thumbnail) and saved with the run.
+* Detector-side use (the RefCOCO+ evaluation): the parsed category is the detector prompt, the candidates
+  are re-ranked by the same scorer.
+
 ## GPU budget principles (8 GB)
 
 * One large detector resident at a time; it is shared across cameras through batching, not one model
@@ -101,7 +116,7 @@ camera N ──RTSP──> CameraReader thread ─┘
 | `lgep.ingestion` | 4 | `CameraReader` (capture thread, newest-frame slot, reconnection with backoff), `StreamManager`, `CameraConfig` (URL redaction, `${ENV}` credentials), simulated RTSP cameras for tests |
 | `lgep.pipeline` | 4 | `PerceptionPipeline`: round-robin over cameras, per-camera rate limit, shared detector, per-camera trackers reset on reconnect, latency statistics |
 | `lgep.reid` | 5 | `ClipEmbedder` (images + texts), `TrackFeatureBank` (crop sampling, per-camera mean-centring), `CameraTopology` (transit windows), `IdentityManager` (global IDs, association records, merge / split), `ReIDService` (online, plugs into the pipeline), Re-ID and MTMC metrics |
-| `lgep.query` | 6 | natural-language → structured query (class, attributes, camera, time) |
+| `lgep.query` | 6 | `parse_query` (rule-based: categories, colours, clothing regions, related objects, cameras, time), `QueryScorer` (CLIP colour verification per body region + description similarity), `TrackIndex` (filter, rank, one hit per identity, save / load) |
 | `lgep.database` | 7 | SQLite schema for detections, tracks, identities and events |
 | `lgep.api` | 7 | FastAPI service |
 | `dashboard/` | 7 | React UI |

@@ -1,0 +1,356 @@
+{
+  "measured": true,
+  "environment": {
+    "timestamp_utc": "2026-11-13T04:57:28+00:00",
+    "os": "Linux-6.8.0-138-generic-x86_64-with-glibc2.35",
+    "python": "3.12.16",
+    "cpu": "AMD Ryzen 7 8845HS w/ Radeon 780M Graphics",
+    "cpu_logical_cores": 16,
+    "ram_gib": 30.6,
+    "packages": {
+      "torch": "2.13.0+cu130",
+      "torchvision": "0.28.0+cu130",
+      "transformers": "5.22.2",
+      "huggingface-hub": "2.4.0",
+      "tokenizers": "0.23.3",
+      "safetensors": "0.8.0",
+      "numpy": "2.5.4",
+      "pillow": "13.0.0",
+      "lgep": "0.1.0",
+      "ultralytics": "8.4.211",
+      "clip": "1.0",
+      "opencv-python": "5.0.0.93",
+      "pycocotools": "2.0.11",
+      "scipy": "1.18.1",
+      "lap": "0.5.14",
+      "trackeval": "1.0.dev1"
+    },
+    "torch_cuda_build": "13.0",
+    "cudnn": 92000,
+    "torch_arch_list": [
+      "sm_75",
+      "sm_80",
+      "sm_86",
+      "sm_90",
+      "sm_100",
+      "sm_120"
+    ],
+    "gpu": {
+      "name": "NVIDIA GeForce RTX 4060 Laptop GPU",
+      "driver": "580.178.04",
+      "memory_total": "8188 MiB",
+      "compute_capability": "8.9",
+      "power_limit": "55.00 W"
+    }
+  },
+  "embedder": {
+    "backend": "hf_clip",
+    "model_id": "laion/CLIP-ViT-B-32-laion2B-s34B-b79K",
+    "revision": "1a25a446712ba5ee05982a381eed697ef9b435cf",
+    "vision_parameters_millions": 87.85,
+    "dim": 512,
+    "input_size": 224,
+    "crop_mode": "stretch",
+    "device": "cuda",
+    "dtype": "float32",
+    "load_seconds": 0.3
+  },
+  "protocol": {
+    "metric": "accuracy: top-1 box IoU >= 0.5 with the described object",
+    "tune_split": "val",
+    "tune_limit": 2000,
+    "candidates": 10
+  },
+  "detectors": {
+    "yoloworld_m_rec": {
+      "tuned_weights": {
+        "detection": 0.5,
+        "text": 4.0,
+        "attributes": 0.25
+      },
+      "tune_accuracy": 0.559,
+      "tune_top5": [
+        {
+          "accuracy": 0.559,
+          "detection": 0.5,
+          "text": 4.0,
+          "attributes": 0.25
+        },
+        {
+          "accuracy": 0.559,
+          "detection": 1.0,
+          "text": 8.0,
+          "attributes": 0.25
+        },
+        {
+          "accuracy": 0.559,
+          "detection": 1.0,
+          "text": 8.0,
+          "attributes": 0.5
+        },
+        {
+          "accuracy": 0.559,
+          "detection": 2.0,
+          "text": 16.0,
+          "attributes": 0.5
+        },
+        {
+          "accuracy": 0.559,
+          "detection": 2.0,
+          "text": 16.0,
+          "attributes": 1.0
+        }
+      ],
+      "splits": {
+        "testA": {
+          "expressions": 5726,
+          "accuracy": {
+            "ours (tuned)": 0.6246943765281173,
+            "detection only": 0.3567935731749913,
+            "text only": 0.49738037024100595,
+            "attributes only": 0.4041215508208173,
+            "detection + text": 0.6192804750261963
+          },
+          "candidate_recall": 0.9228082431016417,
+          "parser_category_accuracy": 0.8522528815927349,
+          "parser_found_category": 0.8774013272790779,
+          "with_colour_attributes": 0.3377575969263011,
+          "accuracy_with_colour_attributes": {
+            "ours (tuned)": 0.688728024819028,
+            "detection only": 0.33350568769389866,
+            "text only": 0.5367114788004137,
+            "attributes only": 0.4736297828335057,
+            "detection + text": 0.672699069286453
+          },
+          "ms_per_expression": {
+            "n": 5726,
+            "mean": 15.159,
+            "std": 21.581,
+            "median": 2.498,
+            "p90": 50.532,
+            "min": 0.001,
+            "max": 231.794
+          }
+        },
+        "testB": {
+          "expressions": 4889,
+          "accuracy": {
+            "ours (tuned)": 0.4651257925956228,
+            "detection only": 0.37021885866230314,
+            "text only": 0.3939455921456331,
+            "attributes only": 0.3726733483329924,
+            "detection + text": 0.4589895684188996
+          },
+          "candidate_recall": 0.858866843935365,
+          "parser_category_accuracy": 0.6655757823685825,
+          "parser_found_category": 0.7508692984250358,
+          "with_colour_attributes": 0.1898138678666394,
+          "accuracy_with_colour_attributes": {
+            "ours (tuned)": 0.6196120689655172,
+            "detection only": 0.35237068965517243,
+            "text only": 0.5161637931034483,
+            "attributes only": 0.36530172413793105,
+            "detection + text": 0.5872844827586207
+          },
+          "ms_per_expression": {
+            "n": 4889,
+            "mean": 24.586,
+            "std": 26.911,
+            "median": 2.981,
+            "p90": 53.106,
+            "min": 0.001,
+            "max": 214.199
+          }
+        }
+      }
+    },
+    "gdino_t_rec": {
+      "tuned_weights": {
+        "detection": 0.5,
+        "text": 2.0,
+        "attributes": 0.25
+      },
+      "tune_accuracy": 0.578,
+      "tune_top5": [
+        {
+          "accuracy": 0.578,
+          "detection": 0.5,
+          "text": 2.0,
+          "attributes": 0.25
+        },
+        {
+          "accuracy": 0.578,
+          "detection": 1.0,
+          "text": 4.0,
+          "attributes": 0.25
+        },
+        {
+          "accuracy": 0.578,
+          "detection": 1.0,
+          "text": 4.0,
+          "attributes": 0.5
+        },
+        {
+          "accuracy": 0.578,
+          "detection": 2.0,
+          "text": 8.0,
+          "attributes": 0.5
+        },
+        {
+          "accuracy": 0.578,
+          "detection": 2.0,
+          "text": 8.0,
+          "attributes": 1.0
+        }
+      ],
+      "splits": {
+        "testA": {
+          "expressions": 5726,
+          "accuracy": {
+            "ours (tuned)": 0.6446035626964722,
+            "detection only": 0.3779252532308767,
+            "text only": 0.4937128885784143,
+            "attributes only": 0.4222843171498428,
+            "detection + text": 0.6360461054837583
+          },
+          "candidate_recall": 0.957911281872162,
+          "parser_category_accuracy": 0.8522528815927349,
+          "parser_found_category": 0.8774013272790779,
+          "with_colour_attributes": 0.3377575969263011,
+          "accuracy_with_colour_attributes": {
+            "ours (tuned)": 0.7083764219234746,
+            "detection only": 0.32057911065149947,
+            "text only": 0.5408479834539814,
+            "attributes only": 0.45191313340227507,
+            "detection + text": 0.6830403309203723
+          },
+          "ms_per_expression": {
+            "n": 5726,
+            "mean": 89.293,
+            "std": 145.178,
+            "median": 0.049,
+            "p90": 344.46,
+            "min": 0.013,
+            "max": 397.79
+          }
+        },
+        "testB": {
+          "expressions": 4889,
+          "accuracy": {
+            "ours (tuned)": 0.4878298220494989,
+            "detection only": 0.39578645939865004,
+            "text only": 0.38883207199836367,
+            "attributes only": 0.3943546737574146,
+            "detection + text": 0.4816935978727756
+          },
+          "candidate_recall": 0.9194109224790346,
+          "parser_category_accuracy": 0.6655757823685825,
+          "parser_found_category": 0.7508692984250358,
+          "with_colour_attributes": 0.1898138678666394,
+          "accuracy_with_colour_attributes": {
+            "ours (tuned)": 0.6217672413793104,
+            "detection only": 0.3793103448275862,
+            "text only": 0.5484913793103449,
+            "attributes only": 0.37176724137931033,
+            "detection + text": 0.5894396551724138
+          },
+          "ms_per_expression": {
+            "n": 4889,
+            "mean": 152.153,
+            "std": 162.946,
+            "median": 0.129,
+            "p90": 348.725,
+            "min": 0.014,
+            "max": 387.706
+          }
+        }
+      }
+    }
+  },
+  "sentence_baselines": {
+    "yoloworld_m_rec": {
+      "testA": {
+        "accuracy": 0.4306671323786238,
+        "ms_per_expression": {
+          "n": 5726,
+          "mean": 46.268,
+          "std": 9.238,
+          "median": 48.053,
+          "p90": 53.63,
+          "min": 9.853,
+          "max": 65.344
+        }
+      },
+      "testB": {
+        "accuracy": 0.40253630599304563,
+        "ms_per_expression": {
+          "n": 4889,
+          "mean": 47.51,
+          "std": 7.793,
+          "median": 48.549,
+          "p90": 54.175,
+          "min": 10.889,
+          "max": 67.13
+        }
+      }
+    },
+    "gdino_t_rec": {
+      "testA": {
+        "accuracy": 0.5677610897659797,
+        "ms_per_expression": {
+          "n": 5726,
+          "mean": 311.657,
+          "std": 30.078,
+          "median": 307.424,
+          "p90": 337.951,
+          "min": 211.549,
+          "max": 497.307
+        }
+      },
+      "testB": {
+        "accuracy": 0.46758028226631215,
+        "ms_per_expression": {
+          "n": 4889,
+          "mean": 308.962,
+          "std": 31.969,
+          "median": 305.485,
+          "p90": 337.918,
+          "min": 139.907,
+          "max": 375.959
+        }
+      }
+    }
+  },
+  "models": {
+    "yoloworld_m_rec": {
+      "backend": "ultralytics_yolo_world",
+      "model_id": "yolov8m-worldv2",
+      "revision": "sha256:b614d33aa35b8e61d988041ff6939dfb3ed627af88ccaf643e4cdb822eb41d71",
+      "parameters_millions": 28.36,
+      "text_encoder": "CLIP ViT-B/32 on cpu",
+      "text_encoder_parameters_millions": 151.28,
+      "load_seconds": 1.97,
+      "device": "cuda",
+      "dtype": "float32",
+      "imgsz": 640,
+      "conf": 0.001,
+      "iou": 0.5,
+      "multi_label": false,
+      "max_det": 10,
+      "letterbox": "minimal"
+    },
+    "gdino_t_rec": {
+      "backend": "hf_transformers",
+      "model_id": "IDEA-Research/grounding-dino-tiny",
+      "revision": "a2bb814dd30d776dcf7e30523b00659f4f141c71",
+      "parameters_millions": 172.25,
+      "load_seconds": 0.39,
+      "device": "cuda",
+      "dtype": "float32",
+      "box_threshold": 0.0,
+      "phrase_score_reduction": "max",
+      "multi_label": false,
+      "max_detections": 10
+    }
+  }
+}

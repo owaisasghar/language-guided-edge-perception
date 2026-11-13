@@ -14,7 +14,10 @@ Cues (each can be switched off for the RQ4 ablation):
   cameras, the transit time (start of the new tracklet minus end of the identity's track in the other
   camera) must lie in that camera pair's window (``CameraTopology``), and an identity cannot be in two
   non-overlapping cameras at the same time;
-* **phrase** (``use_phrase``): only tracklets of the same query phrase (class) are linked.
+* **phrase** (``use_phrase``): only tracklets of the same query phrase (class) are linked;
+* **attributes** (``use_attributes``): tracklets carrying attribute distributions (e.g. CLIP colour
+  probabilities) are linked only if the distributions overlap: Bhattacharyya coefficient
+  sum(sqrt(p * q)) >= ``attribute_min_overlap`` with every member that has attributes.
 """
 
 from __future__ import annotations
@@ -69,6 +72,8 @@ class AssociationConfig:
     use_phrase: bool = True
     max_gap_same_camera_s: float = 30.0
     min_samples: int = 1  # tracklets with fewer appearance samples are not linked (they get their own ID)
+    use_attributes: bool = False
+    attribute_min_overlap: float = 0.5
 
     @classmethod
     def from_dict(cls, d: dict | None) -> AssociationConfig:
@@ -90,6 +95,7 @@ class Member:
     t_start: float
     t_end: float
     descriptor: np.ndarray | None
+    attributes: np.ndarray | None = None
 
 
 @dataclass
@@ -160,6 +166,12 @@ class IdentityManager:
                 ok, why, gap = self._feasible(m, t)
                 if not ok:
                     return None, {**ev, "rejected": why}
+        if self.cfg.use_attributes and t.attributes is not None:
+            for m in ident.members:
+                if m.attributes is not None:
+                    overlap = float(np.sum(np.sqrt(np.clip(m.attributes, 0, None) * np.clip(t.attributes, 0, None))))
+                    if overlap < self.cfg.attribute_min_overlap:
+                        return None, {**ev, "rejected": f"attributes differ (overlap {overlap:.2f})"}
         sims = [float(desc @ m.descriptor) for m in ident.members if m.descriptor is not None]
         if not sims:
             return None, {**ev, "rejected": "no appearance"}
@@ -172,7 +184,7 @@ class IdentityManager:
         if t.key in self._of_track:
             raise ValueError(f"{t.key} was already assigned")
         desc = t.descriptor
-        member = Member(t.key, t.camera_id, t.phrase, t.t_start, t.t_end, desc)
+        member = Member(t.key, t.camera_id, t.phrase, t.t_start, t.t_end, desc, t.attributes)
         if desc is None or t.n_samples < self.cfg.min_samples:
             return self._new(member, "new_low_evidence", None, {"samples": t.n_samples})
         best, best_s, considered = None, -1.0, []

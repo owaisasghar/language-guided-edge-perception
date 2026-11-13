@@ -1,0 +1,122 @@
+{
+  "measured": true,
+  "environment": {
+    "timestamp_utc": "2026-11-13T06:30:01+00:00",
+    "os": "Linux-6.8.0-138-generic-x86_64-with-glibc2.35",
+    "python": "3.12.16",
+    "cpu": "AMD Ryzen 7 8845HS w/ Radeon 780M Graphics",
+    "cpu_logical_cores": 16,
+    "ram_gib": 30.6,
+    "packages": {
+      "torch": "2.13.0+cu130",
+      "torchvision": "0.28.0+cu130",
+      "transformers": "5.22.2",
+      "huggingface-hub": "2.4.0",
+      "tokenizers": "0.23.3",
+      "safetensors": "0.8.0",
+      "numpy": "2.5.4",
+      "pillow": "13.0.0",
+      "lgep": "0.1.0",
+      "ultralytics": "8.4.211",
+      "clip": "1.0",
+      "opencv-python": "5.0.0.93",
+      "pycocotools": "2.0.11",
+      "scipy": "1.18.1",
+      "lap": "0.5.14",
+      "trackeval": "1.0.dev1"
+    },
+    "torch_cuda_build": "13.0",
+    "cudnn": 92000,
+    "torch_arch_list": [
+      "sm_75",
+      "sm_80",
+      "sm_86",
+      "sm_90",
+      "sm_100",
+      "sm_120"
+    ],
+    "gpu": {
+      "name": "NVIDIA GeForce RTX 4060 Laptop GPU",
+      "driver": "580.178.04",
+      "memory_total": "8188 MiB",
+      "compute_capability": "8.9",
+      "power_limit": "55.00 W"
+    }
+  },
+  "base_index_tracks": 809,
+  "queries": [
+    "person in a white shirt",
+    "man in black jeans on cam01",
+    "woman in red",
+    "person with a backpack in the last 30 seconds",
+    "person"
+  ],
+  "sizes": [
+    {
+      "tracks": 1000,
+      "parse_ms": {
+        "n": 100,
+        "mean": 0.043,
+        "std": 0.022,
+        "median": 0.039,
+        "p90": 0.064,
+        "min": 0.015,
+        "max": 0.144
+      },
+      "search_ms": {
+        "n": 100,
+        "mean": 2.248,
+        "std": 2.172,
+        "median": 1.416,
+        "p90": 5.019,
+        "min": 0.391,
+        "max": 14.841
+      },
+      "embedding_bytes_per_track": 8192.0
+    },
+    {
+      "tracks": 10000,
+      "parse_ms": {
+        "n": 100,
+        "mean": 0.079,
+        "std": 0.039,
+        "median": 0.085,
+        "p90": 0.127,
+        "min": 0.02,
+        "max": 0.175
+      },
+      "search_ms": {
+        "n": 100,
+        "mean": 16.714,
+        "std": 10.175,
+        "median": 15.29,
+        "p90": 31.234,
+        "min": 3.431,
+        "max": 42.454
+      },
+      "embedding_bytes_per_track": 8192.0
+    },
+    {
+      "tracks": 100000,
+      "parse_ms": {
+        "n": 100,
+        "mean": 0.121,
+        "std": 0.05,
+        "median": 0.107,
+        "p90": 0.192,
+        "min": 0.05,
+        "max": 0.238
+      },
+      "search_ms": {
+        "n": 100,
+        "mean": 160.824,
+        "std": 93.999,
+        "median": 149.172,
+        "p90": 298.347,
+        "min": 41.036,
+        "max": 395.051
+      },
+      "embedding_bytes_per_track": 8192.0
+    }
+  ]
+}

@@ -9,6 +9,7 @@ Outputs in outputs/milestone4/<run_name>_<timestamp>/:
   tracks/<cam>.txt    MOTChallenge rows per camera (frame = capture index, IDs = local track IDs)
   summary.json        final status, CPU / GPU use, wall time
   identities.json     with --reid: global identities and every association decision with its evidence
+  index/              with --reid: track index for language queries (scripts/query_tracks.py)
 Stop with Ctrl+C (or --duration).
 
 Usage:
@@ -36,6 +37,7 @@ from lgep.ingestion import StreamManager, cameras_from_config
 from lgep.ingestion.simulate import gstreamer_rtsp_available, simulated_cameras
 from lgep.perception.factory import build_detector
 from lgep.pipeline import PerceptionPipeline, PipelineConfig
+from lgep.query.index import TrackIndex
 from lgep.reid import AssociationConfig, CameraTopology, SamplingConfig
 from lgep.reid.embedder import build_embedder
 from lgep.reid.service import ReIDService
@@ -73,7 +75,7 @@ def build_reid(path: Path) -> ReIDService:
     r = load_config(path)["reid"]
     return ReIDService(build_embedder(r["embedder"]), SamplingConfig.from_dict(r["sampling"]),
                        AssociationConfig.from_dict(r["association"]), CameraTopology.from_dict(r.get("topology")),
-                       close_after_s=r.get("close_after_s", 3.0))
+                       close_after_s=r.get("close_after_s", 3.0), index=TrackIndex())
 
 
 def identities_json(reid: ReIDService) -> dict:
@@ -176,6 +178,7 @@ def main() -> int:
             if reid:
                 reid.close_all()
                 write_json(out / "identities.json", identities_json(reid))
+                reid.index.save(out / "index")
             final = {"measured": True, "environment": collect_environment(), "config": cfg,
                      "model": detector.describe(), "wall_seconds": round(time.monotonic() - t0, 1),
                      "process_cpu_percent": round(cpu.percent(), 1), "gpu": gpu.summary(),

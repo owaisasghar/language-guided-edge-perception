@@ -74,6 +74,18 @@ class TrackletRecord:
     sample_frames: list[int] = field(default_factory=list)
     embeddings: list[np.ndarray] = field(default_factory=list)
     center: np.ndarray | None = None  # camera mean embedding to subtract (set when the tracklet is closed)
+    attributes: np.ndarray | None = None  # e.g. CLIP colour probabilities (for the attribute cue)
+    best_crop: np.ndarray | None = None  # the tallest sampled crop (thumbnail, attribute checks)
+    best_crop_frame: int | None = None
+
+    @property
+    def mean_embedding(self) -> np.ndarray | None:
+        """L2-normalised mean of the raw (not centred) embeddings: the track's appearance in CLIP space,
+        comparable with text embeddings."""
+        if not self.embeddings:
+            return None
+        m = np.mean(self.embeddings, axis=0)
+        return (m / (np.linalg.norm(m) + 1e-12)).astype(np.float32)
 
     @property
     def descriptor(self) -> np.ndarray | None:
@@ -129,8 +141,10 @@ class TrackFeatureBank:
             want.append(tr)
         return want
 
-    def add(self, key: str, frame_index: int, embedding: np.ndarray) -> None:
+    def add(self, key: str, frame_index: int, embedding: np.ndarray, crop_image: np.ndarray | None = None) -> None:
         rec = self.tracks[key]
+        if crop_image is not None and (rec.best_crop is None or crop_image.shape[0] > rec.best_crop.shape[0]):
+            rec.best_crop, rec.best_crop_frame = np.ascontiguousarray(crop_image), frame_index
         e = np.asarray(embedding, np.float32)
         rec.sample_frames.append(frame_index)
         rec.embeddings.append(e)

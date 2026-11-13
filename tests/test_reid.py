@@ -120,6 +120,18 @@ def test_phrase_threshold_and_ablation_switches():
     assert no_time.assign(tracklet("cam01/2", 5, 15, unit(1, 0), phrase="truck")).decision == "matched"
 
 
+def test_attribute_cue_rejects_different_colours():
+    red, blue = np.array([0.9, 0.05, 0.05]), np.array([0.05, 0.05, 0.9])
+    for use, expected in ((False, "matched"), (True, "new")):
+        m = IdentityManager(AssociationConfig(appearance_threshold=0.9, use_attributes=use, attribute_min_overlap=0.5))
+        a = tracklet("cam01/1", 0, 10, unit(1, 0))
+        a.attributes = red
+        m.assign(a)
+        b = tracklet("cam01/2", 12, 20, unit(1, 0))
+        b.attributes = blue  # same appearance vector, different colour distribution
+        assert m.assign(b).decision == expected
+
+
 def test_low_evidence_merge_and_split():
     m = IdentityManager(AssociationConfig(appearance_threshold=0.9, min_samples=2))
     assert m.assign(tracklet("cam01/1", 0, 5, unit(1, 0), samples=1)).decision == "new_low_evidence"
