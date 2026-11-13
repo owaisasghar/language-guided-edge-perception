@@ -171,6 +171,31 @@ suspending mid-run (which can break the NVIDIA driver; see `docs/milestone1.md#k
 systemd-inhibit --what=sleep:idle bash scripts/run_milestone2.sh
 ```
 
+Milestone 7 (the server and the dashboard). The Python extras, then Node.js >= 20.19 for building the
+dashboard once; tested with Node 24.18 and npm 11.16, packages pinned in `dashboard/package-lock.json`:
+
+```bash
+pip install -e ".[dev,yolo,video,server]"
+```
+
+```bash
+cd dashboard && npm ci && npm run build && cd ..
+```
+
+```bash
+python scripts/serve.py --simulate
+```
+
+Then open http://127.0.0.1:8000/. The server listens on localhost only. To use it from another machine, set a
+token and listen on all interfaces:
+
+```bash
+LGEP_API_TOKEN=change-me python scripts/serve.py --simulate --override server.host=0.0.0.0
+```
+
+and open `http://<edge-ip>:8000/?token=change-me`. For dashboard development with hot reload, run
+`npm run dev` in `dashboard/` (port 5173, forwards `/api` to the server).
+
 Each script unsets `PYTHONPATH`, because a sourced ROS 2 install would otherwise inject its Python 3.10
 packages and pytest plugins into this env. For manual test runs in a ROS-sourced shell:
 

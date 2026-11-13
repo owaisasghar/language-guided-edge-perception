@@ -1,0 +1,42 @@
+# Milestone 7 — backend and dashboard: the whole edge application in one process, served over HTTP.
+#
+#   python scripts/serve.py --simulate                  # 4 simulated RTSP cameras (Milestone 4), dashboard on :8000
+#   python scripts/serve.py --config configs/cameras.local.yaml   # your own cameras (that file extends this one)
+#   python scripts/serve.py --replay                    # no cameras: browse and search the stored database
+#   cd dashboard && npm ci && npm run build             # once: the dashboard served at http://127.0.0.1:8000/
+#
+# Cameras, simulation, detector and pipeline settings come from Milestone 4; Re-ID from Milestone 5;
+# query scoring weights from Milestone 6.
+
+extends: milestone4_cameras.yaml
+
+run_name: m7_server
+output_dir: outputs/milestone7
+benchmark_dir: benchmarks/milestone7
+
+reid_enabled: true
+reid_config: milestone5_reid.yaml     # its `reid:` block (CLIP embedder, sampling, association, topology)
+query_config: milestone6_query.yaml   # its `query.weights` (the detection weight is not used for tracks)
+
+server:
+  host: 127.0.0.1           # localhost only; use 0.0.0.0 for the LAN, and then set the token
+  port: 8000
+  token_env: LGEP_API_TOKEN # if this environment variable is set, every /api request needs the token
+  dashboard_dir: dashboard/dist
+  cors_origins: ["http://localhost:5173", "http://127.0.0.1:5173"]  # the Vite dev server (npm run dev)
+  status_every_s: 1.0
+
+store:
+  path: outputs/milestone7/lgep.sqlite
+  batch_s: 0.5              # commit interval
+  queue_max: 50000
+  points_every_s: 1.0       # stored box samples per track (trajectory); 0 = every processed frame
+  thumbnails: true          # a 128 px crop per finished track (privacy: false, or a short retention)
+  retention_hours: 24       # older tracks, points, thumbnails and events are deleted; null = keep
+
+live:
+  stream_width: 960         # live frames are downscaled to this width before drawing and JPEG encoding
+  jpeg_quality: 80
+  max_fps: 10               # per camera, at most this many encodes per second (shared by all viewers)
+  draw: true
+  long_poll_timeout_s: 2.0

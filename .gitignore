@@ -40,3 +40,6 @@ third_party/
 # Local camera configs (real camera addresses; credentials belong in environment variables)
 configs/*.local.yaml
 configs/local/
+
+# Dashboard (Milestone 7): dependencies are installed with npm ci from package-lock.json
+node_modules/

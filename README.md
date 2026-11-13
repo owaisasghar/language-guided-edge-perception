@@ -5,13 +5,14 @@ blue shirt"* or *"which cameras saw this vehicle?"*. The system detects matching
 tracks them, links the same object across cameras, and retrieves its earlier appearances. It is built for
 a single 8 GB GPU first and for NVIDIA Jetson Orin NX later.
 
-**Status:** Milestones 1–6 of 10 are done (measured 2026-11-12 / 13):
+**Status:** Milestones 1–7 of 10 are done (measured 2026-11-12 / 13):
 1. the Grounding DINO baseline;
 2. YOLO-World integration with a full COCO val2017 comparison of six detectors;
 3. per-camera tracking (official ByteTrack, persistent IDs) evaluated on MOT17;
 4. multi-camera RTSP ingestion with asynchronous processing and automatic reconnection;
 5. cross-camera Re-ID, evaluated on CityFlowV2 with the official AI City evaluator;
-6. language-guided retrieval, evaluated on RefCOCO+ and CityFlow-NL.
+6. language-guided retrieval, evaluated on RefCOCO+ and CityFlow-NL;
+7. a SQLite metadata store, a FastAPI backend and a React dashboard (live view, search, timeline).
 
 Nothing in this repository reports a number that was not measured; planned targets are labelled as targets.
 
@@ -25,7 +26,7 @@ Nothing in this repository reports a number that was not measured; planned targe
 | 4 | Multi-camera RTSP ingestion | ✅ capture thread per camera, newest-frame buffers, reconnection with backoff, shared detector; outages measured |
 | 5 | Cross-camera Re-ID (CityFlow) | ✅ CLIP appearance + time + camera layout + colour; CityFlowV2 official IDF1 with a cue ablation (RQ4) and an oracle bound |
 | 6 | Language-guided retrieval (CityFlow-NL) | ✅ query parser, CLIP attribute checks, track index; RefCOCO+ and CityFlow-NL (RQ2) |
-| 7 | FastAPI backend + React dashboard | – |
+| 7 | FastAPI backend + React dashboard | ✅ one edge process: store (SQLite), REST + live frames + Server-Sent Events, dashboard; costs measured |
 | 8 | Optimisation and 1/2/4/8-stream benchmarks | – |
 | 9 | Research experiments and ablations | – |
 | 10 | Report, diagrams, demo video | – |
@@ -176,6 +177,33 @@ the right body region. Every finished track is indexed with its global identity.
 
 Details: [docs/milestone6.md](docs/milestone6.md); tables: [benchmarks/milestone6/](benchmarks/milestone6/README.md).
 
+## Backend and dashboard (Milestone 7, measured)
+
+`scripts/serve.py` runs everything in one edge process: cameras → detector → trackers → Re-ID, plus a
+SQLite store (tracks, trajectories, identities, events, thumbnails, search embeddings), a FastAPI service and
+the React dashboard on one port.
+* **Live:** camera tiles with boxes and provisional global IDs, camera health, and a feed of cross-camera links.
+* **Search:** natural-language queries showing how they were understood and the score parts, plus
+  "which cameras saw it?".
+* **Timeline:** tracks started per camera, cross-camera links, and swimlanes of tracks.
+
+| 4 simulated cameras, YOLO-World-M + Re-ID | Milestone 5 app | server | server + one dashboard |
+|---|---|---|---|
+| processed fps per camera (target 10) | 8.53 | 8.33 | 8.12 |
+| latency p50 (frame decoded → tracks) | 34 ms | 35 ms | 37 ms |
+| process CPU (100 % = one core) | 138 % | 139 % | 153 % |
+
+* **The backend costs about 2 % of throughput, and a watching dashboard another 2.5 %.** The video path
+  only enqueues store operations (2.2 µs each); the writer thread could handle about 1,000× the live rate.
+* **The viewer sees each processed frame about 54 ms after capture.** API reads take 2–37 ms under load, and
+  search 25–47 ms.
+* **Costs to know:** live JPEG video is 22.7 Mbit/s for four cameras, and the database grows about 293 MB per
+  hour on these crowded scenes.
+* **Running it live found a real bug, now fixed:** under CPU load, ByteTrack (frame-based) re-found tracks
+  that Re-ID (time-based) had already ended.
+
+Details: [docs/milestone7.md](docs/milestone7.md); tables: [benchmarks/milestone7/](benchmarks/milestone7/README.md).
+
 ## Quick start (Ubuntu 22.04, NVIDIA driver ≥ 580)
 
 ```bash
@@ -214,6 +242,27 @@ Milestone 4 (simulated RTSP cameras need the system GStreamer RTSP server, see d
 
 ```bash
 bash scripts/run_milestone4.sh
+```
+
+The whole application with the dashboard (Milestone 7), in the `lgep` environment from above (not conda's `base`): build the dashboard once (Node.js ≥ 20.19), then open
+http://127.0.0.1:8000/ (localhost only; for the LAN, see [docs/installation.md](docs/installation.md)):
+
+```bash
+conda activate lgep && unset PYTHONPATH
+```
+
+```bash
+pip install -e ".[yolo,video,server]" && (cd dashboard && npm ci && npm run build)
+```
+
+```bash
+python scripts/serve.py --simulate
+```
+
+Browse and search the stored runs without cameras:
+
+```bash
+python scripts/serve.py --replay
 ```
 
 Run the multi-camera application on the simulated cameras (or your own: `--config configs/cameras.local.yaml`):

@@ -261,6 +261,9 @@ from the shift in its tuned threshold.
     (oracle IDP 0.48).
   * Dropping small boxes or trimming track ends, tuned on train, is a cheap lever not used here.
 * **Cost:** association takes 0.6-1.5 ms per tracklet (Python, greedy), which is negligible next to detection.
+  Milestone 7 vectorised it for long-running servers. On these CityFlowV2 tracklets, all 32 checked settings
+  (4 cue sets × 4 thresholds, train and validation) give identical decisions, 4-17× faster (e.g. 18.1 s →
+  0.9 s for the 3,632 validation tracklets).
   * Video pass at 1080p (per frame): decode 4.6 ms, detector 12.6 ms (median 10.9), tracker 0.9 ms, crop
     sampling + CLIP 3.1 ms. Wall clock averaged 38 fps; it ran at 45-55 fps when nothing else was running.
   * The five 2560 × 1920 cameras ran at 20 fps.

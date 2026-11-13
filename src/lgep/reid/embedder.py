@@ -14,6 +14,7 @@ worst on MOT17 person crops: a tall person fills only ~40 % of the padded square
 from __future__ import annotations
 
 import logging
+import threading
 import time
 from dataclasses import dataclass
 
@@ -53,7 +54,10 @@ class EmbedderConfig:
 
 
 class ClipEmbedder:
-    """``embed_images(crops) -> (N, D)`` L2-normalised float32; ``embed_texts(texts)`` likewise."""
+    """``embed_images(crops) -> (N, D)`` L2-normalised float32; ``embed_texts(texts)`` likewise.
+
+    Thread-safe: one lock serialises calls, so the pipeline (crops) and API requests (query texts) can share
+    one model on the GPU."""
 
     def __init__(self, cfg: EmbedderConfig | None = None):
         from transformers import CLIPModel, CLIPTokenizerFast
@@ -78,6 +82,7 @@ class ClipEmbedder:
             p.numel() for p in self.model.visual_projection.parameters())
         self.load_seconds = time.perf_counter() - t0
         self.last_timings: dict[str, float] = {}
+        self._lock = threading.Lock()
         log.info("Loaded %s (vision %.1fM params, dim %d, %s, %s) in %.1fs", cfg.model_id, self.num_parameters / 1e6,
                  self.dim, self.device, cfg.dtype, self.load_seconds)
 
@@ -110,10 +115,14 @@ class ClipEmbedder:
             return x[:, top:top + s, left:left + s]
         return F.interpolate(x[None], size=(s, s), mode="bicubic", antialias=True, align_corners=False)[0]
 
-    @torch.inference_mode()
     def embed_images(self, crops: list[np.ndarray]) -> np.ndarray:
         if not crops:
             return np.zeros((0, self.dim), np.float32)
+        with self._lock:
+            return self._embed_images(crops)
+
+    @torch.inference_mode()
+    def _embed_images(self, crops: list[np.ndarray]) -> np.ndarray:
         t: dict[str, float] = {"pre": 0.0, "infer": 0.0}
         out = []
         for i in range(0, len(crops), self.cfg.batch_size):
@@ -132,10 +141,14 @@ class ClipEmbedder:
         return np.concatenate(out)
 
     # ------------------------------------------------------------------------------------------ texts
-    @torch.inference_mode()
     def embed_texts(self, texts: list[str]) -> np.ndarray:
         if not texts:
             return np.zeros((0, self.dim), np.float32)
+        with self._lock:
+            return self._embed_texts(texts)
+
+    @torch.inference_mode()
+    def _embed_texts(self, texts: list[str]) -> np.ndarray:
         tok = self.tokenizer(list(texts), padding=True, truncation=True, return_tensors="pt").to(self.device)
         f = self.model.get_text_features(**tok)
         f = getattr(f, "pooler_output", f)

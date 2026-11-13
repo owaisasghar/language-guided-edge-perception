@@ -1,0 +1,168 @@
+/* Design tokens. Chart colours follow the validated reference palette (dataviz skill): series 1-2 for the
+   score breakdown (validated as a pair in both modes), blue sequential ramp for the heatmap, emphasis =
+   series 1 vs muted grey, status colours only with an icon and a label. Dark mode is its own set of steps. */
+:root {
+  color-scheme: light;
+  --page: #f9f9f7;
+  --surface-1: #fcfcfb;
+  --surface-2: #f0efec;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #898781;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --border: rgba(11, 11, 11, 0.1);
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --deemph: #c3c2b7;
+  --seq-1: #cde2fb; --seq-2: #9ec5f4; --seq-3: #6da7ec; --seq-4: #3987e5;
+  --seq-5: #256abf; --seq-6: #184f95; --seq-7: #0d366b;
+  --good: #0ca30c; --warning: #fab219; --serious: #ec835a; --critical: #d03b3b;
+  --accent: #2a78d6;
+  --focus: #2a78d6;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.06);
+  --radius: 10px;
+  --font: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface-1: #1a1a19; --surface-2: #262624;
+    --text-primary: #f0efec; --text-secondary: #c3c2b7; --text-muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --border: rgba(255, 255, 255, 0.1);
+    --series-1: #3987e5; --series-2: #d95926; --deemph: #4a4a46;
+    --seq-1: #184f95; --seq-2: #1c5cab; --seq-3: #256abf; --seq-4: #2a78d6;
+    --seq-5: #3987e5; --seq-6: #6da7ec; --seq-7: #9ec5f4;
+    --accent: #3987e5; --focus: #6da7ec;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(0, 0, 0, 0.3);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d; --surface-1: #1a1a19; --surface-2: #262624;
+  --text-primary: #f0efec; --text-secondary: #c3c2b7; --text-muted: #898781;
+  --grid: #2c2c2a; --axis: #383835; --border: rgba(255, 255, 255, 0.1);
+  --series-1: #3987e5; --series-2: #d95926; --deemph: #4a4a46;
+  --seq-1: #184f95; --seq-2: #1c5cab; --seq-3: #256abf; --seq-4: #2a78d6;
+  --seq-5: #3987e5; --seq-6: #6da7ec; --seq-7: #9ec5f4;
+  --accent: #3987e5; --focus: #6da7ec;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--page);
+  color: var(--text-primary);
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+a { color: var(--accent); }
+
+/* ---------------------------------------------------------------- layout */
+.app { max-width: 1480px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+.topbar { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.brand { font-weight: 650; font-size: 16px; margin-right: auto; display: flex; align-items: center; gap: 8px; }
+.brand small { font-weight: 400; color: var(--text-muted); font-size: 13px; }
+.tabs { display: flex; gap: 4px; background: var(--surface-2); padding: 4px; border-radius: 999px; }
+.tabs button { border: 0; background: transparent; padding: 6px 14px; border-radius: 999px; cursor: pointer; color: var(--text-secondary); }
+.tabs button[aria-selected="true"] { background: var(--surface-1); color: var(--text-primary); box-shadow: var(--shadow); }
+.icon-btn { border: 1px solid var(--border); background: var(--surface-1); border-radius: 8px; padding: 6px 10px; cursor: pointer; }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+.card-h { display: flex; align-items: baseline; gap: 8px; padding: 12px 14px 0; }
+.card-h h2 { font-size: 14px; font-weight: 600; margin: 0; }
+.card-h .sub { color: var(--text-muted); font-size: 12px; }
+.card-b { padding: 12px 14px 14px; }
+.muted { color: var(--text-muted); }
+.secondary { color: var(--text-secondary); }
+.num { font-variant-numeric: tabular-nums; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.grow { flex: 1; }
+.empty { color: var(--text-muted); padding: 24px; text-align: center; }
+.error { color: var(--critical); }
+
+/* ---------------------------------------------------------------- stat tiles */
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.tile { padding: 12px 14px; }
+.tile .label { color: var(--text-secondary); font-size: 12px; }
+.tile .value { font-size: 22px; font-weight: 600; margin-top: 2px; }
+.tile .note { color: var(--text-muted); font-size: 12px; }
+
+/* ---------------------------------------------------------------- status (icon + label, never colour alone) */
+.status { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
+.status .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-grid; place-items: center; font-size: 8px; color: #fff; }
+.status.good .dot { background: var(--good); }
+.status.warning .dot { background: var(--warning); color: #0b0b0b; }
+.status.serious .dot { background: var(--serious); }
+.status.critical .dot { background: var(--critical); }
+
+/* ---------------------------------------------------------------- live */
+.live { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; align-items: start; }
+.cams { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.cam { overflow: hidden; }
+.cam .frame { aspect-ratio: 16 / 9; background: var(--surface-2); display: grid; place-items: center; }
+.cam .frame img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.cam .meta { display: flex; gap: 10px; align-items: center; padding: 8px 12px; font-size: 12px; color: var(--text-secondary); flex-wrap: wrap; }
+.cam .meta b { color: var(--text-primary); font-weight: 600; }
+.feed { max-height: 70vh; overflow: auto; }
+.feed ul { list-style: none; margin: 0; padding: 0; }
+.feed li { padding: 8px 14px; border-top: 1px solid var(--border); font-size: 13px; }
+.feed li button { all: unset; cursor: pointer; display: block; width: 100%; }
+.feed li button:hover .what { text-decoration: underline; }
+.feed .when { color: var(--text-muted); font-size: 12px; }
+
+/* ---------------------------------------------------------------- search */
+.searchbar { display: flex; gap: 8px; }
+.searchbar input { flex: 1; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface-1); font-size: 15px; }
+.btn { border: 0; background: var(--accent); color: #fff; border-radius: 8px; padding: 10px 16px; cursor: pointer; font-weight: 600; }
+.btn:disabled { opacity: 0.6; cursor: default; }
+.chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: var(--surface-2); font-size: 12px; color: var(--text-secondary); border: 1px solid var(--border); }
+.chip b { color: var(--text-primary); font-weight: 600; }
+button.chip { cursor: pointer; }
+.results { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.hit { display: flex; gap: 10px; padding: 10px; cursor: pointer; text-align: left; border: 1px solid var(--border); background: var(--surface-1); border-radius: var(--radius); }
+.hit:hover { border-color: var(--accent); }
+.hit .thumb { width: 64px; height: 96px; border-radius: 6px; background: var(--surface-2); object-fit: cover; flex: none; }
+.hit .info { min-width: 0; display: flex; flex-direction: column; gap: 3px; font-size: 12px; }
+.hit .info .title { font-size: 13px; font-weight: 600; }
+.legend { display: inline-flex; gap: 12px; font-size: 12px; color: var(--text-secondary); }
+.legend .key { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+.scorebar { display: flex; height: 8px; gap: 2px; border-radius: 4px; overflow: hidden; background: transparent; }
+.scorebar span { display: block; height: 100%; border-radius: 4px; }
+
+/* ---------------------------------------------------------------- drawer (identity) */
+.drawer-bg { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.35); display: flex; justify-content: flex-end; z-index: 20; }
+.drawer { width: min(560px, 100%); height: 100%; overflow: auto; background: var(--surface-1); padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.drawer h2 { margin: 0; font-size: 18px; }
+.track-row { display: flex; gap: 10px; align-items: center; padding: 8px 0; border-top: 1px solid var(--border); font-size: 13px; }
+.track-row img { width: 40px; height: 60px; object-fit: cover; border-radius: 4px; background: var(--surface-2); }
+
+/* ---------------------------------------------------------------- charts */
+.controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; background: var(--surface-1); padding: 6px 12px; cursor: pointer; color: var(--text-secondary); }
+.seg button + button { border-left: 1px solid var(--border); }
+.seg button[aria-pressed="true"] { background: var(--surface-2); color: var(--text-primary); font-weight: 600; }
+.chart { position: relative; width: 100%; overflow-x: auto; }
+.chart svg { display: block; }
+.chart text { fill: var(--text-muted); font-size: 11px; font-family: var(--font); }
+.chart .lane-label { fill: var(--text-secondary); font-size: 12px; }
+.tooltip { position: fixed; pointer-events: none; z-index: 30; background: var(--surface-1); border: 1px solid var(--border); box-shadow: var(--shadow); border-radius: 8px; padding: 8px 10px; font-size: 12px; min-width: 160px; }
+.tooltip .v { font-weight: 650; font-size: 13px; color: var(--text-primary); }
+.tooltip .k { color: var(--text-secondary); }
+table.data { width: 100%; border-collapse: collapse; font-size: 12px; }
+table.data th, table.data td { text-align: left; padding: 4px 8px; border-top: 1px solid var(--border); }
+table.data td.n, table.data th.n { text-align: right; font-variant-numeric: tabular-nums; }
+
+@media (max-width: 1000px) {
+  .live { grid-template-columns: 1fr; }
+}
+@media (max-width: 700px) {
+  .app { padding: 16px 16px; }
+  .cams { grid-template-columns: 1fr; }
+  .brand small { display: none; }
+}

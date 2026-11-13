@@ -21,6 +21,25 @@ knowledge and must be re-checked when that milestone starts (licences and datase
 | Assignment solver / numerics | – | `lap` 0.5.14 (Jonker-Volgenant, used by ByteTrack); SciPy 1.18 | lap BSD-2-Clause, SciPy BSD-3-Clause (**verified**, wheel licence files) — M3 |
 | Tracking metric | Luiten et al., *HOTA: A Higher Order Metric for Evaluating Multi-Object Tracking*, IJCV 2021, arXiv:2009.07736 | github.com/JonathonLuiten/TrackEval | MIT (**verified**, repo LICENSE at `12c8791`) — HOTA / CLEAR / Identity (M3) |
 
+## Software for the backend and dashboard (Milestone 7)
+
+Licences read from the installed packages' metadata (**verified** 2026-11-13).
+
+| component | version | use | licence |
+|---|---|---|---|
+| FastAPI / Starlette | 0.162.5 / 1.10.0 | HTTP API, SSE, static files | MIT / BSD-3-Clause |
+| uvicorn | 0.54.0 | ASGI server | BSD-3-Clause |
+| httpx | 0.28.1 | tests and benchmark client | BSD-3-Clause |
+| SQLite (Python `sqlite3`) | 3.53.4 | metadata store | public domain |
+| React / React DOM | 19.3.1 | dashboard (the only JavaScript shipped to browsers) | MIT |
+| Vite, @vitejs/plugin-react, Vitest | 8.3.5, 6.1.2, 5.0.5 | build, dev server, unit tests (not shipped) | MIT |
+| TypeScript | 7.0.2 | type checking (not shipped) | Apache-2.0 |
+| lightningcss (pulled in by Vite) | – | CSS processing at build time (not shipped) | MPL-2.0 |
+
+All 95 npm packages in `dashboard/package-lock.json`: MIT 57, Apache-2.0 23, MPL-2.0 12 (lightningcss and its
+platform binaries), ISC 1, BSD-3-Clause 1, 0BSD 1. Versions pinned exactly. Each was at least two weeks old when
+chosen (supply-chain hygiene).
+
 ## Datasets
 
 | dataset | paper | use here | access / licence |

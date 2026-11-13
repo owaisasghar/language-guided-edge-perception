@@ -39,6 +39,13 @@ class TrackEntry:
     samples: int
     embeddings: dict[str, np.ndarray] = field(default_factory=dict, repr=False)  # region -> (D,)
     thumbnail: np.ndarray | None = field(default=None, repr=False)
+    run_id: int | None = None  # with a database (Milestone 7): global IDs restart in every run
+    track_id: int | None = None  # the track's database row
+
+    @property
+    def identity(self) -> tuple | None:
+        """Global identity, unique across runs."""
+        return None if self.global_id is None else (self.run_id, self.global_id)
 
 
 @dataclass
@@ -101,7 +108,7 @@ class TrackIndex:
         s = scorer.score(q, embs, None)
         order, seen = [], set()
         for j in np.argsort(-s["total"], kind="stable"):
-            gid = cand[j].global_id
+            gid = cand[j].identity
             if one_per_identity and gid is not None:
                 if gid in seen:
                     continue
@@ -112,10 +119,17 @@ class TrackIndex:
         cams_of = {}
         for e in self.entries:
             if e.global_id is not None:
-                cams_of.setdefault(e.global_id, set()).add(e.camera_id)
+                cams_of.setdefault(e.identity, set()).add(e.camera_id)
         return [SearchHit(i + 1, float(s["total"][j]), float(s["text"][j]), float(s["attributes"][j]), cand[j],
-                          sorted(cams_of.get(cand[j].global_id, {cand[j].camera_id})))
+                          sorted(cams_of.get(cand[j].identity, {cand[j].camera_id})))
                 for i, j in enumerate(order)]
+
+    def prune(self, before_wall: float) -> int:
+        """Drop entries that ended before ``before_wall`` (retention); returns how many were dropped."""
+        keep = [e for e in self.entries if e.wall_end >= before_wall]
+        dropped = len(self.entries) - len(keep)
+        self.entries = keep
+        return dropped
 
     # --------------------------------------------------------------------------------------- persistence
     def save(self, directory: str | Path) -> None:

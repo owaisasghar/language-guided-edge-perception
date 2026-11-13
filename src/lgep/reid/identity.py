@@ -18,6 +18,13 @@ Cues (each can be switched off for the RQ4 ablation):
 * **attributes** (``use_attributes``): tracklets carrying attribute distributions (e.g. CLIP colour
   probabilities) are linked only if the distributions overlap: Bhattacharyya coefficient
   sum(sqrt(p * q)) >= ``attribute_min_overlap`` with every member that has attributes.
+
+Cost: appearance similarities to all member descriptors are one matrix-vector product; identities whose last
+sighting is further in the past than the longest allowed gap or transit (``time_horizon_s``) are skipped
+without a check (they can never be feasible), and the exact rules above run only for identities in
+descending order of appearance, so a decision costs O(members) in NumPy plus a few Python checks, instead of
+Python loops over every identity ever created. The decisions are the same as checking every identity.
+``peek`` gives the decision for a still-open track without changing anything (provisional live IDs).
 """
 
 from __future__ import annotations
@@ -126,6 +133,8 @@ class AssociationRecord:
 
 
 class IdentityManager:
+    EVIDENCE_SCAN = 64  # below the threshold, at most this many identities are checked for the evidence record
+
     def __init__(self, cfg: AssociationConfig | None = None, topology: CameraTopology | None = None):
         self.cfg = cfg or AssociationConfig()
         self.topology = topology or CameraTopology()
@@ -133,6 +142,20 @@ class IdentityManager:
         self.records: list[AssociationRecord] = []
         self._of_track: dict[str, int] = {}
         self._ids = itertools.count(1)
+        # one row per member descriptor: the matrix, its identity, and its track key (growable arrays)
+        self._mat = np.zeros((0, 0), np.float32)
+        self._row_gid = np.zeros(0, np.int64)
+        self._row_key: list[str] = []
+        self._n = 0
+        self._id_t_end = np.full(1, -np.inf)  # by global ID; -inf = no identity (never created, merged away)
+        self.time_horizon_s = self._horizon()
+
+    def _horizon(self) -> float | None:
+        """Longest possible gap between an identity's last sighting and a feasible new tracklet (None: no limit)."""
+        if not self.cfg.use_time:
+            return None
+        windows = list(self.topology.pairs.values()) + ([self.topology.default] if self.topology.default else [])
+        return max([self.cfg.max_gap_same_camera_s] + [w.max_s for w in windows])
 
     def global_id_of(self, track_key: str) -> int | None:
         return self._of_track.get(track_key)
@@ -157,26 +180,64 @@ class IdentityManager:
             return False, "camera pair not connected", transit
         return w.min_s <= transit <= w.max_s, f"transit {transit:.1f} s in [{w.min_s}, {w.max_s}]", transit
 
-    def _score(self, ident: GlobalIdentity, t: TrackletRecord, desc: np.ndarray) -> tuple[float | None, dict]:
-        ev = {"global_id": ident.global_id}
+    def _rejection(self, ident: GlobalIdentity, t: TrackletRecord) -> str | None:
+        """Why ``t`` cannot join ``ident`` (phrase, time / camera layout, attributes), or None if it can."""
         if self.cfg.use_phrase and any(m.phrase != t.phrase for m in ident.members):
-            return None, {**ev, "rejected": "different phrase"}
+            return "different phrase"
         if self.cfg.use_time:
             for m in ident.members:
-                ok, why, gap = self._feasible(m, t)
+                ok, why, _ = self._feasible(m, t)
                 if not ok:
-                    return None, {**ev, "rejected": why}
+                    return why
         if self.cfg.use_attributes and t.attributes is not None:
             for m in ident.members:
                 if m.attributes is not None:
                     overlap = float(np.sum(np.sqrt(np.clip(m.attributes, 0, None) * np.clip(t.attributes, 0, None))))
                     if overlap < self.cfg.attribute_min_overlap:
-                        return None, {**ev, "rejected": f"attributes differ (overlap {overlap:.2f})"}
-        sims = [float(desc @ m.descriptor) for m in ident.members if m.descriptor is not None]
-        if not sims:
-            return None, {**ev, "rejected": "no appearance"}
-        s = max(sims) if self.cfg.member_reduction == "max" else float(np.mean(sims))
-        return s, {**ev, "appearance": round(s, 4)}
+                        return f"attributes differ (overlap {overlap:.2f})"
+        return None
+
+    def _appearance(self, desc: np.ndarray) -> np.ndarray:
+        """Appearance score per global ID (max or mean over the identity's member descriptors); -inf if none."""
+        out = np.full(len(self._id_t_end), -np.inf)
+        if not self._n:
+            return out
+        sims = self._mat[: self._n] @ desc.astype(np.float32)
+        gids = self._row_gid[: self._n]
+        if self.cfg.member_reduction == "max":
+            np.maximum.at(out, gids, sims)
+        else:
+            cnt = np.bincount(gids, minlength=len(out))
+            tot = np.bincount(gids, weights=sims, minlength=len(out))
+            has = cnt > 0
+            out[has] = tot[has] / cnt[has]
+        out[0] = -np.inf  # global ID 0 is never assigned (rows of split members point to it)
+        return out
+
+    def _decide(self, t: TrackletRecord, desc: np.ndarray) -> tuple[int | None, float | None, dict]:
+        """The best feasible identity (in descending appearance order) and its score, plus evidence. Every
+        identity at or above the threshold is checked, so the decision equals checking all identities."""
+        scores = self._appearance(desc)
+        cand = np.flatnonzero(np.isfinite(scores))
+        if self.time_horizon_s is not None:
+            cand = cand[t.t_start - self._id_t_end[cand] <= self.time_horizon_s]
+        order = cand[np.lexsort((cand, -scores[cand]))]  # score descending, then lower global ID first
+        best, best_s, top, checked = None, None, [], 0
+        for gid in order:
+            s = float(scores[gid])
+            # Until a feasible identity at or above the threshold is found, every one must be checked. After
+            # that (or below the threshold) the decision is fixed; checking continues only for the evidence
+            # (the top 3 feasible scores, and the best feasible score of a "new" decision), with a budget.
+            if (best is not None or s < self.cfg.appearance_threshold) and \
+                    (len(top) >= 3 or checked >= self.EVIDENCE_SCAN):
+                break
+            checked += 1
+            if self._rejection(self.identities[int(gid)], t) is None:
+                if best is None:
+                    best, best_s = int(gid), s
+                if len(top) < 3:
+                    top.append({"global_id": int(gid), "appearance": round(s, 4)})
+        return best, best_s, {"samples": t.n_samples, "candidates": int(len(cand)), "checked": checked, "top": top}
 
     # ------------------------------------------------------------------------------------ association
     def assign(self, t: TrackletRecord) -> AssociationRecord:
@@ -187,26 +248,48 @@ class IdentityManager:
         member = Member(t.key, t.camera_id, t.phrase, t.t_start, t.t_end, desc, t.attributes)
         if desc is None or t.n_samples < self.cfg.min_samples:
             return self._new(member, "new_low_evidence", None, {"samples": t.n_samples})
-        best, best_s, considered = None, -1.0, []
-        for ident in self.identities.values():
-            s, ev = self._score(ident, t, desc)
-            considered.append(ev)
-            if s is not None and s > best_s:
-                best, best_s = ident, s
-        evidence = {"samples": t.n_samples, "candidates": len(considered),
-                    "top": sorted((e for e in considered if "appearance" in e), key=lambda e: -e["appearance"])[:3]}
+        best, best_s, evidence = self._decide(t, desc)
         if best is not None and best_s >= self.cfg.appearance_threshold:
-            best.members.append(member)
-            self._of_track[t.key] = best.global_id
-            rec = AssociationRecord(t.key, best.global_id, "matched", round(best_s, 4), evidence)
+            self._add_member(best, member)
+            rec = AssociationRecord(t.key, best, "matched", round(best_s, 4), evidence)
             self.records.append(rec)
             return rec
         return self._new(member, "new", None if best is None else round(best_s, 4), evidence)
 
+    def peek(self, t: TrackletRecord) -> tuple[int, float] | None:
+        """The identity a still-open tracklet would join now, with its score, or None; changes nothing."""
+        desc = t.descriptor
+        if desc is None or t.n_samples < self.cfg.min_samples or t.key in self._of_track:
+            return None
+        best, best_s, _ = self._decide(t, desc)
+        return (best, best_s) if best is not None and best_s >= self.cfg.appearance_threshold else None
+
+    def _add_member(self, gid: int, member: Member) -> None:
+        self.identities[gid].members.append(member)
+        self._of_track[member.key] = gid
+        if gid >= len(self._id_t_end):
+            grown = np.full(max(2 * len(self._id_t_end), gid + 1), -np.inf)
+            grown[: len(self._id_t_end)] = self._id_t_end
+            self._id_t_end = grown
+        self._id_t_end[gid] = max(self._id_t_end[gid], member.t_end)
+        if member.descriptor is not None:
+            d = member.descriptor.astype(np.float32)
+            if self._n == len(self._mat) or self._mat.shape[1] != len(d):
+                cap = max(64, 2 * len(self._mat))
+                mat = np.zeros((cap, len(d)), np.float32)
+                gids = np.zeros(cap, np.int64)
+                if self._n:
+                    mat[: self._n], gids[: self._n] = self._mat[: self._n], self._row_gid[: self._n]
+                self._mat, self._row_gid = mat, gids
+            self._mat[self._n] = d
+            self._row_gid[self._n] = gid
+            self._row_key.append(member.key)
+            self._n += 1
+
     def _new(self, member: Member, decision: str, score, evidence) -> AssociationRecord:
         gid = next(self._ids)
-        self.identities[gid] = GlobalIdentity(gid, [member])
-        self._of_track[member.key] = gid
+        self.identities[gid] = GlobalIdentity(gid, [])
+        self._add_member(gid, member)
         rec = AssociationRecord(member.key, gid, decision, score, evidence)
         self.records.append(rec)
         return rec
@@ -219,6 +302,9 @@ class IdentityManager:
         for m in a.members:
             self._of_track[m.key] = keep
             self.records.append(AssociationRecord(m.key, keep, "merged", None, {"from": absorb, "reason": reason}))
+        self._row_gid[: self._n][self._row_gid[: self._n] == absorb] = keep
+        self._id_t_end[keep] = max(self._id_t_end[keep], self._id_t_end[absorb])
+        self._id_t_end[absorb] = -np.inf
 
     def split(self, track_key: str, reason: str = "manual") -> int:
         """Detach one tracklet into a new identity; returns its new global ID."""
@@ -226,7 +312,12 @@ class IdentityManager:
         ident = self.identities[gid]
         m = next(x for x in ident.members if x.key == track_key)
         ident.members.remove(m)
+        self._id_t_end[gid] = max((x.t_end for x in ident.members), default=-np.inf)
         if not ident.members:
             del self.identities[gid]
+        if m.key in self._row_key:  # its descriptor row now belongs to the new identity
+            row = self._row_key.index(m.key)
+            self._row_key[row] = ""
+            self._row_gid[row] = 0  # global ID 0 is never used, so this row never scores
         new = self._new(m, "split", None, {"from": gid, "reason": reason})
         return new.global_id

@@ -146,6 +146,56 @@ def test_low_evidence_merge_and_split():
         m.assign(tracklet("cam01/2", 6, 10, unit(1, 0)))
 
 
+def test_peek_predicts_assign_without_changing_anything():
+    m = IdentityManager(AssociationConfig(appearance_threshold=0.9, max_gap_same_camera_s=5))
+    a = m.assign(tracklet("cam01/1", 0, 10, unit(1, 0)))
+    open_track = tracklet("cam01/2", 12, 15, unit(1, 0.1))
+    n_records, n_ids = len(m.records), len(m.identities)
+    gid, score = m.peek(open_track)
+    assert gid == a.global_id and score > 0.99
+    assert (len(m.records), len(m.identities), m.global_id_of("cam01/2")) == (n_records, n_ids, None)
+    assert m.peek(tracklet("cam01/3", 12, 15, unit(0, 1))) is None  # looks different
+    assert m.assign(open_track).global_id == gid
+
+
+def test_time_horizon_skips_identities_that_can_no_longer_match():
+    topo = CameraTopology({("a", "b"): TransitWindow(0, 40)}, default=TransitWindow(0, 20))
+    m = IdentityManager(AssociationConfig(appearance_threshold=0.9, max_gap_same_camera_s=5), topo)
+    assert m.time_horizon_s == 40
+    m.assign(tracklet("a/1", 0, 10, unit(1, 0)))
+    rec = m.assign(tracklet("b/1", 60, 70, unit(1, 0)))  # 50 s after: beyond every window
+    assert rec.decision == "new" and rec.evidence["candidates"] == 0
+    assert IdentityManager(AssociationConfig(use_time=False)).time_horizon_s is None
+
+
+def test_vectorised_decisions_equal_checking_every_identity():
+    """Random tracklets: the manager's decisions equal a brute-force loop over all identities."""
+    rng = np.random.default_rng(0)
+    topo = CameraTopology({("c0", "c1"): TransitWindow(0, 15), ("c1", "c2"): TransitWindow(5, 30, overlapping=True)},
+                          default=TransitWindow(0, 10))
+    for reduction in ("max", "mean"):
+        cfg = AssociationConfig(appearance_threshold=0.8, member_reduction=reduction, max_gap_same_camera_s=8)
+        m = IdentityManager(cfg, topo)
+        protos = [unit(*rng.normal(size=8)) for _ in range(6)]  # 6 "objects", noisy views of them
+        t = 0.0
+        for i in range(150):
+            t += rng.uniform(0, 3)
+            emb = unit(*(protos[rng.integers(6)] + rng.normal(scale=0.25, size=8)))
+            tr = tracklet(f"c{rng.integers(3)}/{i}", t, t + rng.uniform(1, 6), emb)
+            # brute force with the original rule: best feasible identity by appearance, then the threshold
+            best, best_s = None, -1.0
+            for ident in m.identities.values():
+                if m._rejection(ident, tr) is not None:
+                    continue
+                sims = [float(tr.descriptor @ x.descriptor) for x in ident.members if x.descriptor is not None]
+                s = max(sims) if reduction == "max" else float(np.mean(sims))
+                if s > best_s + 1e-6 or (abs(s - best_s) <= 1e-6 and best is not None and ident.global_id < best):
+                    best, best_s = ident.global_id, s
+            rec = m.assign(tr)
+            expected = best if best is not None and best_s >= cfg.appearance_threshold else None
+            assert (rec.global_id if rec.decision == "matched" else None) == expected, (reduction, i)
+
+
 def test_topology_from_config():
     topo = CameraTopology.from_dict({"default": None, "pairs": [{"from": "a", "to": "b", "min_s": 5, "max_s": 60}]})
     assert topo.window("a", "b").max_s == 60 and topo.window("b", "a").min_s == 5 and topo.window("a", "c") is None
@@ -197,3 +247,29 @@ def test_service_closes_idle_tracks_and_links_them():
     final = svc.close_all()
     assert final[0].decision == "matched" and svc.global_id("cam01/2") == svc.global_id("cam01/1")
     assert svc.stats()["crops_embedded"] == 3 and svc.stats()["global_identities"] == 1
+
+
+def test_service_gives_a_track_refound_after_it_ended_a_new_segment():
+    """ByteTrack counts lost frames, the service counts seconds: when processing is slow, the tracker can re-find
+    a track the service already ended. The key comes back; it must become a new tracklet, not crash."""
+    from lgep.tracking.tracker import Track
+
+    class Emb:
+        def embed_images(self, crops):
+            return np.array([unit(1, 0)] * len(crops), np.float32)
+
+    svc = ReIDService(Emb(), SamplingConfig(every_n_frames=1, min_score=0.0, center=False),
+                      AssociationConfig(appearance_threshold=0.9, max_gap_same_camera_s=10), close_after_s=1.0)
+    img = np.zeros((480, 640, 3), np.uint8)
+    t1 = Track("cam01", 1, "person", (100.0, 100.0, 150.0, 300.0), 0.9, 1)
+
+    def frame(i, t, tracks):
+        return svc.on_result(SimpleNamespace(camera_id="cam01", index=i, t_capture=t, image=img), None,
+                             SimpleNamespace(tracks=tracks))
+
+    frame(1, 0.0, [t1])
+    assert [r.track_key for r in frame(2, 2.0, [])] == ["cam01/1"]  # idle 2 s > 1 s: ended and assigned
+    frame(3, 2.5, [t1])  # the tracker re-finds track 1
+    final = svc.close_all()
+    assert [r.track_key for r in final] == ["cam01/1~2"] and final[0].decision == "matched"
+    assert svc.segments.reopened == 1 and svc.stats()["tracks_refound_after_end"] == 1

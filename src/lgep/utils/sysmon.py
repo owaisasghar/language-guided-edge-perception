@@ -64,6 +64,12 @@ class GpuSampler:
         if self._thread:
             self._thread.join(2)
 
+    def latest(self) -> dict | None:
+        """The most recent sample (live status)."""
+        if not self.util:
+            return None
+        return {"util_percent": self.util[-1], "memory_used_mib": self.mem_mib[-1]}
+
     def summary(self) -> dict | None:
         if not self.util:
             return None

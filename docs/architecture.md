@@ -5,8 +5,8 @@ Grounding DINO and YOLO-World, behind one interface); Milestone 3 adds **per-cam
 persistent local track IDs; Milestone 4 adds **multi-camera RTSP ingestion** with asynchronous processing
 and reconnection; Milestone 5 adds **cross-camera Re-ID** (appearance embeddings, time / camera-layout / colour
 constraints, global identity manager; evaluated on CityFlowV2); Milestone 6 adds **language queries** (parsing, attribute verification, a
-searchable track index). Everything else is planned and will be designed in detail at the start of its
-milestone.
+searchable track index); Milestone 7 adds the **metadata store, the HTTP API and the React dashboard**, running
+in the same edge process. Optimisation (Milestone 8) and the research experiments (Milestone 9) build on this.
 
 ```mermaid
 flowchart LR
@@ -24,7 +24,7 @@ flowchart LR
   I --> J[11. FastAPI]
   J --> K[12. React dashboard]
   classDef done fill:#0b7,stroke:#063,color:#fff;
-  class A,B,C,D,E,I,Q done;
+  class A,B,C,D,E,F,G,H,I,J,K,Q done;
 ```
 
 ## Identity model (fixed from day one)
@@ -97,6 +97,36 @@ camera N ──RTSP──> CameraReader thread ─┘
 * Detector-side use (the RefCOCO+ evaluation): the parsed category is the detector prompt, the candidates
   are re-ranked by the same scorer.
 
+## Edge application, store and API (Milestone 7)
+
+```
+                 perception worker (one thread, per processed frame)
+PerceptionPipeline ──> ReIDService.on_result ──> provisional IDs (peek) ──> Recorder ──> LiveHub.update
+                         │ closed tracks -> IdentityManager       │ store operations     │ frame reference
+                         │ -> PersistentTrackIndex.add            v (queued, never      v (no copy)
+                         └──────────────────────────────> MetadataStore queue   blocking)
+                                                                  │ writer thread: batched transactions (WAL)
+                                                                  v
+                                                     SQLite: runs, cameras, tracks, track_points,
+                                                     track_media (thumbnail + CLIP embeddings),
+                                                     identities, events  ──commit──> EventBus
+                                                                  ^                    │
+FastAPI (uvicorn, same process) ── reads (own connection per request) ──┘            │ SSE
+   /api/status /api/tracks /api/identities /api/events /api/timeline /api/search      │
+   /api/cameras/{id}/frame.jpg (long poll: LiveHub encodes on demand)  /api/stream <──┘
+   /  -> React dashboard (built static files)
+```
+
+* **Nothing in the API path can slow the video path.** The worker only enqueues small operations and keeps
+  a reference to the newest frame; SQLite writes happen in the store's writer thread; JPEG encoding happens
+  in the request that asks for a frame, at most `live.max_fps` times per camera, shared by all viewers.
+* **Runs.** Every server start is a run; local track IDs and global IDs are unique within a run, so the
+  store keys tracks and identities by run. Search covers earlier runs too: the index is rebuilt from
+  `track_media` at start (within the retention period).
+* **Track segments.** A tracker key re-found after the Re-ID service ended it (frame-based vs time-based
+  "lost" rules, see `lgep.tracking.segments`) becomes a new tracklet `cam01/17~2`, in Re-ID and the store alike.
+* **Replay mode** serves a stored database without cameras (browse, timeline, search).
+
 ## GPU budget principles (8 GB)
 
 * One large detector resident at a time; it is shared across cameras through batching, not one model
@@ -117,6 +147,6 @@ camera N ──RTSP──> CameraReader thread ─┘
 | `lgep.pipeline` | 4 | `PerceptionPipeline`: round-robin over cameras, per-camera rate limit, shared detector, per-camera trackers reset on reconnect, latency statistics |
 | `lgep.reid` | 5 | `ClipEmbedder` (images + texts), `TrackFeatureBank` (crop sampling, per-camera mean-centring), `CameraTopology` (transit windows), `IdentityManager` (global IDs, association records, merge / split), `ReIDService` (online, plugs into the pipeline), Re-ID and MTMC metrics |
 | `lgep.query` | 6 | `parse_query` (rule-based: categories, colours, clothing regions, related objects, cameras, time), `QueryScorer` (CLIP colour verification per body region + description similarity), `TrackIndex` (filter, rank, one hit per identity, save / load) |
-| `lgep.database` | 7 | SQLite schema for detections, tracks, identities and events |
-| `lgep.api` | 7 | FastAPI service |
-| `dashboard/` | 7 | React UI |
+| `lgep.database` | 7 | `MetadataStore` (SQLite, WAL, one writer thread, batched commits, retention), `Recorder` (pipeline output -> store operations), `PersistentTrackIndex` / `load_index` (search across restarts), `queries` (all read SQL) |
+| `lgep.api` | 7 | `create_app` (FastAPI: REST, long-poll live frames, Server-Sent Events, token auth, static dashboard), `LiveSystem` / `ReplaySystem` (the edge application in one process), `LiveHub` (newest frames, on-demand JPEG with overlays), `EventBus` (thread-safe SSE fan-out) |
+| `dashboard/` | 7 | React + TypeScript (Vite): live camera grid with provisional IDs and health, event feed, natural-language search with score breakdown, identity view, timeline (density heatmap, cross-camera links, swimlanes) |

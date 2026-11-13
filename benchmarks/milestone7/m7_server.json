@@ -1,0 +1,287 @@
+{
+ "measured": true,
+ "date": "2026-11-13T15:21:26",
+ "warmup_s": 25.0,
+ "window_s": 90.0,
+ "environment": {
+  "timestamp_utc": "2026-11-13T10:21:26+00:00",
+  "os": "Linux-6.8.0-138-generic-x86_64-with-glibc2.35",
+  "python": "3.12.16",
+  "cpu": "AMD Ryzen 7 8845HS w/ Radeon 780M Graphics",
+  "cpu_logical_cores": 16,
+  "ram_gib": 30.6,
+  "packages": {
+   "torch": "2.13.0+cu130",
+   "torchvision": "0.28.0+cu130",
+   "transformers": "5.22.2",
+   "huggingface-hub": "2.4.0",
+   "tokenizers": "0.23.3",
+   "safetensors": "0.8.0",
+   "numpy": "2.5.4",
+   "pillow": "13.0.0",
+   "lgep": "0.1.0",
+   "ultralytics": "8.4.211",
+   "clip": "1.0",
+   "opencv-python": "5.0.0.93",
+   "pycocotools": "2.0.11",
+   "scipy": "1.18.1",
+   "lap": "0.5.14",
+   "trackeval": "1.0.dev1"
+  },
+  "torch_cuda_build": "13.0",
+  "cudnn": 92000,
+  "torch_arch_list": [
+   "sm_75",
+   "sm_80",
+   "sm_86",
+   "sm_90",
+   "sm_100",
+   "sm_120"
+  ],
+  "gpu": {
+   "name": "NVIDIA GeForce RTX 4060 Laptop GPU",
+   "driver": "580.178.04",
+   "memory_total": "8188 MiB",
+   "compute_capability": "8.9",
+   "power_limit": "55.00 W"
+  }
+ },
+ "runs": {
+  "baseline": {
+   "name": "baseline",
+   "process_cpu_percent": 138.4,
+   "gpu": {
+    "samples": 180,
+    "util_percent_mean": 56.3,
+    "util_percent_p90": 68.0,
+    "device_memory_used_mib_max": 1226.0
+   },
+   "processed_fps_per_camera": [
+    8.5,
+    8.56,
+    8.5,
+    8.56
+   ],
+   "processed_fps_mean": 8.53,
+   "latency_ms_p50_mean": 34.2,
+   "latency_ms_p90_mean": 50.4,
+   "reid": {
+    "frames": 3957,
+    "crops_embedded": 14417,
+    "embed_ms_per_frame": 7.32,
+    "provisional_ms_per_frame": 0.0,
+    "tracks_refound_after_end": 0,
+    "open_tracks": 74,
+    "global_identities": 661,
+    "multi_camera_identities": 32,
+    "decisions": {
+     "new_low_evidence": 128,
+     "new": 533,
+     "matched": 198
+    }
+   }
+  },
+  "server": {
+   "name": "server",
+   "process_cpu_percent": 139.1,
+   "gpu": {
+    "samples": 180,
+    "util_percent_mean": 53.4,
+    "util_percent_p90": 63.0,
+    "device_memory_used_mib_max": 1276.0
+   },
+   "processed_fps_per_camera": [
+    8.43,
+    8.35,
+    8.21,
+    8.34
+   ],
+   "processed_fps_mean": 8.33,
+   "latency_ms_p50_mean": 34.6,
+   "latency_ms_p90_mean": 49.5,
+   "reid": {
+    "frames": 3696,
+    "crops_embedded": 13486,
+    "embed_ms_per_frame": 7.34,
+    "provisional_ms_per_frame": 0.452,
+    "tracks_refound_after_end": 0,
+    "open_tracks": 70,
+    "global_identities": 628,
+    "multi_camera_identities": 30,
+    "decisions": {
+     "new_low_evidence": 120,
+     "new": 508,
+     "matched": 200
+    }
+   },
+   "store": {
+    "path": "outputs/milestone7/bench_20261113-152126/server.sqlite",
+    "run_id": 1,
+    "queued": 0,
+    "submitted": 13893,
+    "written": 13857,
+    "dropped": 0,
+    "failed": 0,
+    "commits": 215,
+    "last_commit_ms": 16.84,
+    "max_commit_ms": 57.73,
+    "size_mb": 9.79
+   },
+   "live_hub": {
+    "cameras": 4,
+    "encodes": 0,
+    "frames_served": 0,
+    "encode_ms_mean": 0.0
+   },
+   "callback_ms_mean": 9.58,
+   "db": {
+    "size_mb": 9.79,
+    "uptime_s": 120.2,
+    "mb_per_hour": 293.2,
+    "operations_per_s": 115.3,
+    "tracks_per_hour": 26895
+   }
+  },
+  "server_viewer": {
+   "name": "server_viewer",
+   "process_cpu_percent": 153.1,
+   "gpu": {
+    "samples": 180,
+    "util_percent_mean": 53.5,
+    "util_percent_p90": 62.0,
+    "device_memory_used_mib_max": 1238.0
+   },
+   "processed_fps_per_camera": [
+    8.2,
+    8.15,
+    8.06,
+    8.07
+   ],
+   "processed_fps_mean": 8.12,
+   "latency_ms_p50_mean": 36.8,
+   "latency_ms_p90_mean": 50.8,
+   "reid": {
+    "frames": 3638,
+    "crops_embedded": 13281,
+    "embed_ms_per_frame": 7.5,
+    "provisional_ms_per_frame": 0.484,
+    "tracks_refound_after_end": 0,
+    "open_tracks": 75,
+    "global_identities": 645,
+    "multi_camera_identities": 28,
+    "decisions": {
+     "new_low_evidence": 111,
+     "new": 534,
+     "matched": 184
+    }
+   },
+   "store": {
+    "path": "outputs/milestone7/bench_20261113-152126/server_viewer.sqlite",
+    "run_id": 1,
+    "queued": 0,
+    "submitted": 13815,
+    "written": 13767,
+    "dropped": 0,
+    "failed": 0,
+    "commits": 214,
+    "last_commit_ms": 12.49,
+    "max_commit_ms": 31.8,
+    "size_mb": 9.89
+   },
+   "live_hub": {
+    "cameras": 4,
+    "encodes": 3634,
+    "frames_served": 3634,
+    "encode_ms_mean": 2.92
+   },
+   "callback_ms_mean": 9.86,
+   "viewer": {
+    "cameras": {
+     "cam01": {
+      "frames": 740,
+      "fps": 8.22
+     },
+     "cam02": {
+      "frames": 738,
+      "fps": 8.19
+     },
+     "cam03": {
+      "frames": 729,
+      "fps": 8.09
+     },
+     "cam04": {
+      "frames": 734,
+      "fps": 8.15
+     }
+    },
+    "frame_age_ms_p50": 53.6,
+    "frame_age_ms_p90": 77.6,
+    "jpeg_kb_mean": 85.0,
+    "encode_ms_p50": 2.82,
+    "video_kbit_per_s": 22730.0,
+    "events_received": 1406,
+    "track_close_event_delay_s_p50": 3.39,
+    "track_close_event_delay_s_p90": 3.59,
+    "status_ms_p50": 5.94
+   },
+   "api": {
+    "GET /api/status": {
+     "p50_ms": 5.5,
+     "p90_ms": 7.05,
+     "response_kb": 2.7
+    },
+    "GET /api/tracks (200 newest)": {
+     "p50_ms": 9.96,
+     "p90_ms": 12.73,
+     "response_kb": 70.4
+    },
+    "GET /api/tracks (5 min window, all)": {
+     "p50_ms": 36.93,
+     "p90_ms": 42.68,
+     "response_kb": 319.3
+    },
+    "GET /api/events (200)": {
+     "p50_ms": 2.59,
+     "p90_ms": 3.55,
+     "response_kb": 14.4
+    },
+    "GET /api/identities (multi-camera)": {
+     "p50_ms": 2.43,
+     "p90_ms": 3.18,
+     "response_kb": 3.7
+    },
+    "GET /api/timeline (1 h, 60 buckets)": {
+     "p50_ms": 2.33,
+     "p90_ms": 3.6,
+     "response_kb": 1.9
+    },
+    "POST /api/search (repeated query)": {
+     "p50_ms": 25.44,
+     "p90_ms": 40.74,
+     "response_kb": 8.1
+    },
+    "POST /api/search (new query each time)": {
+     "p50_ms": 46.54,
+     "p90_ms": 77.11
+    },
+    "indexed_tracks": 737
+   },
+   "db": {
+    "size_mb": 9.89,
+    "uptime_s": 120.3,
+    "mb_per_hour": 296.0,
+    "operations_per_s": 114.4,
+    "tracks_per_hour": 26933
+   }
+  },
+  "store_throughput": {
+   "tracks": 20000,
+   "operations": 260000,
+   "submit_us_per_op": 2.23,
+   "ops_per_s": 116394,
+   "tracks_per_s": 8953,
+   "max_commit_ms": 624.08,
+   "db_mb": 18.63
+  }
+ }
+}
