@@ -74,6 +74,10 @@ class TrackletRecord:
     sample_frames: list[int] = field(default_factory=list)
     embeddings: list[np.ndarray] = field(default_factory=list)
     center: np.ndarray | None = None  # camera mean embedding to subtract (set when the tracklet is closed)
+    # Milestone 9: embeddings of a dedicated Re-ID model (e.g. FastReID) of the same crops, for identity matching
+    # only; ``embeddings`` (CLIP) stay for search, attributes and the index. Empty: identity uses ``embeddings``.
+    identity_embeddings: list[np.ndarray] = field(default_factory=list)
+    identity_center: np.ndarray | None = None
     attributes: np.ndarray | None = None  # e.g. CLIP colour probabilities (for the attribute cue)
     best_crop: np.ndarray | None = None  # the tallest sampled crop (thumbnail, attribute checks)
     best_crop_frame: int | None = None
@@ -89,11 +93,17 @@ class TrackletRecord:
 
     @property
     def descriptor(self) -> np.ndarray | None:
-        if not self.embeddings:
+        """The appearance used for identity: mean-centred, L2-normalised mean of the identity model's
+        embeddings if there are any, else of the CLIP embeddings."""
+        if self.identity_embeddings:
+            emb, center = self.identity_embeddings, self.identity_center
+        else:
+            emb, center = self.embeddings, self.center
+        if not emb:
             return None
-        e = np.asarray(self.embeddings, np.float64)
-        if self.center is not None:
-            e = e - self.center
+        e = np.asarray(emb, np.float64)
+        if center is not None:
+            e = e - center
             e /= np.linalg.norm(e, axis=1, keepdims=True) + 1e-12
         m = e.mean(axis=0)
         return (m / (np.linalg.norm(m) + 1e-12)).astype(np.float32)
@@ -111,10 +121,13 @@ class TrackFeatureBank:
         self.tracks: dict[str, TrackletRecord] = {}
         self._sum: dict[str, np.ndarray] = {}  # per camera: running sum / count of all embeddings
         self._count: dict[str, int] = {}
+        self._isum: dict[str, np.ndarray] = {}  # the same for identity-model embeddings
+        self._icount: dict[str, int] = {}
 
-    def camera_mean(self, camera_id: str) -> np.ndarray | None:
-        n = self._count.get(camera_id, 0)
-        return None if not n else (self._sum[camera_id] / n).astype(np.float32)
+    def camera_mean(self, camera_id: str, identity: bool = False) -> np.ndarray | None:
+        s, c = (self._isum, self._icount) if identity else (self._sum, self._count)
+        n = c.get(camera_id, 0)
+        return None if not n else (s[camera_id] / n).astype(np.float32)
 
     def observe(self, camera_id: str, frame_index: int, t: float, tracks, image_size: tuple[int, int]) -> list:
         """Update time spans for this frame's tracks; return the tracks whose crop should be embedded now."""
@@ -141,7 +154,9 @@ class TrackFeatureBank:
             want.append(tr)
         return want
 
-    def add(self, key: str, frame_index: int, embedding: np.ndarray, crop_image: np.ndarray | None = None) -> None:
+    def add(self, key: str, frame_index: int, embedding: np.ndarray, crop_image: np.ndarray | None = None,
+            identity: np.ndarray | None = None) -> None:
+        """One sampled crop: its (CLIP) embedding and, optionally, an identity model's embedding of it."""
         rec = self.tracks[key]
         if crop_image is not None and (rec.best_crop is None or crop_image.shape[0] > rec.best_crop.shape[0]):
             rec.best_crop, rec.best_crop_frame = np.ascontiguousarray(crop_image), frame_index
@@ -150,15 +165,23 @@ class TrackFeatureBank:
         rec.embeddings.append(e)
         self._sum[rec.camera_id] = self._sum.get(rec.camera_id, 0) + e.astype(np.float64)
         self._count[rec.camera_id] = self._count.get(rec.camera_id, 0) + 1
+        if identity is not None:
+            i = np.asarray(identity, np.float32)
+            rec.identity_embeddings.append(i)
+            self._isum[rec.camera_id] = self._isum.get(rec.camera_id, 0) + i.astype(np.float64)
+            self._icount[rec.camera_id] = self._icount.get(rec.camera_id, 0) + 1
         if len(rec.embeddings) > self.cfg.max_samples:  # keep the spread over time: drop every second sample
             rec.embeddings = rec.embeddings[::2]
             rec.sample_frames = rec.sample_frames[::2]
+            rec.identity_embeddings = rec.identity_embeddings[::2]  # same samples kept
 
     def pop(self, key: str) -> TrackletRecord | None:
         """Remove a finished track; with ``center``, attach the camera's current mean embedding."""
         rec = self.tracks.pop(key, None)
         if rec is not None and self.cfg.center:
             rec.center = self.camera_mean(rec.camera_id)
+            if rec.identity_embeddings:
+                rec.identity_center = self.camera_mean(rec.camera_id, identity=True)
         return rec
 
 

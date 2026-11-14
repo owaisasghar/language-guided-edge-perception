@@ -15,6 +15,8 @@ a single 8 GB GPU first and for NVIDIA Jetson Orin NX later.
 7. a SQLite metadata store, a FastAPI backend and a React dashboard (live view, search, timeline);
 8. optimisation and scaling: 1-8 camera streams, FP16, batching, Re-ID in its own thread, frame sampling.
 
+Milestone 9 (research experiments) is in progress; first results in [docs/milestone9.md](docs/milestone9.md).
+
 Since then (2026-11-14): a **vehicle mode** (colour and vehicle-type search, see below) and a redesigned dashboard.
 
 Nothing in this repository reports a number that was not measured; planned targets are labelled as targets.
@@ -31,7 +33,7 @@ Nothing in this repository reports a number that was not measured; planned targe
 | 6 | Language-guided retrieval (CityFlow-NL) | ✅ query parser, CLIP attribute checks, track index; RefCOCO+ and CityFlow-NL (RQ2) |
 | 7 | FastAPI backend + React dashboard | ✅ one edge process: store (SQLite), REST + live frames + Server-Sent Events, dashboard; costs measured |
 | 8 | Optimisation and 1/2/4/8-stream benchmarks | ✅ 8 streams at 10 fps each (was 4.56); FP16 without accuracy loss; per-optimisation ablation, sampling, saturation, GPU energy |
-| 9 | Research experiments and ablations | – |
+| 9 | Research experiments and ablations | 🔄 in progress: OC-SORT and BoT-SORT (official, equality-tested) vs ByteTrack on 4 detectors; person detection P/R/AP50; FastReID person Re-ID. Pending: vehicle Re-ID, retrieval, profiling, write-up |
 | 10 | Report, diagrams, demo video | – |
 
 ## First findings (Milestone 1, measured)
@@ -396,15 +398,14 @@ python scripts/run_detector.py --config configs/milestone2_prompts.yaml --model 
 ## Repository layout
 
 ```
-configs/      YAML configs (no hard-coded parameters) and data manifests
+configs/      YAML configs (no hard-coded parameters), data manifests, experiments (milestone9_*.yaml)
 src/lgep/     perception, tracking, reid, query, ingestion, database, api, utils
 scripts/      runnable entry points (env check, downloads, inference, benchmarks)
 tests/        pytest suite (unit, real-weights integration, GPU consistency)
 benchmarks/   measured results only (JSON + generated Markdown)
 docs/         installation, architecture, per-milestone reports, references
-experiments/  research experiment definitions (from Milestone 9)
 dashboard/    React front end (Milestone 7)
-data/, models/, outputs/   local only: git-ignored
+data/, models/, outputs/, third_party/   local only: git-ignored (third_party/: official code checkouts, M9)
 ```
 
 ## Data and licences

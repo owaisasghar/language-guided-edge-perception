@@ -38,8 +38,11 @@ class ReIDService:
     def __init__(self, embedder, sampling: SamplingConfig | None = None, association: AssociationConfig | None = None,
                  topology: CameraTopology | None = None, close_after_s: float = 3.0, crop_pad: float = 0.0,
                  index=None, thumbnail_height: int = 128, provisional_every_s: float = 1.0,
-                 segments: TrackSegments | None = None, assign_segments: bool = True):
+                 segments: TrackSegments | None = None, assign_segments: bool = True, identity_embedder=None):
         self.embedder = embedder
+        # Milestone 9: an optional dedicated Re-ID model (e.g. FastReID) for identity matching; ``embedder`` (CLIP)
+        # stays for search, attributes and the index. Both embed the same crops.
+        self.identity_embedder = identity_embedder
         self.bank = TrackFeatureBank(sampling)
         self.identities = IdentityManager(association, topology)
         self.close_after_s = close_after_s
@@ -75,10 +78,11 @@ class ReIDService:
                 t0 = time.perf_counter()
                 crops = [crop(image, tr.box_xyxy, self.crop_pad) for tr in want]
                 feats = self.embedder.embed_images(crops)
+                ids = self.identity_embedder.embed_images(crops) if self.identity_embedder is not None else [None] * len(want)
                 self.embed_ms_total += (time.perf_counter() - t0) * 1e3
                 self.crops_embedded += len(want)
-                for tr, f, c in zip(want, feats, crops):
-                    self.bank.add(tr.key, frame.index, f, c if self.index is not None else None)
+                for tr, f, c, i in zip(want, feats, crops, ids):
+                    self.bank.add(tr.key, frame.index, f, c if self.index is not None else None, identity=i)
             self.frames += 1
             return self._close(frame.camera_id, frame.t_capture)
 
@@ -97,12 +101,14 @@ class ReIDService:
         out = {}
         with self._lock:
             center = self.bank.camera_mean(camera_id) if self.bank.cfg.center else None
+            icenter = self.bank.camera_mean(camera_id, identity=True) if self.bank.cfg.center else None
             for key, rec in self.bank.tracks.items():
                 if rec.camera_id != camera_id:
                     continue
                 cached = self._provisional.get(key)
                 if cached is None or now - cached[0] >= self.provisional_every_s:
-                    res = self.identities.peek(dataclasses.replace(rec, center=center)) if rec.embeddings else None
+                    res = (self.identities.peek(dataclasses.replace(rec, center=center, identity_center=icenter))
+                           if rec.embeddings else None)
                     cached = self._provisional[key] = (now, res)
                 if cached[1] is not None:
                     out[key] = cached[1]

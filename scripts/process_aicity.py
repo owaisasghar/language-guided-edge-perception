@@ -8,6 +8,9 @@ c010 is in S03 and S05):
     (``reid.sampling``), for cross-camera association (scripts/eval_aicity_mtmc.py);
   * CityFlow-NL: CLIP embeddings of up to ``nl.crops_per_track`` crops of every annotated NL track seen by this
     camera, taken in the same pass (scripts/eval_cityflow_nl.py);
+  * with ``reid.extra_embedders`` (Milestone 9): the same tracklet crops embedded by other models too, stored as
+    ``trk_<i>__<name>`` and ``camera_mean__<name>`` next to CLIP's (thinned identically, so sample k of every
+    model is the same crop);
   * timing (detector, tracker, embedding, decoding per frame).
 Cameras whose cache exists are skipped (``--force`` to redo).
 
@@ -70,7 +73,29 @@ def nl_requests(nl_root: Path, n_per_track: int) -> dict[str, dict[int, list[tup
     return req
 
 
-def process_camera(cam: dict, cfg: dict, detector, embedder, nl_req: dict, out: Path) -> dict:
+class ExtraFeatures:
+    """Embeddings of another model for the crops TrackFeatureBank samples: same order, same thinning rule
+    (keep every second sample above ``max_samples``), per-camera running mean over all samples."""
+
+    def __init__(self, max_samples: int):
+        self.max_samples = max_samples
+        self.by_key: dict[str, list[np.ndarray]] = {}
+        self.sum, self.count = None, 0
+
+    def add(self, key: str, e: np.ndarray) -> None:
+        e = np.asarray(e, np.float32)
+        lst = self.by_key.setdefault(key, [])
+        lst.append(e)
+        self.sum = e.astype(np.float64) if self.sum is None else self.sum + e
+        self.count += 1
+        if len(lst) > self.max_samples:
+            self.by_key[key] = lst[::2]
+
+    def mean(self) -> np.ndarray | None:
+        return None if not self.count else (self.sum / self.count).astype(np.float32)
+
+
+def process_camera(cam: dict, cfg: dict, detector, embedder, nl_req: dict, out: Path, extras: dict | None = None) -> dict:
     a = cfg["aicity"]
     fps = float(a["fps"].get(cam["camera"], a["fps"]["default"]))
     phrases = [p.strip() for p in a["prompt"].split(".") if p.strip()]
@@ -83,6 +108,10 @@ def process_camera(cam: dict, cfg: dict, detector, embedder, nl_req: dict, out: 
         raise OSError(f"cannot open {cam['dir'] / 'vdo.avi'}")
     rows, nl_emb = [], {}
     tm = {"decode": [], "detector": [], "tracker": [], "embed": []}
+    extras = extras or {}
+    xfeat = {n: ExtraFeatures(bank.cfg.max_samples) for n in extras}
+    for n in extras:
+        tm[f"embed_{n}"] = []
     f = 0
     while True:
         t0 = time.perf_counter()
@@ -117,6 +146,12 @@ def process_camera(cam: dict, cfg: dict, detector, embedder, nl_req: dict, out: 
             for (uuid, _), e in zip(nl_here, feats[len(want):]):
                 nl_emb.setdefault(uuid, []).append(e)
         tm["embed"].append((time.perf_counter() - te) * 1e3)
+        for n, ex in extras.items():  # tracklet crops only (CityFlow-NL uses CLIP)
+            tx = time.perf_counter()
+            if want:
+                for t, e in zip(want, ex.embed_images(crops[: len(want)])):
+                    xfeat[n].add(t.key, e)
+            tm[f"embed_{n}"].append((time.perf_counter() - tx) * 1e3)
     cap.release()
     recs = list(bank.tracks.values())
     arrays = {"rows": np.array(rows, np.float64).reshape(-1, 7)}
@@ -132,6 +167,13 @@ def process_camera(cam: dict, cfg: dict, detector, embedder, nl_req: dict, out: 
                                   "frames_seen": r.frames_seen, "samples": r.n_samples})
         if r.embeddings:
             arrays[f"trk_{i}"] = np.stack(r.embeddings).astype(np.float16)
+        for n, xf in xfeat.items():
+            if xf.by_key.get(r.key):
+                assert len(xf.by_key[r.key]) == len(r.embeddings), "extra embeddings out of step with CLIP's"
+                arrays[f"trk_{i}__{n}"] = np.stack(xf.by_key[r.key]).astype(np.float16)
+    for n, xf in xfeat.items():
+        if xf.mean() is not None:
+            arrays[f"camera_mean__{n}"] = xf.mean()
     for uuid, embs in nl_emb.items():
         arrays[f"nl_{uuid}"] = np.stack(embs).astype(np.float16)
     np.savez_compressed(out / f"{cam['name']}.npz", **arrays)
@@ -144,8 +186,9 @@ def main() -> int:
     ap.add_argument("--config", default="configs/milestone5_cityflow.yaml")
     ap.add_argument("--cameras", nargs="*", default=None)
     ap.add_argument("--force", action="store_true")
+    ap.add_argument("--override", nargs="*", default=[], metavar="KEY=VALUE", help="dotted config overrides")
     args = ap.parse_args()
-    cfg = load_config(REPO_ROOT / args.config)
+    cfg = load_config(REPO_ROOT / args.config, args.override)
     a = cfg["aicity"]
     root, out = REPO_ROOT / a["root"], REPO_ROOT / a["cache_dir"]
     out.mkdir(parents=True, exist_ok=True)
@@ -159,13 +202,16 @@ def main() -> int:
         nl_req = nl_requests(REPO_ROOT / cfg["nl"]["root"], cfg["nl"]["crops_per_track"])
         detector = build_detector(cfg["models"][a["detector"]], cfg.get("device", "auto"), base_dir=REPO_ROOT)
         embedder = build_embedder(cfg["reid"]["embedder"])
+        extras = {n: build_embedder(c) for n, c in (cfg["reid"].get("extra_embedders") or {}).items()}
         (out / "environment.json").write_text(json.dumps({"environment": collect_environment(),
                                                           "detector": detector.describe(),
-                                                          "embedder": embedder.describe(), "config": cfg}, indent=1))
+                                                          "embedder": embedder.describe(),
+                                                          "extra_embedders": {n: e.describe() for n, e in extras.items()},
+                                                          "config": cfg}, indent=1))
         t_all = time.monotonic()
         for k, cam in enumerate(todo, 1):
             t0 = time.monotonic()
-            m = process_camera(cam, cfg, detector, embedder, nl_req.get(cam["name"], {}), out)
+            m = process_camera(cam, cfg, detector, embedder, nl_req.get(cam["name"], {}), out, extras)
             el = time.monotonic() - t0
             log.info("%2d/%d %s/%s: %d frames in %.0f s (%.1f fps) | %d tracklets | %d NL tracks | det %.1f ms, embed %.1f ms",
                      k, len(todo), cam["scenario"], cam["camera"], m["frames"], el, m["frames"] / max(el, 1e-6),

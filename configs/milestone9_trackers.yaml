@@ -1,0 +1,35 @@
+# Milestone 9 — tracker comparison on MOT17: ByteTrack vs OC-SORT vs BoT-SORT (official implementations,
+# vendored with equality tests), on the cached detections of Milestone 3, with Milestone 3's protocol.
+#
+#   python scripts/eval_trackers_mot17.py          # CPU only; needs the Milestone 3 detection caches
+#
+# Protocol (as Milestone 3): each tracker's high-score threshold is tuned per detector on train_half (best
+# HOTA over the grid), results are on val_half; the trackers' own default (0.6) is reported too. Same output
+# filters for every tracker (area > 100 px², pedestrians wider than 1.6 x their height dropped), same
+# lost-track window (30 frames at 30 fps, scaled by each sequence's frame rate). Every other parameter is
+# each tracker's own MOT17 setting (lgep.tracking.tracker: OCSORT_DEFAULTS, BOTSORT_DEFAULTS).
+
+extends: milestone3_mot17.yaml
+
+run_name: m9_trackers
+output_dir: outputs/milestone9
+benchmark_dir: benchmarks/milestone9
+
+# Deployed detector, the strongest YOLO-World and the strongest zero-shot detector of Milestone 3, and the
+# ground-truth boxes (what is left is the tracker's own error).
+detectors: [yoloworld_m, yoloworld_x_1280, gdino_b, oracle_gt]
+
+trackers:
+  bytetrack: {algorithm: bytetrack}
+  ocsort: {algorithm: ocsort}
+  botsort: {algorithm: botsort}                                  # + camera-motion compensation (sparse optical flow)
+  botsort_no_cmc: {algorithm: botsort, botsort: {cmc: none}}     # isolates what camera motion adds
+
+# BoT-SORT's camera motion is estimated once per sequence and split from the MOT17 frames (BGR, as the
+# official code reads them) and cached; it does not depend on the detections.
+camera_motion:
+  method: sparseOptFlow
+  downscale: 2
+
+workers: 8          # parallel tuning / evaluation jobs (CPU); the timing pass afterwards runs alone
+timing_detector: yoloworld_m

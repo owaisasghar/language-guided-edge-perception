@@ -152,3 +152,57 @@ def test_phrase_groups_track_label_flicker_as_one_object():
         ids_s |= {(t.phrase, t.local_id) for t in split.update_from_result(frame(label)).tracks}
     assert ids_g == {("vehicle", 1)}  # one track for the whole time
     assert len(ids_s) > 1  # per-label trackers split it
+
+
+# --- Milestone 9: OC-SORT and BoT-SORT as alternatives (tracker.algorithm) ---------------------------------
+
+
+@pytest.mark.parametrize("algorithm", ["bytetrack", "ocsort", "botsort"])
+def test_every_algorithm_keeps_ids_through_a_short_occlusion(algorithm):
+    t = CameraTracker("cam01", TrackerConfig(algorithm=algorithm))
+    walk = [box(100 + 5 * f, 200) for f in range(60)]
+    for f in range(20):
+        r = t.update(frame((walk[f], 0.9), (box(600, 300), 0.9)))
+    assert ids(r) == [1, 2]
+    for f in range(20, 26):  # 6 frames without the walker
+        t.update(frame((box(600, 300), 0.9)))
+    for f in range(26, 30):  # OC-SORT reports a re-found track at once; new ones only after min_hits matches
+        r = t.update(frame((walk[f], 0.9), (box(600, 300), 0.9)))
+    assert ids(r) == [1, 2]
+    assert all(tr.key.startswith("cam01/") and tr.score == 0.9 for tr in r.tracks)
+
+
+def test_ocsort_reports_new_tracks_after_min_hits():
+    t = CameraTracker("cam01", TrackerConfig(algorithm="ocsort"))
+    for f in range(4):  # the first min_hits frames of the stream are reported at once (official behaviour)
+        t.update(frame((box(10 + f, 10), 0.9)))
+    seen = [ids(t.update(frame((box(14 + f, 10), 0.9), (box(400 + f, 50), 0.9)))) for f in range(4)]
+    assert seen[0] == [1] and seen[-1] == [1, 2]  # the second person appears after 3 consecutive matches
+    assert t.update(frame((box(400, 50), 0.9))).tracks[0].start_frame == 5
+
+
+def test_botsort_estimates_camera_motion_once_per_frame(monkeypatch):
+    t = CameraTracker("cam01", TrackerConfig(algorithm="botsort"))
+    assert t.needs_frames and not CameraTracker("c", TrackerConfig(algorithm="ocsort")).needs_frames
+    calls = []
+    monkeypatch.setattr(t._motion, "apply", lambda img, rgb=False: calls.append(rgb) or np.eye(2, 3))
+    img = np.zeros((120, 160, 3), np.uint8)
+    two_phrases = {**frame((box(10, 10), 0.9)), **frame((box(80, 10), 0.9), phrase="car")}
+    r = t.update(two_phrases, img)
+    assert calls == [True] and len(r.tracks) == 2 and r.motion_ms >= 0  # one estimate for both phrases
+    t.update(two_phrases)  # no image: runs without compensation (a warning), never raises
+    t.update(two_phrases, warp=np.eye(2, 3))  # precomputed warp (evaluation): no estimate
+    assert calls == [True]
+    old = t._motion
+    t.reset()  # a stream gap: the next frame has no predecessor, so the estimator starts afresh
+    assert t._motion is not None and t._motion is not old
+
+
+def test_tracker_config_validation():
+    assert TrackerConfig.from_dict({"algorithm": "botsort", "botsort": {"cmc": "none"}}).algorithm == "botsort"
+    assert not CameraTracker("c", TrackerConfig.from_dict({"algorithm": "botsort", "botsort": {"cmc": "none"}})).needs_frames
+    with pytest.raises(ValueError, match="algorithm"):
+        TrackerConfig.from_dict({"algorithm": "deepsort"})
+    with pytest.raises(ValueError, match="tracker.ocsort"):
+        TrackerConfig.from_dict({"algorithm": "ocsort", "ocsort": {"max_age": 5}})
+    assert TrackerConfig(frame_rate=14, track_buffer=30).lost_frames == 14

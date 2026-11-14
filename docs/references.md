@@ -13,10 +13,10 @@ knowledge and must be re-checked when that milestone starts (licences and datase
 | Re-ID / retrieval embeddings (M5) | Cherti et al., *Reproducible scaling laws for contrastive language-image learning* (OpenCLIP, LAION-2B), CVPR 2023, arXiv:2212.07143 | HF `laion/CLIP-ViT-B-32-laion2B-s34B-b79K` @ `1a25a44` via `transformers` | MIT (**verified**, HF model card metadata, 2026-11-12) |
 | Promptable segmentation (optional) | Ravi et al., *SAM 2: Segment Anything in Images and Videos*, arXiv:2408.00714 | github.com/facebookresearch/sam2 | Apache-2.0 (*to verify*) |
 | MOT | Zhang et al., *ByteTrack: Multi-Object Tracking by Associating Every Detection Box*, ECCV 2022, arXiv:2110.06864 | github.com/ifzhang/ByteTrack | MIT (**verified**, repo LICENSE at `d1bf019`) — tracker vendored in `src/lgep/tracking/bytetrack/` (M3) |
-| MOT | Aharon et al., *BoT-SORT: Robust Associations Multi-Pedestrian Tracking*, arXiv:2206.14651 | github.com/NirAharon/BoT-SORT | *to verify* |
-| MOT | Cao et al., *Observation-Centric SORT*, CVPR 2023, arXiv:2203.14360 | github.com/noahcao/OC_SORT | MIT (*to verify*) |
+| MOT | Aharon et al., *BoT-SORT: Robust Associations Multi-Pedestrian Tracking*, arXiv:2206.14651 | github.com/NirAharon/BoT-SORT | MIT (**verified**, repo LICENSE at `2519854`) — tracker and GMC vendored in `src/lgep/tracking/botsort/` (M9) |
+| MOT | Cao et al., *Observation-Centric SORT*, CVPR 2023, arXiv:2203.14360 | github.com/noahcao/OC_SORT | MIT (**verified**, repo LICENSE at `8462e7e`) — vendored in `src/lgep/tracking/ocsort/` (M9) |
 | Re-ID | Zhou et al., *Omni-Scale Feature Learning for Person Re-Identification* (OSNet), ICCV 2019, arXiv:1905.00953 | github.com/KaiyangZhou/deep-person-reid | MIT (*to verify*) |
-| Re-ID toolbox | He et al., *FastReID*, arXiv:2006.02631 | github.com/JDAI-CV/fast-reid | Apache-2.0 (*to verify*) |
+| Re-ID toolbox | He et al., *FastReID*, arXiv:2006.02631 | github.com/JDAI-CV/fast-reid; model zoo v0.1.1 `veri_sbs_R50-ibn.pth`, `msmt_sbs_R50-ibn.pth` | code Apache-2.0 (**verified**, repo LICENSE at `c9bc3ce`), used from a local checkout, not vendored (M9). The weights are trained on VeRi-776 and MSMT17, which are released for non-commercial research (below): research use only, never redistributed |
 | Detection metric | COCO detection evaluation (Lin et al., above) | pycocotools 2.0.11 (github.com/ppwwyyxx/cocoapi) | BSD-2-Clause (**verified**, wheel metadata "FreeBSD") — M2 |
 | Assignment solver / numerics | – | `lap` 0.5.14 (Jonker-Volgenant, used by ByteTrack); SciPy 1.18 | lap BSD-2-Clause, SciPy BSD-3-Clause (**verified**, wheel licence files) — M3 |
 | Tracking metric | Luiten et al., *HOTA: A Higher Order Metric for Evaluating Multi-Object Tracking*, IJCV 2021, arXiv:2009.07736 | github.com/JonathonLuiten/TrackEval | MIT (**verified**, repo LICENSE at `12c8791`) — HOTA / CLEAR / Identity (M3) |
@@ -48,6 +48,13 @@ chosen (supply-chain hygiene).
 | MOT17 | Milan et al., *MOT16: A Benchmark for Multi-Object Tracking*, arXiv:1603.00831 | pedestrian tracking (M3) | CC BY-NC-SA 3.0 (**verified**, motchallenge.net/data/MOT17, 2026-11-12; some sequences also carry their original source's conditions). Non-commercial: never committed. We use MOT17Det.zip (1.95 GB) + MOT17Labels.zip instead of the 5.9 GB MOT17.zip |
 | CityFlow (AI City Challenge) | Tang et al., *CityFlow: A City-Scale Benchmark for Multi-Target Multi-Camera Vehicle Tracking and Re-Identification*, CVPR 2019, arXiv:1903.09254 | multi-camera vehicle tracking / Re-ID (M5) | AIC 2022 Track 1 ("CityFlowV2"): direct download from aicitychallenge.org (the request form is deprecated); NVIDIA Dataset License Agreement v. 2022-02-09 (**verified**, read in full): non-commercial academic use only (also for models developed with it), no redistribution except a minimal portion in research papers with acknowledgement and no unredacted faces or licence plates, binding arbitration, US export rules. Accepted by the project owner on 2026-11-13. Never committed; no CityFlow frames in public demos |
 | CityFlow-NL | Feng et al., *CityFlow-NL: Tracking and Retrieval of Vehicles at City Scale by Natural Language Descriptions*, arXiv:2101.04741 | NL vehicle retrieval (M6) | AIC 2023 Track 2: same videos as CityFlowV2 plus track descriptions; NVIDIA Dataset License Agreement v. 2023-01-12 (**verified**: same terms as above). Accepted by the project owner on 2026-11-13 |
+
+Datasets behind downloaded weights only (not downloaded here; Milestone 9's FastReID models were trained on them):
+
+| dataset | paper | use here | access / licence |
+|---|---|---|---|
+| VeRi-776 | Liu et al., *A Deep Learning-Based Approach to Progressive Vehicle Re-identification for Urban Surveillance*, ECCV 2016 | training data of FastReID's vehicle model (M9) | released by the authors on request for non-commercial research (*to verify*) |
+| MSMT17 | Wei et al., *Person Transfer GAN to Bridge Domain Gap for Person Re-Identification*, CVPR 2018, arXiv:1711.08565 | training data of FastReID's person model (M9) | released by the authors on request for non-commercial research (*to verify*) |
 
 Data and weights are never committed. Each dataset gets a download script and a manifest with
 checksums, as `configs/samples/milestone1_coco.yaml` does for Milestone 1.

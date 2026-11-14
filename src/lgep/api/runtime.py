@@ -45,6 +45,9 @@ def _scorer(embedder, cfg: dict, base_dir: Path) -> QueryScorer:
     return scorer
 
 
+TRACKER_NAMES = {"bytetrack": "ByteTrack", "ocsort": "OC-SORT", "botsort": "BoT-SORT"}
+
+
 class _Base:
     live = False
 
@@ -153,12 +156,16 @@ class LiveSystem(_Base):
 
             r = deep_merge(load_config(base_dir / "configs" / cfg["reid_config"])["reid"], cfg.get("reid_overrides") or {})
             self.index = PersistentTrackIndex(self.store)
+            # Milestone 9: optional dedicated Re-ID model for identity matching (CLIP stays for search and colours)
+            ident = build_embedder(r["identity_embedder"]) if r.get("identity_embedder") else None
             self.reid = ReIDService(build_embedder(r["embedder"]), SamplingConfig.from_dict(r["sampling"]),
                                     AssociationConfig.from_dict(r["association"]),
                                     CameraTopology.from_dict(r.get("topology")),
                                     close_after_s=r.get("close_after_s", 3.0), index=self.index,
-                                    assign_segments=not cfg.get("reid_async", False))
+                                    assign_segments=not cfg.get("reid_async", False), identity_embedder=ident)
             self.reid.embedder.embed_images([np.zeros((128, 64, 3), np.uint8)] * 8)  # warm-up
+            if ident is not None:
+                ident.embed_images([np.zeros((128, 64, 3), np.uint8)] * 8)
             self.scorer = _scorer(self.reid.embedder, cfg, base_dir)
             self.store.cfg.close_after_s = self.reid.close_after_s  # one rule for "track ended"
         self.recorder = Recorder(self.store, self.reid.segments if self.reid is not None else None)
@@ -189,11 +196,13 @@ class LiveSystem(_Base):
         d.update({
             "detector": self.detector.describe(),
             "pipeline": {"phrases": self.pipeline.phrases, "process_fps": pc.process_fps, "batch_size": pc.batch_size,
-                         "tracker": "ByteTrack", "track_thresh": tc.track_thresh, "phrase_groups": tc.phrase_groups},
+                         "tracker": TRACKER_NAMES.get(tc.algorithm, tc.algorithm), "track_thresh": tc.track_thresh,
+                         "phrase_groups": tc.phrase_groups},
             "reid": None if self.reid is None else {
                 "asynchronous": self.reid_worker is not None, "close_after_s": self.reid.close_after_s,
                 "appearance_threshold": self.reid.identities.cfg.appearance_threshold,
-                "embedder": self.reid.embedder.describe()},
+                "embedder": self.reid.embedder.describe(),
+                "identity_embedder": None if self.reid.identity_embedder is None else self.reid.identity_embedder.describe()},
             "cameras": [{"camera_id": c.camera_id, "url": c.display_url, "kind": "stream" if c.is_live else "file",
                          "source": (c.extra or {}).get("source")} for c in self.cameras],
             "opencv_threads": self.cfg.get("opencv_threads"),

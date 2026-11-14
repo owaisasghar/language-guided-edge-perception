@@ -57,3 +57,29 @@ def test_write_predictions_keeps_multi_camera_ids_and_clips(tmp_path):
     assert n == 2
     assert lines[0] == "1 100 1 0 10 25 20 -1 -1"   # x -5 clipped to 0, width shrinks
     assert lines[1] == "2 100 3 95 50 4 20 -1 -1"   # right edge clipped to w - 1 = 99
+
+
+def test_extra_embeddings_stay_aligned_with_the_bank():
+    """Milestone 9: a second model's embeddings of the sampled crops must be thinned exactly like CLIP's, so
+    sample k of each model is the same crop; the camera mean covers every sample."""
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+    from process_aicity import ExtraFeatures
+
+    from lgep.reid import SamplingConfig, TrackFeatureBank
+
+    bank = TrackFeatureBank(SamplingConfig(max_samples=4))
+
+    class T:
+        key, camera_id, local_id, phrase, box_xyxy, score = "c1/1", "c1", 1, "vehicle", (0, 0, 100, 100), 0.9
+
+    bank.observe("c1", 1, 0.0, [T()], (640, 480))
+    extra = ExtraFeatures(max_samples=4)
+    for f in range(1, 12):  # sample index f encoded in both embeddings
+        bank.add("c1/1", f, np.full(3, f, np.float32))
+        extra.add("c1/1", np.full(5, f, np.float32))
+    clip = [int(e[0]) for e in bank.tracks["c1/1"].embeddings]
+    assert [int(e[0]) for e in extra.by_key["c1/1"]] == clip and len(clip) <= 4
+    assert extra.mean()[0] == pytest.approx(6.0)  # mean over all 11 samples, as the bank's camera mean

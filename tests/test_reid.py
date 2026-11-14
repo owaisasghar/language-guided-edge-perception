@@ -301,3 +301,52 @@ def test_reid_worker_never_blocks_and_closes_on_stop():
     gate.set()
     final = w.stop()
     assert [r.track_key for r in final] == ["cam01/1"] and w.stats()["processed"] >= 2
+
+
+# --- Milestone 9: a dedicated Re-ID model for identity, CLIP for search -----------------------------------------
+
+
+def test_identity_embeddings_drive_the_descriptor_and_are_thinned_with_clip():
+    bank = TrackFeatureBank(SamplingConfig(max_samples=4, every_n_frames=1, min_score=0.0))
+    bank.observe("cam01", 1, 0.0, [track(1, (100, 100, 150, 300))], (640, 480))
+    for f in range(1, 12):  # sample f: CLIP embedding along x, identity embedding along y, both tagged with f
+        bank.add("cam01/1", f, unit(1, 0, f / 100), identity=unit(0, 1, f / 100))
+    rec = bank.tracks["cam01/1"]
+    assert len(rec.embeddings) == len(rec.identity_embeddings) <= 4
+    assert [round(e[2] / e[0] * 100) for e in rec.embeddings] == [round(i[2] / i[1] * 100) for i in rec.identity_embeddings]
+    assert rec.descriptor[1] > 0.9 and rec.mean_embedding[0] > 0.9  # identity from the Re-ID model, search from CLIP
+    assert bank.camera_mean("cam01", identity=True)[1] > 0.9 and bank.camera_mean("cam01")[0] > 0.9
+    closed = bank.pop("cam01/1")
+    assert closed.center is not None and closed.identity_center is not None
+    plain = tracklet("cam02/1", 0, 1, unit(1, 0, 0))  # no identity model: descriptor from CLIP, as before
+    assert plain.descriptor[0] > 0.99
+
+
+def test_service_links_by_the_identity_model_when_clip_disagrees():
+    """Two tracks that CLIP finds different but the identity model finds the same are linked, and the search
+    index keeps CLIP's embeddings."""
+    clip_calls, id_calls = [], []
+
+    class Emb:
+        def __init__(self, q):
+            self.q = q
+
+        def embed_images(self, crops):
+            return np.array([unit(*c) for c in self.q.pop(0)], np.float32)
+
+    svc = ReIDService(Emb(clip_calls), SamplingConfig(every_n_frames=1, min_score=0.0, center=False),
+                      AssociationConfig(appearance_threshold=0.9, max_gap_same_camera_s=10), close_after_s=1.0,
+                      identity_embedder=Emb(id_calls))
+    img = np.zeros((480, 640, 3), np.uint8)
+
+    def frame(i, t, tracks, clip, ident):
+        clip_calls.append(clip)
+        id_calls.append(ident)
+        return svc.on_result(SimpleNamespace(camera_id="cam01", index=i, t_capture=t, image=img), None,
+                             SimpleNamespace(tracks=tracks))
+
+    frame(1, 0.0, [track(1, (100, 100, 150, 300))], [(1, 0, 0)], [(0, 1, 0)])
+    frame(2, 2.0, [track(2, (120, 100, 170, 300))], [(0, 0, 1)], [(0, 1, 0.01)])  # CLIP: orthogonal; Re-ID: same
+    svc.close_all()
+    assert svc.global_id("cam01/2") == svc.global_id("cam01/1")
+    assert not clip_calls and not id_calls  # both models embedded every sampled crop

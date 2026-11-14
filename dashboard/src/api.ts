@@ -133,6 +133,7 @@ export interface Health {
 }
 
 export interface ModelInfo {
+  display_name?: string;
   model_id?: string;
   backend?: string;
   dtype?: string;
@@ -154,7 +155,8 @@ export interface SystemInfo {
   detector?: ModelInfo;
   pipeline?: { phrases: string[]; process_fps: number; batch_size: number; tracker: string; track_thresh: number;
     phrase_groups: Record<string, string[]> };
-  reid?: { asynchronous: boolean; close_after_s: number; appearance_threshold: number; embedder: ModelInfo } | null;
+  reid?: { asynchronous: boolean; close_after_s: number; appearance_threshold: number; embedder: ModelInfo;
+           identity_embedder?: ModelInfo | null } | null;
   cameras?: { camera_id: string; url: string; kind: string; source?: string | null }[];
   opencv_threads?: number | null;
 }

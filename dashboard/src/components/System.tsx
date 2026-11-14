@@ -37,7 +37,7 @@ function Meter({ label, value, max, unit, note, severity = false }: {
   );
 }
 
-const model = (m: ModelInfo | null | undefined) => (m ? `${m.model_id ?? m.backend ?? "model"}` : "–");
+const model = (m: ModelInfo | null | undefined) => (m ? `${m.display_name ?? m.model_id ?? m.backend ?? "model"}` : "–");
 
 export function SystemView({ status, system }: { status: Status | null; system: SystemInfo | null }) {
   const env = system?.environment;
@@ -68,8 +68,9 @@ export function SystemView({ status, system }: { status: Status | null; system: 
             <Kv k="threshold" v={system?.pipeline?.track_thresh} />
             <Kv k="grouped" v={Object.keys(system?.pipeline?.phrase_groups ?? {}).join(", ") || "none"} />
           </Stage>
-          <Stage name="Re-identify" title={system?.reid ? model(system.reid.embedder) : "off"}>
-            <Kv k="precision" v={system?.reid?.embedder?.dtype} />
+          <Stage name="Re-identify" title={system?.reid ? model(system.reid.identity_embedder ?? system.reid.embedder) : "off"}>
+            <Kv k="precision" v={(system?.reid?.identity_embedder ?? system?.reid?.embedder)?.dtype} />
+            {system?.reid?.identity_embedder && <Kv k="search features" v={model(system.reid.embedder)} />}
             <Kv k="thread" v={system?.reid ? (system.reid.asynchronous ? "own worker" : "detection worker") : "–"} />
             <Kv k="link threshold" v={system?.reid?.appearance_threshold} />
           </Stage>

@@ -2,6 +2,8 @@
 """Cross-camera vehicle tracking on CityFlowV2, scored with the official AI City evaluator (RQ4).
 
 Input: the per-camera caches of ``process_aicity.py`` (local tracks + CLIP embeddings). Nothing is trained.
+``aicity.appearance`` (Milestone 9) picks the appearance feature: ``clip`` (default) or the name of one of
+``reid.extra_embedders`` stored in the cache (e.g. a FastReID vehicle model); colours always come from CLIP.
 
 1. Every local track becomes a tracklet: mean-centred CLIP descriptor (as in Milestone 5), time span on the
    scenario clock, and CLIP zero-shot colour probabilities of its mean embedding.
@@ -71,30 +73,42 @@ class Cam:
     rows: np.ndarray  # frame, local ID, x, y, w, h, score
     size: tuple[int, int]
     recs: list[TrackletRecord]
+    clip_means: list = None  # per tracklet: mean raw CLIP embedding (for colours), None without samples
 
 
 # ------------------------------------------------------------------------------------------ data
+def unit_mean(emb: np.ndarray) -> np.ndarray:
+    """As TrackletRecord.mean_embedding: L2-normalised mean of the raw embeddings."""
+    m = np.mean(list(emb.astype(np.float32)), axis=0)
+    return (m / (np.linalg.norm(m) + 1e-12)).astype(np.float32)
+
+
 def load_split(cfg: dict, split: str, scenarios: list[str]) -> list[Cam]:
     a = cfg["aicity"]
     root, cache = REPO_ROOT / a["root"], REPO_ROOT / a["cache_dir"]
+    feat = a.get("appearance", "clip")
+    suffix = "" if feat == "clip" else f"__{feat}"
     cams = []
     for scen in scenarios:
         for cdir in sorted((root / split / scen).glob("c*")):
             name = f"{scen}_{cdir.name}"
             meta = json.loads((cache / f"{name}.json").read_text())
             z = np.load(cache / f"{name}.npz")
-            center = z["camera_mean"] if "camera_mean" in z.files else None
-            recs = []
+            if f"camera_mean{suffix}" not in z.files and "camera_mean" in z.files:
+                raise KeyError(f"{name}: no {feat!r} embeddings in {cache} (run process_aicity.py with it)")
+            center = z[f"camera_mean{suffix}"] if f"camera_mean{suffix}" in z.files else None
+            recs, clip_means = [], []
             for i, t in enumerate(meta["tracklets"]):
                 r = TrackletRecord(key=t["key"], camera_id=cdir.name, local_id=t["local_id"], phrase="vehicle",
                                    first_frame=t["first_frame"], last_frame=t["last_frame"], t_start=t["t_start"],
                                    t_end=t["t_end"], frames_seen=t["frames_seen"])
-                if f"trk_{i}" in z.files:
-                    r.embeddings = list(z[f"trk_{i}"].astype(np.float32))
+                if f"trk_{i}{suffix}" in z.files:
+                    r.embeddings = list(z[f"trk_{i}{suffix}"].astype(np.float32))
                     r.center = center
+                clip_means.append(unit_mean(z[f"trk_{i}"]) if f"trk_{i}" in z.files else None)
                 recs.append(r)
             h, w = cv2.imread(str(cdir / "roi.jpg"), cv2.IMREAD_GRAYSCALE).shape
-            cams.append(Cam(cdir.name, scen, z["rows"], (w, h), recs))
+            cams.append(Cam(cdir.name, scen, z["rows"], (w, h), recs, clip_means))
     return cams
 
 
@@ -104,8 +118,9 @@ def add_colours(cams: list[Cam], cfg: dict) -> list[str]:
     from lgep.reid.embedder import build_embedder
 
     scorer = QueryScorer(build_embedder(cfg["reid"]["embedder"]))
-    recs = [r for c in cams for r in c.recs if r.embeddings]
-    probs = scorer.colour_probs(np.stack([r.mean_embedding for r in recs]), cfg["aicity"]["colour_template"])
+    pairs = [(r, m) for c in cams for r, m in zip(c.recs, c.clip_means) if r.embeddings and m is not None]
+    recs = [r for r, _ in pairs]
+    probs = scorer.colour_probs(np.stack([m for _, m in pairs]), cfg["aicity"]["colour_template"])
     for r, p in zip(recs, probs):
         r.attributes = p.astype(np.float32)
     return list(scorer.colours)
@@ -195,11 +210,12 @@ def main() -> int:
     ap.add_argument("--config", default="configs/milestone5_cityflow.yaml")
     ap.add_argument("--workers", type=int, default=8)
     ap.add_argument("--no-curves", action="store_true", help="skip the post-hoc validation curves")
+    ap.add_argument("--override", nargs="*", default=[], metavar="KEY=VALUE", help="dotted config overrides")
     args = ap.parse_args()
-    cfg = load_config(REPO_ROOT / args.config)
+    cfg = load_config(REPO_ROOT / args.config, args.override)
     a = cfg["aicity"]
     root = REPO_ROOT / a["root"]
-    out = REPO_ROOT / cfg["output_dir"] / "aicity_mtmc"
+    out = REPO_ROOT / cfg["output_dir"] / f"aicity_mtmc_{cfg['run_name']}"
     out.mkdir(parents=True, exist_ok=True)
     setup_logging(cfg.get("log_level", "INFO"), out / "eval.log")
     splits = {"train": a["train_scenarios"], "validation": a["validation_scenarios"]}
@@ -278,6 +294,7 @@ def main() -> int:
         "protocol": "CityFlowV2 (AI City Challenge 2022 Track 1); thresholds tuned on train (S01, S03, S04) with "
                     "the official evaluator; validation (S02, S05) evaluated once per variant",
         "evaluator": "data/aicity/cityflowv2/eval/eval.py (official, unchanged; see lgep.evaluation.aicity)",
+        "appearance_feature": a.get("appearance", "clip"), "cache_dir": a["cache_dir"],
         "detector": a["detector"], "prompt": a["prompt"], "tracker": cfg["tracker"],
         "sampling": cfg["reid"]["sampling"], "association": a["association"],
         "default_transit": a["default_transit"], "transit_margin_s": a["transit_margin_s"],
@@ -300,9 +317,11 @@ def main() -> int:
         "seconds": round(time.monotonic() - t_all, 1),
     }
     bdir = REPO_ROOT / cfg["benchmark_dir"]
-    (bdir / "m5_cityflow.json").write_text(json.dumps(report, indent=1), encoding="utf-8")
-    (bdir / "m5_cityflow.md").write_text(markdown(report, splits["validation"]), encoding="utf-8")
-    log.info("wrote %s (%.0f s)", bdir / "m5_cityflow.json", report["seconds"])
+    bdir.mkdir(parents=True, exist_ok=True)
+    name = cfg["run_name"]  # m5_cityflow for Milestone 5's config
+    (bdir / f"{name}.json").write_text(json.dumps(report, indent=1), encoding="utf-8")
+    (bdir / f"{name}.md").write_text(markdown(report, splits["validation"]), encoding="utf-8")
+    log.info("wrote %s (%.0f s)", bdir / f"{name}.json", report["seconds"])
     return 0
 
 

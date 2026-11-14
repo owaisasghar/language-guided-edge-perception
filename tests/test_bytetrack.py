@@ -54,19 +54,20 @@ def test_bbox_ious_equals_cython_bbox_definition():
     assert edge[0, 0] == 0.0 and edge[0, 1] == pytest.approx(10 / 190)
 
 
-def scenario(seed: int, frames: int = 400, objects: int = 12):
+def scenario(seed: int, frames: int = 400, objects: int = 12, with_ids: bool = False):
     """Synthetic detections: moving boxes, noise, occlusions of 5-60 frames (around ByteTrack's 30-frame
-    buffer), low-score boxes, false positives, crossing paths and objects entering late."""
+    buffer), low-score boxes, false positives, crossing paths and objects entering late. ``with_ids``: also the object index of each row (-1: false
+    positive), e.g. to give each object a consistent appearance; the detections are the same either way."""
     rng = np.random.default_rng(seed)
     pos = rng.uniform([0, 0], [1200, 600], (objects, 2))
     vel = rng.normal(0, 4, (objects, 2))
     size = rng.uniform([20, 50], [80, 200], (objects, 2))
     birth = rng.integers(1, frames // 2, objects)
     hidden = np.zeros(objects, int)
-    out = []
+    out, ids = [], []
     for f in range(1, frames + 1):
         pos += vel
-        rows = []
+        rows, row_ids = [], []
         for i in range(objects):
             if f < birth[i]:
                 continue
@@ -79,11 +80,14 @@ def scenario(seed: int, frames: int = 400, objects: int = 12):
             w, h = size[i] * rng.uniform(0.9, 1.1, 2)
             rows.append([x1, y1, x1 + w, y1 + h, rng.choice([rng.uniform(0.6, 0.98), rng.uniform(0.1, 0.6)],
                                                               p=[0.8, 0.2])])
+            row_ids.append(i)
         for _ in range(rng.poisson(1.5)):  # false positives
             x1, y1 = rng.uniform(0, 1200), rng.uniform(0, 600)
             rows.append([x1, y1, x1 + rng.uniform(15, 60), y1 + rng.uniform(30, 120), rng.uniform(0.05, 0.8)])
+            row_ids.append(-1)
         out.append(np.array(rows, dtype=np.float64).reshape(-1, 5))
-    return out
+        ids.append(np.array(row_ids, dtype=int))
+    return (out, ids) if with_ids else out
 
 
 @pytest.fixture(scope="module")

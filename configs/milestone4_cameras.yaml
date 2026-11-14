@@ -46,4 +46,8 @@ pipeline:
   prompt: person
   process_fps: 10           # per camera; 0 = every new frame
   tracker:
-    track_thresh: 0.1       # tuned for yoloworld_m on MOT17 train-half (benchmarks/milestone3)
+    # bytetrack (default) | ocsort | botsort. Milestone 9 compared them on MOT17 with these detections: no
+    # consistent winner (benchmarks/milestone9/m9_trackers.md). botsort's camera-motion compensation helps only
+    # moving cameras and costs ~7 ms CPU per 1080p frame; for fixed cameras use botsort: {cmc: none}.
+    algorithm: bytetrack
+    track_thresh: 0.1       # tuned for yoloworld_m on MOT17 train-half (benchmarks/milestone3, and milestone9 for all three)

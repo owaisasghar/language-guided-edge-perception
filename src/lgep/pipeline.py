@@ -169,7 +169,7 @@ class PerceptionPipeline:
             return True
         for (rt, frame), det in zip(batch, dets):
             try:
-                trk = rt.tracker.update_from_result(det)
+                trk = rt.tracker.update_from_result(det, frame.image if rt.tracker.needs_frames else None)
             except Exception:
                 rt.errors += 1
                 log.exception("%s: tracking frame %d failed", frame.camera_id, frame.index)
@@ -209,7 +209,7 @@ class PerceptionPipeline:
         t0 = self._clock()
         try:
             det = self.detector.detect(frame.image, self.phrases)
-            trk = rt.tracker.update_from_result(det)
+            trk = rt.tracker.update_from_result(det, frame.image if rt.tracker.needs_frames else None)
         except Exception:
             rt.errors += 1
             log.exception("%s: processing frame %d failed", frame.camera_id, frame.index)

@@ -2,8 +2,8 @@
 
 Backend: CLIP via Hugging Face ``transformers`` (already a core dependency). Default weights: LAION's
 ViT-B/32 trained on LAION-2B (MIT licence, safetensors), pinned to a commit. CLIP is a general-purpose
-embedding, not a Re-ID model; dedicated Re-ID models (OSNet, FastReID) can be added behind the same
-``embed_images`` contract and compared once CityFlow is available.
+embedding, not a Re-ID model. Dedicated Re-ID models (FastReID, Milestone 9: ``backend: fastreid``,
+lgep.reid.fastreid_embedder) sit behind the same ``embed_images`` contract.
 
 Pre-processing (``crop_mode``, on the GPU, one batch): ``stretch`` resizes the crop to the square input
 (default), ``center_crop`` is CLIP's own (short side to 224, centred square crop), ``letterbox`` pads to a
@@ -38,6 +38,9 @@ class EmbedderConfig:
     batch_size: int = 64  # crops per forward pass
     crop_mode: str = "stretch"
     local_files_only: bool = False
+    # backend fastreid: model_id is the config file inside the FastReID checkout, weights the checkpoint
+    weights: str | None = None
+    fastreid_root: str = "third_party/fast-reid"
 
     @classmethod
     def from_dict(cls, d: dict | None) -> EmbedderConfig:
@@ -46,8 +49,10 @@ class EmbedderConfig:
         if unknown:
             raise ValueError(f"Unknown embedder config keys: {sorted(unknown)}")
         cfg = cls(**d)
-        if cfg.backend != "hf_clip":
-            raise ValueError(f"Unknown embedder backend {cfg.backend!r} (available: hf_clip)")
+        if cfg.backend not in ("hf_clip", "fastreid"):
+            raise ValueError(f"Unknown embedder backend {cfg.backend!r} (available: hf_clip, fastreid)")
+        if cfg.backend == "fastreid" and not cfg.weights:
+            raise ValueError("embedder backend fastreid needs 'weights' (a FastReID checkpoint)")
         if cfg.crop_mode not in CROP_MODES:
             raise ValueError(f"crop_mode must be one of {CROP_MODES}, got {cfg.crop_mode!r}")
         return cfg
@@ -155,5 +160,11 @@ class ClipEmbedder:
         return F.normalize(f.float(), dim=-1).cpu().numpy()
 
 
-def build_embedder(cfg: dict | EmbedderConfig | None) -> ClipEmbedder:
-    return ClipEmbedder(cfg if isinstance(cfg, EmbedderConfig) else EmbedderConfig.from_dict(cfg))
+def build_embedder(cfg: dict | EmbedderConfig | None):
+    """CLIP (``hf_clip``, default) or a dedicated Re-ID model (``fastreid``); both have ``embed_images``."""
+    cfg = cfg if isinstance(cfg, EmbedderConfig) else EmbedderConfig.from_dict(cfg)
+    if cfg.backend == "fastreid":
+        from lgep.reid.fastreid_embedder import FastReIDEmbedder
+
+        return FastReIDEmbedder(cfg)
+    return ClipEmbedder(cfg)

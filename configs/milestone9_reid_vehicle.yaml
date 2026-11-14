@@ -1,0 +1,33 @@
+# Milestone 9 — vehicle Re-ID with a dedicated model: Milestone 5's CityFlowV2 cross-camera evaluation (official
+# AI City evaluator, IDF1) with the FastReID VeRi-776 model (SBS R50-ibn, official model zoo) as the appearance
+# feature instead of CLIP. Detection, tracking, crop sampling, mean-centring, cue sets, tuning on train
+# (S01, S03, S04) and validation (S02, S05) are Milestone 5's.
+#
+#   python scripts/process_aicity.py --config configs/milestone9_reid_vehicle.yaml   # GPU pass, ~1 h
+#   python scripts/eval_aicity_mtmc.py --config configs/milestone9_reid_vehicle.yaml                       # FastReID
+#   python scripts/eval_aicity_mtmc.py --config configs/milestone9_reid_vehicle.yaml --override aicity.appearance=clip \
+#       run_name=m9_cityflow_clip                                                                         # CLIP, same pass
+#
+# One pass stores both models' embeddings of the same crops, so the comparison is crop-for-crop. VeRi-776 is a
+# separate dataset (another city's cameras): CityFlow is unseen by this model, as by CLIP. Weights:
+# models/fastreid/veri_sbs_R50-ibn.pth (docs/milestone9.md); CityFlow licence: local use only.
+
+extends: milestone5_cityflow.yaml
+run_name: m9_cityflow_fastreid
+output_dir: outputs/milestone9
+benchmark_dir: benchmarks/milestone9
+
+aicity:
+  cache_dir: outputs/milestone9/aicity
+  appearance: fastreid_veri
+  # wider than Milestone 5's 0.3-0.9: FastReID's similarities need not fall in CLIP's range
+  tune_thresholds: [0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9]
+
+reid:
+  extra_embedders:
+    fastreid_veri:
+      backend: fastreid
+      model_id: configs/VeRi/sbs_R50-ibn.yml
+      weights: models/fastreid/veri_sbs_R50-ibn.pth
+      revision: null
+      batch_size: 64

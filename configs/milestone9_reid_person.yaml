@@ -1,0 +1,26 @@
+# Milestone 9 — person Re-ID with a dedicated model: Milestone 5's MOT17 re-linking evaluation with the FastReID
+# MSMT17 model (SBS R50-ibn, official model zoo) instead of CLIP. Everything else (detectors, tracking, crop
+# sampling, mean-centring, tuning grid, splits) is Milestone 5's, so the results compare directly with
+# benchmarks/milestone5/m5_relink_*.json.
+#
+#   python scripts/eval_reid_mot17.py --config configs/milestone9_reid_person.yaml
+#
+# Weights: models/fastreid/msmt_sbs_R50-ibn.pth (docs/milestone9.md). MSMT17 is a separate dataset (campus
+# cameras), so MOT17 is unseen by this model, as it is by CLIP.
+
+extends: milestone5_reid.yaml
+run_name: m9_relink_fastreid_msmt
+output_dir: outputs/milestone9
+benchmark_dir: benchmarks/milestone9
+
+reid:
+  embedder:
+    backend: fastreid
+    model_id: configs/MSMT17/sbs_R50-ibn.yml
+    weights: models/fastreid/msmt_sbs_R50-ibn.pth
+    revision: null
+    crop_mode: stretch          # FastReID's own pre-processing (resize to 384 x 128)
+    batch_size: 64
+
+relink:
+  ablation_crop_modes: [stretch]

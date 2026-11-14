@@ -40,6 +40,9 @@ eval = [
 video = ["opencv-python>=4.10"]
 # HTTP API and dashboard server (Milestone 7). Tested with fastapi 0.162.5, uvicorn 0.54.0 (pydantic 2.14).
 server = ["fastapi>=0.115", "uvicorn>=0.30", "httpx>=0.27"]
+# Dedicated Re-ID models (Milestone 9): what the official FastReID code (a local checkout at third_party/fast-reid,
+# commit c9bc3ce, Apache-2.0; see docs/milestone9.md) imports for building its models.
+fastreid = ["yacs==0.1.8", "termcolor==2.5.0"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
