@@ -15,6 +15,8 @@ a single 8 GB GPU first and for NVIDIA Jetson Orin NX later.
 7. a SQLite metadata store, a FastAPI backend and a React dashboard (live view, search, timeline);
 8. optimisation and scaling: 1-8 camera streams, FP16, batching, Re-ID in its own thread, frame sampling.
 
+Since then (2026-11-14): a **vehicle mode** (colour and vehicle-type search, see below) and a redesigned dashboard.
+
 Nothing in this repository reports a number that was not measured; planned targets are labelled as targets.
 
 ## Milestones
@@ -28,7 +30,7 @@ Nothing in this repository reports a number that was not measured; planned targe
 | 5 | Cross-camera Re-ID (CityFlow) | ✅ CLIP appearance + time + camera layout + colour; CityFlowV2 official IDF1 with a cue ablation (RQ4) and an oracle bound |
 | 6 | Language-guided retrieval (CityFlow-NL) | ✅ query parser, CLIP attribute checks, track index; RefCOCO+ and CityFlow-NL (RQ2) |
 | 7 | FastAPI backend + React dashboard | ✅ one edge process: store (SQLite), REST + live frames + Server-Sent Events, dashboard; costs measured |
-| 8 | Optimisation and 1/2/4/8-stream benchmarks | ✅ 8 streams at 10 fps each (was 4.35); FP16 without accuracy loss; per-optimisation ablation, sampling, saturation, GPU energy |
+| 8 | Optimisation and 1/2/4/8-stream benchmarks | ✅ 8 streams at 10 fps each (was 4.56); FP16 without accuracy loss; per-optimisation ablation, sampling, saturation, GPU energy |
 | 9 | Research experiments and ablations | – |
 | 10 | Report, diagrams, demo video | – |
 
@@ -166,13 +168,13 @@ the right body region. Every finished track is indexed with its global identity.
 |---|---|---|
 | RefCOCO+ testA (people), Rank-1 box | **0.645** (Grounding DINO-T candidates), 0.625 (YOLO-World-M) | Grounding DINO-T prompted with the sentence: 0.568 |
 | RefCOCO+ testB (objects), Rank-1 box | **0.488**, 0.465 | 0.468 |
-| CityFlow-NL, S05, 337 vehicles: MRR / R@10 | 0.143 / 0.29-0.30 | random: 0.019 |
+| CityFlow-NL, S05, 337 vehicles: MRR / R@10 | 0.142 / 0.29-0.30 | random: 0.019 |
 
 * **On still images, parsing + CLIP re-ranking beats prompting the detector with the whole sentence**, for
   both detectors. With YOLO-World-M it is more accurate than Grounding DINO on people, at a fraction of the
   cost.
 * **On vehicle tracks it is weak, and the descriptions are the reason.** A vehicle shares its described
-  colour and type with a median of 72 others. Knowing colour and type perfectly would give MRR 0.131, the level
+  colour and type with a median of 74 others. Knowing colour and type perfectly would give MRR 0.124, the level
   the system reaches. Motion ("turns left") and relations ("followed by a van") are not modelled yet.
 * Queries take 2-3 ms on 337 tracks and 15 ms on 10,000 (CPU scan; 149 ms at 100,000).
 
@@ -202,6 +204,13 @@ the React dashboard on one port.
   hour on these crowded scenes.
 * **Running it live found a real bug, now fixed:** under CPU load, ByteTrack (frame-based) re-found tracks
   that Re-ID (time-based) had already ended.
+* **The dashboard** (redesigned 2026-11-14) has four pages:
+  * **Live:** KPIs with sparklines, camera tiles with overlays, a focus view per camera, an activity feed.
+  * **Search:** natural-language queries showing how they were understood and the score parts.
+  * **Timeline:** density heatmap and swimlanes.
+  * **System:** the pipeline as configured, live resource meters, camera health, hardware.
+
+  It also has an identity "journey" view, light and dark mode, and a phone layout.
 
 Details: [docs/milestone7.md](docs/milestone7.md); tables: [benchmarks/milestone7/](benchmarks/milestone7/README.md).
 
@@ -212,22 +221,41 @@ per second per camera:
 
 | streams | Milestone 7 settings: fps / camera, latency p50, GPU power | all optimisations: fps / camera, latency p50, GPU power |
 |---|---|---|
-| 1 | 10.0, 13.7 ms, 20.8 W | **10.0, 10.0 ms, 16.8 W** |
-| 4 | 10.0, 15.7 ms, 54.2 W | **10.0, 10.1 ms, 28.9 W** |
-| 8 | **4.35**, 31.7 ms, 54.6 W | **10.0**, 48.5 ms, 52.5 W |
+| 1 | 10.0, 13.7 ms, 20.0 W | **10.0, 10.0 ms, 16.1 W** |
+| 4 | 10.0, 14.8 ms, 53.8 W | **10.0, 10.3 ms, 26.9 W** |
+| 8 | **4.56**, 31.1 ms, 54.5 W | **10.0**, 42.6 ms, 52.7 W |
 
 * **FP16 costs no measured accuracy.**
   * YOLO-World-M: COCO AP 42.56 against 42.60 in FP32, at 37 % lower latency.
   * CLIP: cosine ≥ 0.99998 with the FP32 embeddings, the same identity separation, about 3× faster.
 * **Batching across cameras is the largest throughput lever, and FP16 is what makes it work.** At 8 streams it
-  gives +54 % frames and −34 % GPU energy per frame; under light load it costs nothing. Re-ID in its own thread
+  gives +42 % frames and −26 % GPU energy per frame; under light load it costs nothing. Re-ID in its own thread
   keeps detection at full rate, at 0.2 s more lag for global IDs.
-* **Together:** 8 streams go from 4.35 to 10 fps per camera, with 58 % less GPU energy per frame.
-* **The next limit is not the GPU.** One process tops out at about 105-114 frames/s with the GPU half idle.
+* **Together:** 8 streams go from 4.56 to 10 fps per camera, with 56 % less GPU energy per frame.
+* **The next limit is not the GPU.** One process tops out at about 112-118 frames/s with the GPU only just over
+  half busy.
+* **Long runs matter.** A 10-minute test found that NumPy's OpenBLAS thread pool halved throughput after about
+  three minutes (about 1,000 identities; 13 cores spinning). With one BLAS thread the server stays at 40 frames/s
+  and 1.3 cores for 10 minutes and 3,400 identities.
 * **Two bugs found by benchmarking, both fixed and tested.** Ultralytics silently makes OpenCV single-threaded on
   import, which fooled my first baseline. Asynchronous Re-ID asked for tracklet keys at the wrong moment.
 
 Details: [docs/milestone8.md](docs/milestone8.md); tables: [benchmarks/milestone8/](benchmarks/milestone8/README.md).
+
+## Vehicle mode (2026-11-14, measured)
+
+The same system tracks cars, trucks, buses and motorcycles (`configs/vehicles.yaml`), and search understands
+vehicle types: "white SUV", "black pickup truck on cam07", "silver station wagon".
+* **Vehicle-type check:** CLIP checks the type (sedan, SUV, pickup, van, minivan, hatchback, wagon) next to the
+  colour.
+* **Tracking:** label flicker between "car" and "truck" no longer splits a vehicle's track, and the pedestrian
+  shape filter no longer drops wide cars.
+* **No number plates, on purpose:** they need cameras close enough to read them, country-specific models, and
+  care as personal data.
+
+On CityFlow-NL (337 vehicles, zero-shot), adding the type check raises top-10 retrieval from 30 % to 36 % and
+MRR from 0.139 to 0.157. The 95 % interval of the gain only just includes 0, so this is promising but not proven.
+CLIP's type agrees with the annotators for 77 % of vehicles. Details: [docs/vehicles.md](docs/vehicles.md).
 
 ## Quick start (Ubuntu 22.04, NVIDIA driver ≥ 580)
 
@@ -288,6 +316,13 @@ The optimised configuration (Milestone 8: FP16, batching, Re-ID thread) with eig
 
 ```bash
 python scripts/serve.py --config configs/milestone8_scaling.yaml --simulate
+```
+
+Vehicle mode on the four CityFlowV2 cameras of scenario S02 as live sources (needs the AI City data; local use
+only, see its licence):
+
+```bash
+python scripts/serve.py --config configs/vehicles.yaml
 ```
 
 Browse and search the stored runs without cameras:

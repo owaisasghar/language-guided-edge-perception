@@ -20,7 +20,7 @@ from pathlib import Path
 import numpy as np
 
 from lgep.query.attributes import QueryScorer
-from lgep.query.parser import StructuredQuery
+from lgep.query.parser import VEHICLES, StructuredQuery
 
 REGIONS = ("full", "upper", "lower", "head")
 
@@ -97,8 +97,12 @@ class TrackIndex:
         track), so one object seen many times does not fill the list."""
         now = time.time() if now is None else now
         cams = {c.lower() for c in q.cameras}
+        cats = set(q.categories)
+        if q.vehicle_types and scorer.check_types and cats <= set(VEHICLES):
+            cats |= set(VEHICLES)  # YOLO-World calls vans / pickups "car" or "truck": the type check decides
+        vehicle_query = bool(cats & set(VEHICLES))
         cand = [e for e in self.entries
-                if (not q.categories or e.category in q.categories)
+                if (not cats or e.category in cats or (vehicle_query and e.category == "vehicle"))
                 and (not cams or e.camera_id.lower() in cams)
                 and self._time_ok(e, q, now) and "full" in e.embeddings]
         if not cand:

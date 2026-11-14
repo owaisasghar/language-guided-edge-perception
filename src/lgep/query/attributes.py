@@ -7,6 +7,8 @@ Here colours are verified separately:
   "a photo of a {colour} {category}." over the colour vocabulary -> P(requested colour);
 * **clothing colour** ("blue shirt", "black jeans"): the same on the matching body region of a person crop
   (upper / lower / head), with prompts "a photo of a person wearing a {colour} {item}.";
+* **vehicle type** ("white SUV", "black pickup"): softmax over "a photo of a {type}." for the vehicle types and
+  other vehicles (``VEHICLE_TYPE_VOCAB``) -> P(requested type); the detector only knows car / truck / bus;
 * **description similarity**: cosine similarity between the crop and "a photo of {description}.".
 
 ``QueryScorer.score`` combines detection score, description similarity and attribute probability with
@@ -19,7 +21,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from lgep.query.parser import COLOURS, StructuredQuery
+from lgep.query.parser import COLOURS, VEHICLE_TYPE_VOCAB, StructuredQuery
 
 # Fractions of a person box (top, bottom) used for each clothing region.
 REGIONS = {"full": (0.0, 1.0), "upper": (0.15, 0.6), "lower": (0.5, 0.95), "head": (0.0, 0.25)}
@@ -47,10 +49,12 @@ class ScoreWeights:
 class QueryScorer:
     """Scores candidate crops (from a detector or a track index) against a structured query."""
 
-    def __init__(self, embedder, weights: ScoreWeights | None = None, colours=COLOURS):
+    def __init__(self, embedder, weights: ScoreWeights | None = None, colours=COLOURS, check_types: bool = True):
         self.embedder = embedder
         self.weights = weights or ScoreWeights()
         self.colours = tuple(colours)
+        self.check_types = check_types  # vehicle-type check (False reproduces Milestone 6)
+        self.types = tuple(VEHICLE_TYPE_VOCAB)
         self._text_cache: dict[str, np.ndarray] = {}
 
     def texts(self, prompts: list[str]) -> np.ndarray:
@@ -62,7 +66,14 @@ class QueryScorer:
 
     def colour_probs(self, image_embs: np.ndarray, template: str) -> np.ndarray:
         """(N, n_colours) softmax over the colour prompts; ``template`` contains ``{colour}``."""
-        t = self.texts([template.format(colour=c) for c in self.colours])
+        return self._softmax(image_embs, [template.format(colour=c) for c in self.colours])
+
+    def type_probs(self, image_embs: np.ndarray) -> np.ndarray:
+        """(N, n_types) softmax over "a photo of a {vehicle type}." (``self.types`` order)."""
+        return self._softmax(image_embs, [f"a photo of a {VEHICLE_TYPE_VOCAB[k]}." for k in self.types])
+
+    def _softmax(self, image_embs: np.ndarray, prompts: list[str]) -> np.ndarray:
+        t = self.texts(prompts)
         logits = LOGIT_SCALE * image_embs @ t.T
         logits -= logits.max(axis=1, keepdims=True)
         p = np.exp(logits)
@@ -95,12 +106,17 @@ class QueryScorer:
         n = len(full)
         text = full @ self.texts([f"a photo of {q.free_text}."])[0] if q.free_text else np.zeros(n)
         checks = self.attribute_checks(q)
-        if checks:
+        types = list(q.vehicle_types) if self.check_types else []
+        if checks or types:
             probs = [self.colour_probs(region_embs[r], tpl)[:, self.colours.index(c)] for r, tpl, c in checks]
+            if types:
+                tp = self.type_probs(full)
+                probs += [tp[:, self.types.index(k)] for k in types]
             attrs = np.mean(probs, axis=0)
         else:
             attrs = np.ones(n)
         det = np.zeros(n) if det_scores is None else np.asarray(det_scores, float)
         w = self.weights
         total = w.detection * det + w.text * text + w.attributes * attrs
-        return {"text": text, "attributes": attrs, "detection": det, "total": total, "checks": checks}
+        return {"text": text, "attributes": attrs, "detection": det, "total": total,
+                "checks": checks + [("full", "vehicle type", k) for k in types]}

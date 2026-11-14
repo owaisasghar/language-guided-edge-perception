@@ -144,26 +144,32 @@ cameras. (The official test set has 184 tracks from another scenario; its videos
 | S05, one gallery track per vehicle (337 vehicles; random MRR 0.019) | MRR | R@1 | R@5 | R@10 | 184-vehicle galleries, MRR (20 draws) |
 |---|---|---|---|---|---|
 | CLIP description similarity only | 0.133 | 0.050 | 0.187 | 0.288 | 0.192 ± 0.011 |
-| + colour check, Milestone 6 weight (0.25, from RefCOCO+) | **0.143** | **0.068** | 0.190 | 0.288 | 0.198 ± 0.013 |
-| + colour check, weight tuned on S02 (0.05) | 0.139 | 0.059 | 0.184 | **0.303** | 0.198 ± 0.011 |
+| + colour check, Milestone 6 weight (0.25, from RefCOCO+) | **0.142** | **0.065** | 0.193 | 0.288 | 0.197 ± 0.014 |
+| + colour check, weight tuned on S02 (0.05) | 0.139 | 0.059 | 0.187 | **0.300** | 0.197 ± 0.011 |
 
 | S05, across cameras (all 1,737 tracks; any track of the vehicle counts) | MRR | R@1 | R@10 | P@10 | mAP |
 |---|---|---|---|---|---|
 | CLIP description similarity only | 0.185 | 0.089 | 0.385 | 0.066 | 0.084 |
-| + colour check, weight tuned on S02 (0.05) | 0.189 | 0.092 | 0.398 | 0.069 | 0.087 |
+| + colour check, weight tuned on S02 (0.05) | 0.189 | 0.093 | 0.397 | 0.069 | 0.087 |
+
+*Re-run on 2026-11-14 with the parser extended for vehicles ([vehicles.md](vehicles.md)): 465 of the 6,465
+descriptions now parse differently ("wagon", "crossover" and "saloon" are recognised as cars, and a colour
+before them is kept). Every figure moved by at most 0.003; the values first published (commit 4cb7414) are in
+the git history. RefCOCO+ is unaffected (3 of 10,615 test expressions parse differently).*
 
 * **Retrieval works far above chance but is weak**: MRR 0.14 is 7× random; the described vehicle is in the
   top 10 for 29-30 % of queries among 337 vehicles. On galleries of the official test-set size (184), MRR is
   0.20. These numbers are not comparable with the challenge leaderboard (different tracks; challenge entries
   train on CityFlow-NL and model motion).
 * **The descriptions themselves set the limit for an appearance-only system.** In S05, a vehicle shares its
-  described colour and type with a median of 72 other vehicles (white, black and gray sedans dominate). A ranker
-  that knew colour and type *perfectly* and nothing else would reach MRR 0.131. The system is at that level
-  (0.133-0.143). To go further it would need what the descriptions add beyond appearance: motion ("turns left",
+  described colour and type with a median of 74 other vehicles (white, black and gray sedans dominate). A ranker
+  that knew colour and type *perfectly* and nothing else would reach MRR 0.124. The system is at that level
+  (0.133-0.142). ("Type" here is the detector's category, car / truck / bus. With
+  finer vehicle types such as SUV or sedan, checked by CLIP, the group shrinks; see [vehicles.md](vehicles.md).) To go further it would need what the descriptions add beyond appearance: motion ("turns left",
   "keeps straight") and relations to other vehicles ("followed by a green van"). Neither is modelled.
-* **The colour check does not help measurably here.** The gains are +0.006 to +0.010 MRR, and the bootstrap 95 %
+* **The colour check does not help measurably here.** The gains are +0.006 to +0.009 MRR, and the bootstrap 95 %
   intervals include 0 (e.g. weight 0.05: +0.006 [-0.001, +0.013]); weights ≥ 2 hurt significantly. One reason:
-  CLIP's top colour agrees with the annotators' colour for only 60 % of the vehicles (66 % if gray = silver),
+  CLIP's top colour agrees with the annotators' colour for only 61 % of the vehicles (66 % if gray = silver),
   against clear gains on RefCOCO+ people (§4.2).
 * The parser finds a colour in 84 % and a vehicle category in 92 % of the 6,465 descriptions. "SUV",
   "pickup", "van" are mapped to car / truck, but their exact words still count in the description similarity.

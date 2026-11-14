@@ -203,6 +203,10 @@ class FakeSystem:
     def status(self):
         return {"live": True, "run_id": self.run_id, "cameras": {}, "value": np.float32(1.5)}
 
+    def describe(self):
+        return {"live": True, "detector": {"model_id": "fake", "dtype": "float16"},
+                "cameras": [{"camera_id": "cam01", "url": "rtsp://***@h/x"}]}
+
 
 @pytest.fixture
 def server(tmp_path, monkeypatch, request):
@@ -268,6 +272,10 @@ def test_api_read_endpoints(server):
     assert tl["identity_links"] == [0, 0, 1]
     assert client.get("/api/timeline", params={"since": 10, "until": 5}).status_code == 422
     assert [c["camera_id"] for c in client.get("/api/cameras").json()] == ["cam01", "cam02"]
+    sysinfo = client.get("/api/system").json()
+    assert sysinfo["detector"]["dtype"] == "float16" and sysinfo["cameras"][0]["url"] == "rtsp://***@h/x"
+    h = client.get("/api/health").json()
+    assert h["query_examples"] == [] and "prompt" in h
 
 
 def test_api_search_and_parse(server):

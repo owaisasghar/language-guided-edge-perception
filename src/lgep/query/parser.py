@@ -47,7 +47,8 @@ for words, cats in {
      "skier", "surfer", "batter", "catcher", "umpire", "rider", "cyclist", "biker"): ("person",),
     ("cycle",): ("bicycle",),
     ("bike", "bikes"): ("bicycle", "motorcycle"),  # "bike" is used for both
-    ("sedan", "suv", "taxi", "cab", "van", "jeep", "hatchback", "minivan"): ("car",),
+    ("sedan", "suv", "taxi", "cab", "van", "jeep", "hatchback", "minivan", "wagon", "station wagon", "estate car",
+     "saloon", "crossover", "mpv", "coupe"): ("car",),
     ("motorbike", "scooter", "moped"): ("motorcycle",),
     ("lorry", "pickup", "pick up", "pickup truck", "semi"): ("truck",),
     ("coach", "minibus"): ("bus",),
@@ -85,6 +86,21 @@ COLOURS = ("red", "orange", "yellow", "green", "blue", "purple", "pink", "brown"
 _COLOUR_SYNONYMS = {"grey": "gray", "navy": "blue", "maroon": "red", "crimson": "red", "burgundy": "red",
                     "tan": "brown", "beige": "brown", "violet": "purple", "purp": "purple", "teal": "green",
                     "olive": "green", "golden": "yellow", "gold": "yellow", "blk": "black", "wht": "white"}
+# Vehicle types (sub-types of the detector's car / truck classes), checked with CLIP like colours.
+# canonical name -> (words in a query, the CLIP prompt noun)
+VEHICLE_TYPES = {
+    "sedan": (("sedan", "sedans", "saloon"), "sedan car"),
+    "SUV": (("suv", "suvs", "jeep", "crossover"), "SUV"),
+    "pickup": (("pickup truck", "pick-up truck", "pick up truck", "pickup", "pick-up", "pick up"), "pickup truck"),
+    "minivan": (("minivan", "mini van", "mpv"), "minivan"),
+    "van": (("van", "vans"), "van"),
+    "hatchback": (("hatchback", "hatchbacks"), "hatchback car"),
+    "wagon": (("station wagon", "wagon", "estate car"), "station wagon"),
+}
+# the alternatives a type is compared against (softmax): the types plus other vehicles
+VEHICLE_TYPE_VOCAB = {**{k: v[1] for k, v in VEHICLE_TYPES.items()}, "bus": "bus", "truck": "box truck",
+                      "motorcycle": "motorcycle"}
+_TYPE_WORDS = sorted(((w, k) for k, (ws, _) in VEHICLE_TYPES.items() for w in ws), key=lambda x: -len(x[0]))
 CLOTHING_REGIONS = {
     **dict.fromkeys(("shirt", "tshirt", "t-shirt", "tee", "jacket", "coat", "sweater", "hoodie", "top", "blouse", "vest",
                      "jersey", "sweatshirt", "cardigan", "uniform", "shirts", "jackets", "coats", "tank"), "upper"),
@@ -127,6 +143,7 @@ class StructuredQuery:
     cameras: list[str] = field(default_factory=list)
     time: TimeFilter | None = None
     free_text: str = ""  # the description without camera / time filters (used for CLIP similarity)
+    vehicle_types: list[str] = field(default_factory=list)  # "white SUV" -> ["SUV"] (VEHICLE_TYPES)
 
     @property
     def detector_prompt(self) -> str:
@@ -255,4 +272,22 @@ def parse_query(text: str) -> StructuredQuery:
         elif head_found:
             q.object_colours += pending
     q.object_colours = list(dict.fromkeys(q.object_colours))
+    # Vehicle types of the head object only: "a red sedan followed by a green van" is about the sedan.
+    head = " " + q.free_text + " "
+    for rel in _RELATIONS:
+        i = head.find(f" {rel} ", 1)
+        if i > 0 and any(f" {w} " in head[:i + 1] for w, _ in _TYPE_WORDS):
+            head = head[:i + 1]
+    rest = head
+    for word, kind in _TYPE_WORDS:  # longest first: "pickup truck" before "pickup", "minivan" before "van"
+        if f" {word} " in rest:
+            q.vehicle_types.append(kind)
+            # a colour right before the type word is the vehicle's colour ("silver station wagon"), if the
+            # head had none ("a green wagon")
+            before = rest.split(f" {word} ", 1)[0].split()
+            colour = _colour(before[-1]) if before else None
+            if colour and not q.object_colours and all(c.colour != colour for c in q.clothing):
+                q.object_colours.append(colour)
+            rest = rest.replace(f" {word} ", " ")
+    q.vehicle_types = list(dict.fromkeys(q.vehicle_types))
     return q

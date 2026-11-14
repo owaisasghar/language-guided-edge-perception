@@ -32,7 +32,7 @@ from lgep.database import queries
 from lgep.query.parser import parse_query
 
 log = logging.getLogger(__name__)
-API_VERSION = "0.7.0"
+API_VERSION = "0.8.0"
 
 
 class SearchRequest(BaseModel):
@@ -98,7 +98,14 @@ def create_app(system, cfg: dict, base_dir: Path) -> FastAPI:
     @api.get("/health")
     def health():
         return {"status": "ok", "live": system.live, "run_id": system.run_id, "version": API_VERSION,
-                "search": system.scorer is not None, "auth": token is not None}
+                "search": system.scorer is not None, "auth": token is not None,
+                "query_examples": list(cfg.get("query_examples") or []),
+                "prompt": (cfg.get("pipeline") or {}).get("prompt")}
+
+    @api.get("/system")
+    def system_info():
+        """Models, precision, scheduling, cameras (URLs redacted), hardware: what the System page shows."""
+        return JSONResponse(json.loads(json.dumps(system.describe(), default=_json_default)))
 
     @api.get("/status")
     def status():

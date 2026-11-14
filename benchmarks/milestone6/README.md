@@ -10,11 +10,11 @@ gallery track per vehicle (337 vehicles; random MRR 0.019); colour weight tuned 
 | scoring | MRR | R@1 | R@5 | R@10 | 184-vehicle galleries MRR |
 |---|---|---|---|---|---|
 | CLIP description similarity only | 0.133 | 0.050 | 0.187 | 0.288 | 0.192 ± 0.011 |
-| + colour check (Milestone 6 weight 0.25) | 0.143 | 0.068 | 0.190 | 0.288 | 0.198 ± 0.013 |
-| + colour check (tuned on S02, 0.05) | 0.139 | 0.059 | 0.184 | 0.303 | 0.198 ± 0.011 |
+| + colour check (Milestone 6 weight 0.25) | 0.142 | 0.065 | 0.193 | 0.288 | 0.197 ± 0.014 |
+| + colour check (tuned on S02, 0.05) | 0.139 | 0.059 | 0.187 | 0.300 | 0.197 ± 0.011 |
 
-A vehicle shares its described colour + type with a median of 72 others; ranking by perfectly known colour +
-type would give MRR 0.131. Colour-check gains are within bootstrap noise. Details: docs/milestone6.md §4.5.
+A vehicle shares its described colour + category with a median of 74 others; ranking by perfectly known
+colour + category would give MRR 0.124 (re-run 2026-11-14 with the vehicle-extended parser; changes ≤ 0.003). Colour-check gains are within bootstrap noise. Details: docs/milestone6.md §4.5.
 
 ## RefCOCO+ (accuracy = top-1 box IoU ≥ 0.5 with the described object)
 

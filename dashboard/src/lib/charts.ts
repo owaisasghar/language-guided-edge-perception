@@ -93,3 +93,27 @@ export function compact(n: number): string {
   if (Math.abs(n) < 1_000_000) return `${(n / 1000).toFixed(1)}K`;
   return `${(n / 1_000_000).toFixed(1)}M`;
 }
+
+
+/** SVG path of a sparkline through `values` (nulls skipped) in a w x h box with `pad` px inside; y starts at 0. */
+export function sparkPath(values: (number | null)[], w: number, h: number, pad = 2, max?: number): string {
+  const pts = values.map((v, i) => [i, v] as const).filter((p): p is readonly [number, number] => p[1] != null);
+  if (pts.length < 2) return "";
+  const top = Math.max(max ?? 0, ...pts.map((p) => p[1]), 1e-9);
+  const x = (i: number) => pad + (i / (values.length - 1)) * (w - 2 * pad);
+  const y = (v: number) => h - pad - (v / top) * (h - 2 * pad);
+  return pts.map(([i, v], k) => `${k ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+}
+
+/** "+12 s", "+3 min" between two appearances (or "at the same time" when they overlap). */
+export function fmtGap(prevEnd: number, nextStart: number): string {
+  const d = nextStart - prevEnd;
+  if (d <= 0) return "at the same time";
+  return `+${fmtDuration(d)}`;
+}
+
+/** Colour name -> CSS colour for a small swatch next to the word (the word always carries the meaning). */
+export const SWATCH: Record<string, string> = {
+  red: "#d33", orange: "#f08a24", yellow: "#f2c200", green: "#2a9d4b", blue: "#2f6fe0", purple: "#7b4fd6",
+  pink: "#ee7fb0", brown: "#8a5a35", black: "#111", white: "#fff", gray: "#8b8b8b", silver: "#c9cdd2",
+};

@@ -15,6 +15,12 @@ Stop with Ctrl+C: the pipeline is stopped, open tracks are closed and stored, th
 
 from __future__ import annotations
 
+import os
+
+# Before NumPy loads OpenBLAS: one BLAS thread. OpenBLAS's default pool (one thread per logical core) spins on the
+# small matrix products of identity matching; in a long run it took ~12 cores (docs/milestone8.md, long-run test).
+os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
+
 import argparse
 import logging
 import sys

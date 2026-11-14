@@ -66,7 +66,8 @@ tests/test_store_api.py        store, recorder, persistence across runs, API on 
 
 | endpoint | what |
 |---|---|
-| `GET /api/health`, `/api/status`, `/api/runs` | liveness; cameras, pipeline, Re-ID, store, GPU, CPU, last-hour counts |
+| `GET /api/health`, `/api/status`, `/api/runs` | liveness, example queries, prompt; cameras, pipeline, Re-ID, store, GPU (incl. power), CPU, last-hour counts |
+| `GET /api/system` | models and precision, scheduling (batch size, rate), tracker, Re-ID, store settings, cameras (URLs redacted), hardware and software versions |
 | `GET /api/cameras`, `/api/cameras/{id}/frame.jpg?after=&timeout=`, `/api/cameras/{id}/tracks` | camera list; next live frame with overlays (204 on timeout); current tracks as JSON |
 | `GET /api/tracks`, `/api/tracks/{id}`, `/api/tracks/{id}/thumbnail.jpg` | tracks by camera / time / identity / category; one track with its trajectory points |
 | `GET /api/identities`, `/api/identities/{id}` | global identities (default: seen by ≥ 2 cameras); one identity with its tracks and link evidence |
@@ -78,18 +79,34 @@ Interactive documentation at `/api/docs`.
 
 ### Dashboard
 
-* **Live:** the camera grid, each tile with the newest processed frame (boxes, local ID, provisional
-  global ID), health (status colour + icon + label), processed fps, latency, active tracks and the shown
-  frame's age; an event feed of cross-camera links and camera state changes (click → identity).
-* **Search:** the query box with examples; the interpretation as chips (object, colours, clothing,
-  camera, time); results with thumbnail, camera, time, identity and the cameras it was seen in, and a
-  two-part score bar (description similarity, colour check), with a legend and the values printed.
-* **Timeline:** a time window in one row above the charts; a heatmap of tracks started per camera, with
-  cross-camera links per bucket on the same time axis; swimlanes of individual tracks for windows up to
-  30 min. Tracks of identities seen by several cameras are drawn in blue and the rest in grey; hovering
-  highlights the identity in every camera. Each chart has a table view.
-* Light and dark mode (system setting or the theme button), with the palette validated for colour-vision
-  deficiencies in both modes.
+Redesigned on 2026-11-14 (version 0.8.0). The first version is described in the git history; the redesign
+keeps every data path and adds a System page.
+
+* **Shell:** sidebar with the product mark, icon navigation (Live, Search, Timeline, System), live-connection
+  status, run, uptime, version, and a three-way theme switch (system / light / dark). On phones it becomes a
+  top bar. A banner appears when the live stream is lost. Deep links: `#search`, `?q=…`, `?camera=cam02`,
+  `?identity=12`.
+* **Live:** KPI strip (cameras online, throughput and GPU with two-minute sparklines, median latency, tracks
+  and cross-camera identities in the last hour). Camera tiles show the newest processed frame with the name,
+  a LIVE badge, fps, latency, tracked objects and frame age laid over the video. Clicking a tile opens a focus
+  view: the video at full width plus "In view now", the camera's current tracks with their provisional global
+  IDs. The activity feed lists cross-camera links (with a thumbnail of the track; click → identity) and camera
+  health changes.
+* **Search:** a hero search box (`/` focuses it) with the server's example queries (people or vehicles,
+  `query_examples`); the interpretation as labelled chips (object, colour with a swatch, clothing, vehicle
+  type, camera, time); a results gallery with rank and identity badges, cameras, times, and a two-part score
+  meter (description similarity, colour / type checks) with a legend and printed values; loading skeletons
+  and an empty state that explains how to phrase queries.
+* **Identity:** a drawer with the identity's cameras, number of appearances, time span, and its **journey**:
+  every appearance in time order, with the time between them and the camera change, the link decision and
+  similarity, and the cross-camera link evidence.
+* **Timeline:** time window in the page header; the density heatmap with cross-camera links on the same time
+  axis, and the swimlanes; each chart has a table view.
+* **System (new):** the pipeline as configured (cameras, detector and precision, batching and rate, tracker,
+  Re-ID model, thread and threshold, store and search), live meters (GPU utilisation, memory, power; process
+  CPU; Re-ID lag; database), a camera health table, and hardware / software versions (`GET /api/system`).
+* Colours: the validated chart palette (unchanged); status colours always with an icon and a label; dark mode
+  has its own steps. No UI, chart or icon library: icons are inline SVG drawn for this project.
 
 ## 3. Validation
 

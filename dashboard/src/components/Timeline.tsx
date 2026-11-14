@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { getJSON, type Timeline, type Track } from "../api";
 import { bucketSeconds, compact, fmtClock, fmtDuration, packRows, seqStep, timeTicks } from "../lib/charts";
+import { IconAlert, IconLayers, IconTimeline } from "./Icons";
+import { PageHead } from "./Layout";
 
 const RANGES: [string, number][] = [["5 min", 300], ["15 min", 900], ["1 h", 3600], ["6 h", 21600], ["24 h", 86400]];
 const SWIMLANE_MAX_S = 1800; // individual tracks only for windows up to 30 min
@@ -60,8 +62,8 @@ function Density({ tl, cameras, setTip }: { tl: Timeline; cameras: string[]; set
   return (
     <div className="card">
       <div className="card-h">
-        <h2>Tracks started per camera</h2>
-        <span className="sub">per {fmtDuration(tl.bucket_s)}; below: cross-camera links</span>
+        <span className="card-icon"><IconTimeline size={16} /></span>
+        <div><h2>Tracks started per camera</h2><div className="sub">per {fmtDuration(tl.bucket_s)}; below: cross-camera links</div></div>
         <span className="grow" />
         <span className="legend" aria-label="Colour scale">
           <span className="muted">fewer</span>
@@ -113,7 +115,7 @@ function Density({ tl, cameras, setTip }: { tl: Timeline; cameras: string[]; set
             </g>
           </svg>
         </div>
-        <button className="icon-btn" onClick={() => setTable(!table)} aria-expanded={table}>{table ? "Hide table" : "Show as table"}</button>
+        <button className="btn-ghost" onClick={() => setTable(!table)} aria-expanded={table}>{table ? "Hide table" : "Show as table"}</button>
         {table && (
           <div style={{ overflowX: "auto", marginTop: 8 }}>
             <table className="data">
@@ -158,8 +160,8 @@ function Swimlanes({ tracks, cameras, since, until, setTip, onIdentity }: {
   return (
     <div className="card">
       <div className="card-h">
-        <h2>Tracks per camera</h2>
-        <span className="sub">each bar is one local track; hover to highlight its identity in every camera, click for details</span>
+        <span className="card-icon"><IconLayers size={16} /></span>
+        <div><h2>Tracks per camera</h2><div className="sub">each bar is one local track; hover to highlight its identity in every camera, click for details</div></div>
         <span className="grow" />
         <span className="legend">
           <span><span className="key" style={{ background: "var(--series-1)" }} />seen by several cameras</span>
@@ -203,7 +205,7 @@ function Swimlanes({ tracks, cameras, since, until, setTip, onIdentity }: {
           </svg>
         </div>
         <div className="row">
-          <button className="icon-btn" onClick={() => setTable(!table)} aria-expanded={table}>{table ? "Hide table" : "Show as table"}</button>
+          <button className="btn-ghost" onClick={() => setTable(!table)} aria-expanded={table}>{table ? "Hide table" : "Show as table"}</button>
           <span className="muted">{compact(tracks.length)} tracks in this window</span>
         </div>
         {table && (
@@ -266,19 +268,22 @@ export function TimelineView({ cameras, live, onIdentity }: { cameras: string[];
   }, [load, live]);
 
   const cams = cameras.length ? cameras : Object.keys(tl?.tracks_started ?? {}).sort();
+  const sub = end ? `${live ? "The last" : "Until the end of the stored data:"} ${fmtDuration(span)}${live ? ", refreshed every 5 seconds" : ""}.` : "Loading…";
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12, opacity: loading && tl ? 0.7 : 1 }}>
-      <div className="controls">
+    <>
+      <PageHead title="Timeline" sub={sub} actions={
         <div className="seg" role="group" aria-label="Time window">
           {RANGES.map(([label, s]) => <button key={s} aria-pressed={span === s} onClick={() => setSpan(s)}>{label}</button>)}
         </div>
-        <span className="muted">{end ? `${live ? "last" : "until the end of the stored data,"} ${fmtDuration(span)}${live ? ", refreshed every 5 s" : ""}` : ""}</span>
-        {error && <span className="error">{error}</span>}
+      } />
+      {error && <div className="banner error" role="alert"><IconAlert size={16} />{error}</div>}
+      <div className="stack" style={{ opacity: loading && tl ? 0.75 : 1, transition: "opacity 0.15s" }}>
+        {!tl && !error && <div className="skeleton" style={{ height: 240 }} />}
+        {tl && <Density tl={tl} cameras={cams} setTip={setTip} />}
+        {tracks && tl && <Swimlanes tracks={tracks} cameras={cams} since={tl.since} until={tl.until} setTip={setTip} onIdentity={onIdentity} />}
+        {!tracks && tl && <div className="card empty-state">Choose a window of 15 minutes or less to see individual tracks.</div>}
       </div>
-      {tl && <Density tl={tl} cameras={cams} setTip={setTip} />}
-      {tracks && tl && <Swimlanes tracks={tracks} cameras={cams} since={tl.since} until={tl.until} setTip={setTip} onIdentity={onIdentity} />}
-      {!tracks && tl && <div className="card empty">Choose a window of 15 minutes or less to see individual tracks.</div>}
       <Tooltip tip={tip} />
-    </div>
+    </>
   );
 }

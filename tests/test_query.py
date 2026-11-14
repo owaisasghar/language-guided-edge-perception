@@ -149,3 +149,59 @@ def test_index_filters_ranks_and_reports_cameras(tmp_path):
 
 def test_clothing_dataclass_is_hashable_and_comparable():
     assert Clothing("shirt", "upper", "blue") == Clothing("shirt", "upper", "blue")
+
+
+
+@pytest.mark.parametrize("text, cats, colours, types", [
+    ("white SUV", ["car"], ["white"], ["SUV"]),
+    ("black pickup truck on cam07", ["truck"], ["black"], ["pickup"]),
+    ("blue minivan", ["car"], ["blue"], ["minivan"]),  # minivan, not van
+    ("silver station wagon", ["car"], ["silver"], ["wagon"]),
+    ("red colur car", ["car"], ["red"], []),  # misspelt "colour" is ignored
+    ("grey jeep", ["car"], ["gray"], ["SUV"]),
+    ("a person in a red shirt", ["person"], [], []),
+    ("A red sedan runs down the street followed by a green van.", ["car"], ["red"], ["sedan"]),  # head only
+    ("A white SUV with a black pickup behind it", ["car"], ["white"], ["SUV"]),
+])
+def test_vehicle_types(text, cats, colours, types):
+    q = parse_query(text)
+    assert (q.categories, q.object_colours, q.vehicle_types) == (cats, colours, types)
+
+
+class TypeEmbedder(ColourEmbedder):
+    """Images: red crops are 'SUVs', blue crops are 'sedans' (by colour channel); texts by the words they contain."""
+
+    def embed_texts(self, texts):
+        out = []
+        for t in texts:
+            idx = 0 if "suv" in t.lower() else 2 if "sedan" in t else 15 if "a photo of a" in t and "{" not in t else None
+            out.append(self._vec(idx) if idx is not None else super().embed_texts([t])[0])
+        return np.stack(out)
+
+
+def test_vehicle_type_check_and_switch():
+    from lgep.query.attributes import QueryScorer, ScoreWeights
+
+    red, blue = np.zeros((40, 80, 3), np.uint8), np.zeros((40, 80, 3), np.uint8)
+    red[..., 0], blue[..., 2] = 200, 200
+    emb = TypeEmbedder()
+    full = emb.embed_images([red, blue])
+    q = parse_query("SUV")
+    on = QueryScorer(emb, ScoreWeights(0, 0, 1)).score(q, {"full": full})
+    assert on["attributes"][0] > 0.9 > 0.1 > on["attributes"][1]  # P(SUV): high for the 'SUV' crop
+    assert ("full", "vehicle type", "SUV") in on["checks"]
+    off = QueryScorer(emb, ScoreWeights(0, 0, 1), check_types=False).score(q, {"full": full})
+    assert list(off["attributes"]) == [1.0, 1.0]  # Milestone 6 behaviour: no type check
+
+
+def test_vehicle_type_searches_all_vehicle_classes():
+    from lgep.query.attributes import QueryScorer
+
+    e1 = entry("cam01/1", "car", 0, 1, 1000.0)
+    e2 = entry("cam01/2", "truck", 0, 2, 1000.0)  # a van the detector called "truck"
+    e3 = entry("cam01/3", "person", 0, 3, 1000.0)
+    idx = TrackIndex([e1, e2, e3])
+    hits = idx.search(parse_query("van"), QueryScorer(ColourEmbedder()), now=1001.0)
+    assert sorted(h.entry.key for h in hits) == ["cam01/1", "cam01/2"]
+    hits = idx.search(parse_query("van"), QueryScorer(ColourEmbedder(), check_types=False), now=1001.0)
+    assert [h.entry.key for h in hits] == ["cam01/1"]  # without the type check: the parsed category only

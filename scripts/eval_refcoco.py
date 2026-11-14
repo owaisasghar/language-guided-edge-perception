@@ -79,7 +79,7 @@ class Evaluator:
         self.cfg = cfg
         self.root = REPO_ROOT / cfg["refcoco"]["root"]
         self.embedder = build_embedder(cfg["reid"]["embedder"])
-        self.scorer = QueryScorer(self.embedder)
+        self.scorer = QueryScorer(self.embedder, check_types=False)  # Milestone 6 protocol (no vehicle-type check)
         self.detectors = {}
         self._images = {}
         self._cand_cache = {}

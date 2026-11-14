@@ -38,6 +38,7 @@ log = logging.getLogger(__name__)
 def _scorer(embedder, cfg: dict, base_dir: Path) -> QueryScorer:
     qcfg = load_config(base_dir / "configs" / cfg["query_config"]).get("query", {})
     w = dict(qcfg.get("weights", {}))
+    w.update(cfg.get("query_weights") or {})  # e.g. vehicle mode: the attribute weight tuned with the type check
     w["detection"] = 0.0  # tracks have no detector score for a query
     scorer = QueryScorer(embedder, ScoreWeights.from_dict(w))
     embedder.embed_texts(["a photo of a person."])  # warm-up: the first user query should not pay for it
@@ -70,6 +71,24 @@ class _Base:
     def _retention_cutoff(self) -> float | None:
         h = self.store.cfg.retention_hours
         return None if h is None else time.time() - h * 3600
+
+    def describe(self) -> dict:
+        """What this system is made of (for the dashboard's System page): configuration and hardware, no secrets."""
+        from lgep.utils.env import collect_environment
+
+        if not hasattr(self, "_environment"):
+            e = collect_environment()
+            self._environment = {k: e.get(k) for k in ("os", "python", "cpu", "cpu_logical_cores", "ram_gib", "gpu",
+                                                         "torch_cuda_build")}
+            self._environment["torch"] = (e.get("packages") or {}).get("torch")
+        st = self.store.cfg
+        return {"live": self.live, "run_id": self.run_id, "environment": self._environment,
+                "store": {"retention_hours": st.retention_hours, "thumbnails": st.thumbnails,
+                          "points_every_s": st.points_every_s, "batch_s": st.batch_s},
+                "search": None if self.scorer is None else {
+                    "weights": {"text": self.scorer.weights.text, "attributes": self.scorer.weights.attributes},
+                    "embedder": self.scorer.embedder.describe() if hasattr(self.scorer.embedder, "describe") else None,
+                    "vehicle_type_check": self.scorer.check_types}}
 
     def status(self) -> dict:
         return {"live": self.live, "run_id": self.run_id, "uptime_s": round(time.time() - self.started_wall, 1),
@@ -115,6 +134,9 @@ class LiveSystem(_Base):
                 raise RuntimeError("--simulate needs the system GStreamer RTSP server (docs/installation.md)")
             self.sims = simulated_cameras(cfg)
         self.cameras = cameras_from_config(cfg)
+        for c in self.cameras:  # video files given relative to the repository (e.g. data/...)
+            if not c.is_live and not os.path.isabs(c.url) and (base_dir / c.url).exists():
+                c.url = str(base_dir / c.url)
         p = dict(cfg["pipeline"])
         model = p.pop("model")
         p["tracker"] = {**cfg.get("tracker", {}), **p.get("tracker", {})}
@@ -159,6 +181,24 @@ class LiveSystem(_Base):
         self.cpu_percent = 0.0
         self.callback_ms_total = 0.0
         self.callback_frames = 0
+
+    def describe(self) -> dict:
+        d = super().describe()
+        pc = self.pipeline.cfg
+        tc = self.pipeline._tracker_cfg
+        d.update({
+            "detector": self.detector.describe(),
+            "pipeline": {"phrases": self.pipeline.phrases, "process_fps": pc.process_fps, "batch_size": pc.batch_size,
+                         "tracker": "ByteTrack", "track_thresh": tc.track_thresh, "phrase_groups": tc.phrase_groups},
+            "reid": None if self.reid is None else {
+                "asynchronous": self.reid_worker is not None, "close_after_s": self.reid.close_after_s,
+                "appearance_threshold": self.reid.identities.cfg.appearance_threshold,
+                "embedder": self.reid.embedder.describe()},
+            "cameras": [{"camera_id": c.camera_id, "url": c.display_url, "kind": "stream" if c.is_live else "file",
+                         "source": (c.extra or {}).get("source")} for c in self.cameras],
+            "opencv_threads": self.cfg.get("opencv_threads"),
+        })
+        return d
 
     # ------------------------------------------------------------------------------------ per frame
     def on_result(self, frame, det, trk) -> None:

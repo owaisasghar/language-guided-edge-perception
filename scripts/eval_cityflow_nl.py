@@ -200,7 +200,7 @@ def main() -> int:
     tracks = load_tracks(cfg, pcfg)
     log.info("%d tracks, %d vehicles", len(tracks), len({t["vehicle"] for t in tracks}))
     embedder = build_embedder(cfg["reid"]["embedder"])
-    scorer = QueryScorer(embedder)
+    scorer = QueryScorer(embedder, check_types=False)  # Milestone 6 protocol; type check: eval_vehicle_attributes.py
     w_text = cfg["query"]["weights"]["text"]
     grid = sorted(set(c["attribute_weights"]) | {cfg["query"]["weights"]["attributes"]})
     per = {}
@@ -214,7 +214,7 @@ def main() -> int:
 
     # query latency: parse + CLIP text encoding (uncached) + scoring against the evaluation gallery
     g = np.stack([t["emb"] for t in vehicle_gallery([t for t in tracks if t["scenario"] == c["eval_scenario"]])])
-    lat_scorer, lat = QueryScorer(embedder, ScoreWeights(0.0, w_text, tuned)), []
+    lat_scorer, lat = QueryScorer(embedder, ScoreWeights(0.0, w_text, tuned), check_types=False), []
     for t in tracks[:200]:
         s = time.perf_counter()
         lat_scorer.score(parse_query(t["nl"][0]), {"full": g})

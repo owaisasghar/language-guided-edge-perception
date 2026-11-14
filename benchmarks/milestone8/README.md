@@ -1,51 +1,51 @@
 # Milestone 8 benchmark results — scaling and optimisation
 
-**Actual measurements**, 2026-11-13 (`scripts/benchmark_scaling.py`, `configs/milestone8_scaling.yaml`): the full edge application (simulated RTSP cameras, 1080p30 H.264 -> YOLO-World-M -> ByteTrack -> CLIP Re-ID -> SQLite), each run a fresh start, 15 s warm-up, 40 s measured. RTX 4060 Laptop GPU, Ryzen 7 8845HS (8 cores / 16 threads). Latency = frame decoded -> tracks ready. GPU energy = mean GPU board power / processed frames per second. Machine CPU includes the camera simulators.
+**Actual measurements**, 2026-11-14 (`scripts/benchmark_scaling.py`, `configs/milestone8_scaling.yaml`): the full edge application (simulated RTSP cameras, 1080p30 H.264 -> YOLO-World-M -> ByteTrack -> CLIP Re-ID -> SQLite), each run a fresh start, 15 s warm-up, 40 s measured. RTX 4060 Laptop GPU, Ryzen 7 8845HS (8 cores / 16 threads). Latency = frame decoded -> tracks ready. GPU energy = mean GPU board power / processed frames per second. Machine CPU includes the camera simulators.
 
 ## Scaling (RQ5): 1, 2, 4, 8 streams, 10 fps per camera target
 
 | settings, streams | fps / camera (mean) | fps / camera (min) | total fps | latency p50 / p90 / p99 ms | batch | GPU | GPU power | GPU mJ / frame | app CPU | machine CPU | Re-ID frames dropped | Re-ID lag p50 ms |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Milestone 7 settings, 1 | 10.02 | 10.02 | 10.0 | 13.7 / 14.4 / 15.2 | 1.00 | 19 % | 20.8 W | 2076 | 34 % | 7 % | – | – |
-| Milestone 7 settings, 2 | 10.00 | 9.98 | 20.0 | 13.4 / 15.0 / 16.4 | 1.00 | 36 % | 35.9 W | 1797 | 71 % | 12 % | – | – |
-| Milestone 7 settings, 4 | 9.98 | 9.96 | 39.9 | 15.7 / 29.0 / 42.4 | 1.00 | 66 % | 54.2 W | 1357 | 134 % | 21 % | – | – |
-| Milestone 7 settings, 8 | 4.35 | 4.34 | 34.8 | 31.7 / 45.1 / 50.1 | 1.00 | 66 % | 54.6 W | 1570 | 200 % | 39 % | – | – |
-| all optimisations, 1 | 10.00 | 10.00 | 10.0 | 10.0 / 10.8 / 11.4 | 1.00 | 10 % | 16.8 W | 1685 | 26 % | 6 % | 0 % | 14 |
-| all optimisations, 2 | 10.00 | 10.00 | 20.0 | 10.8 / 12.5 / 15.2 | 1.00 | 22 % | 19.8 W | 991 | 58 % | 11 % | 0 % | 16 |
-| all optimisations, 4 | 10.00 | 9.98 | 40.0 | 10.1 / 11.6 / 16.9 | 1.00 | 38 % | 28.9 W | 723 | 106 % | 19 % | 0 % | 16 |
-| all optimisations, 8 | 10.00 | 9.98 | 80.0 | 48.5 / 64.0 / 79.4 | 3.29 | 51 % | 52.5 W | 656 | 266 % | 44 % | 9 % | 216 |
+| Milestone 7 settings, 1 | 10.02 | 10.02 | 10.0 | 13.7 / 14.9 / 17.0 | 1.00 | 19 % | 20.0 W | 1994 | 34 % | 7 % | – | – |
+| Milestone 7 settings, 2 | 10.01 | 10.01 | 20.0 | 13.2 / 14.8 / 16.7 | 1.00 | 36 % | 35.2 W | 1760 | 70 % | 12 % | – | – |
+| Milestone 7 settings, 4 | 9.98 | 9.96 | 39.9 | 14.8 / 24.9 / 36.2 | 1.00 | 63 % | 53.8 W | 1347 | 125 % | 21 % | – | – |
+| Milestone 7 settings, 8 | 4.56 | 4.54 | 36.5 | 31.1 / 44.5 / 48.9 | 1.00 | 73 % | 54.5 W | 1495 | 193 % | 38 % | – | – |
+| all optimisations, 1 | 10.00 | 10.00 | 10.0 | 10.0 / 11.0 / 12.1 | 1.00 | 10 % | 16.1 W | 1609 | 27 % | 6 % | 0 % | 15 |
+| all optimisations, 2 | 10.01 | 10.01 | 20.0 | 10.8 / 12.8 / 16.0 | 1.00 | 21 % | 19.4 W | 970 | 59 % | 11 % | 0 % | 16 |
+| all optimisations, 4 | 10.00 | 9.98 | 40.0 | 10.3 / 12.1 / 15.4 | 1.00 | 38 % | 26.9 W | 674 | 104 % | 20 % | 0 % | 15 |
+| all optimisations, 8 | 10.00 | 9.98 | 80.0 | 42.6 / 54.5 / 64.5 | 2.61 | 54 % | 52.7 W | 659 | 266 % | 42 % | 6 % | 202 |
 
 ## What each optimisation contributes (RQ6), 8 streams, 10 fps per camera target
 
 | settings | fps / camera (mean) | fps / camera (min) | total fps | latency p50 / p90 / p99 ms | batch | GPU | GPU power | GPU mJ / frame | app CPU | machine CPU | Re-ID frames dropped | Re-ID lag p50 ms |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Milestone 7 settings | 4.35 | 4.34 | 34.8 | 31.7 / 45.1 / 50.1 | 1.00 | 66 % | 54.6 W | 1570 | 200 % | 39 % | – | – |
-| + Re-ID in its own thread | 4.54 | 4.52 | 36.3 | 45.3 / 61.1 / 73.9 | 1.00 | 72 % | 54.4 W | 1498 | 267 % | 44 % | 0 % | 77 |
-| + batching across cameras | 7.38 | 7.09 | 59.0 | 141.6 / 164.0 / 186.9 | 7.67 | 77 % | 54.2 W | 918 | 297 % | 48 % | 56 % | 404 |
-| + FP16 (all optimisations) | 10.00 | 9.98 | 80.0 | 48.5 / 64.0 / 79.4 | 3.29 | 51 % | 52.5 W | 656 | 266 % | 44 % | 9 % | 216 |
-| all but the Re-ID thread | 8.45 | 8.14 | 67.6 | 87.5 / 125.4 / 150.6 | 7.36 | 41 % | 50.8 W | 752 | 208 % | 42 % | – | – |
-| all but batching | 6.48 | 6.41 | 51.9 | 37.0 / 50.7 / 57.0 | 1.00 | 38 % | 51.9 W | 1000 | 245 % | 44 % | 0 % | 48 |
-| Milestone 7 settings, OpenCV default threads | 3.56 | 3.54 | 28.5 | 34.8 / 49.5 / 57.3 | 1.00 | 52 % | 53.3 W | 1874 | 512 % | 67 % | – | – |
-| all optimisations, OpenCV default threads | 9.71 | 9.50 | 77.7 | 79.5 / 109.9 / 149.6 | 5.92 | 37 % | 49.1 W | 631 | 580 % | 70 % | 53 % | 282 |
+| Milestone 7 settings | 4.56 | 4.54 | 36.5 | 31.1 / 44.5 / 48.9 | 1.00 | 73 % | 54.5 W | 1495 | 193 % | 38 % | – | – |
+| + Re-ID in its own thread | 4.69 | 4.69 | 37.5 | 45.0 / 59.2 / 72.5 | 1.00 | 78 % | 54.4 W | 1449 | 268 % | 42 % | 0 % | 76 |
+| + batching across cameras | 7.76 | 7.46 | 62.1 | 134.7 / 156.9 / 175.9 | 7.65 | 81 % | 54.3 W | 874 | 288 % | 45 % | 49 % | 373 |
+| + FP16 (all optimisations) | 10.00 | 9.98 | 80.0 | 42.6 / 54.5 / 64.5 | 2.61 | 54 % | 52.7 W | 659 | 266 % | 42 % | 6 % | 202 |
+| all but the Re-ID thread | 9.24 | 9.06 | 73.9 | 81.5 / 115.5 / 138.8 | 7.24 | 48 % | 50.6 W | 684 | 202 % | 39 % | – | – |
+| all but batching | 7.03 | 6.99 | 56.2 | 34.7 / 48.9 / 55.2 | 1.00 | 42 % | 49.8 W | 885 | 244 % | 42 % | 0 % | 45 |
+| Milestone 7 settings, OpenCV default threads | 4.32 | 4.31 | 34.6 | 32.8 / 45.7 / 50.5 | 1.00 | 67 % | 54.4 W | 1575 | 481 % | 57 % | – | – |
+| all optimisations, OpenCV default threads | 9.99 | 9.97 | 79.9 | 52.3 / 71.1 / 85.8 | 3.43 | 50 % | 50.6 W | 633 | 545 % | 62 % | 25 % | 243 |
 
 ## Frame sampling (RQ6), all optimisations, 8 streams
 
 | frames per second per camera | fps / camera (mean) | fps / camera (min) | total fps | latency p50 / p90 / p99 ms | batch | GPU | GPU power | GPU mJ / frame | app CPU | machine CPU | Re-ID frames dropped | Re-ID lag p50 ms |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 2 | 2.00 | 2.00 | 16.0 | 14.2 / 18.0 / 20.9 | 1.00 | 26 % | 21.6 W | 1349 | 132 % | 34 % | 0 % | 23 |
-| 5 | 5.00 | 4.99 | 40.0 | 19.2 / 36.2 / 51.3 | 1.06 | 32 % | 42.2 W | 1055 | 197 % | 39 % | 0 % | 31 |
-| 10 | 10.00 | 9.98 | 80.0 | 48.5 / 64.0 / 79.4 | 3.29 | 51 % | 52.5 W | 656 | 266 % | 44 % | 9 % | 216 |
-| 15 | 12.59 | 12.15 | 100.7 | 81.9 / 99.1 / 115.3 | 7.14 | 53 % | 51.2 W | 508 | 277 % | 47 % | 51 % | 233 |
-| every frame (30) | 13.15 | 13.15 | 105.2 | 84.4 / 100.1 / 112.7 | 8.00 | 50 % | 51.0 W | 485 | 271 % | 46 % | 54 % | 222 |
+| 2 | 2.00 | 2.00 | 16.0 | 12.4 / 16.0 / 21.5 | 1.00 | 22 % | 19.6 W | 1221 | 122 % | 32 % | 0 % | 20 |
+| 5 | 5.00 | 4.99 | 40.0 | 19.2 / 42.0 / 49.9 | 1.23 | 41 % | 39.1 W | 979 | 193 % | 38 % | 0 % | 34 |
+| 10 | 10.00 | 9.98 | 80.0 | 42.6 / 54.5 / 64.5 | 2.61 | 54 % | 52.7 W | 659 | 266 % | 42 % | 6 % | 202 |
+| 15 | 13.36 | 12.20 | 106.8 | 80.2 / 95.9 / 109.6 | 7.29 | 58 % | 50.3 W | 471 | 276 % | 45 % | 50 % | 220 |
+| every frame (30) | 14.02 | 14.02 | 112.2 | 81.1 / 95.7 / 106.2 | 8.00 | 57 % | 49.7 W | 443 | 267 % | 44 % | 55 % | 212 |
 
 ## Saturation: every decoded frame (30 fps per camera), all optimisations
 
 | streams | fps / camera (mean) | fps / camera (min) | total fps | latency p50 / p90 / p99 ms | batch | GPU | GPU power | GPU mJ / frame | app CPU | machine CPU | Re-ID frames dropped | Re-ID lag p50 ms |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | 29.99 | 29.99 | 30.0 | 10.0 / 10.8 / 13.8 | 1.00 | 24 % | 21.7 W | 723 | 51 % | 8 % | 0 % | 13 |
-| 2 | 30.01 | 30.00 | 60.0 | 12.6 / 16.4 / 19.5 | 1.00 | 40 % | 48.3 W | 805 | 114 % | 15 % | 0 % | 18 |
-| 4 | 28.43 | 28.35 | 113.7 | 50.0 / 63.8 / 70.7 | 3.98 | 64 % | 53.4 W | 469 | 211 % | 27 % | 15 % | 175 |
-| 8 | 13.15 | 13.15 | 105.2 | 84.4 / 100.1 / 112.7 | 8.00 | 50 % | 51.0 W | 485 | 271 % | 46 % | 54 % | 222 |
+| 1 | 29.99 | 29.99 | 30.0 | 10.1 / 11.2 / 13.0 | 1.00 | 24 % | 20.5 W | 684 | 52 % | 8 % | 0 % | 13 |
+| 2 | 30.00 | 30.00 | 60.0 | 11.8 / 15.7 / 18.2 | 1.00 | 40 % | 45.5 W | 758 | 115 % | 15 % | 0 % | 17 |
+| 4 | 29.48 | 28.98 | 117.9 | 47.4 / 62.3 / 67.6 | 3.93 | 65 % | 53.4 W | 453 | 210 % | 26 % | 13 % | 162 |
+| 8 | 14.02 | 14.02 | 112.2 | 81.1 / 95.7 / 106.2 | 8.00 | 57 % | 49.7 W | 443 | 267 % | 44 % | 55 % | 212 |
 
 ## FP16 accuracy and speed
 

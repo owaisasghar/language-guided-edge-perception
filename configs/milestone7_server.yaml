@@ -40,3 +40,10 @@ live:
   max_fps: 10               # per camera, at most this many encodes per second (shared by all viewers)
   draw: true
   long_poll_timeout_s: 2.0
+
+query_examples:       # shown as suggestions in the dashboard's search
+  - person in a white shirt
+  - woman in red
+  - person with a backpack
+  - man in a black jacket on cam01
+  - person in blue in the last 5 minutes

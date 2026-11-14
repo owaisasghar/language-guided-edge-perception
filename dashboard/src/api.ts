@@ -26,9 +26,13 @@ export interface Status {
   time?: number;
   cameras?: Record<string, CameraStatus>;
   pipeline?: { target_process_fps: number; phrases: string[]; callback_ms_mean: number };
-  reid?: { global_identities: number; multi_camera_identities: number; embed_ms_per_frame: number } | null;
-  store: { size_mb: number; queued: number; dropped: number; written: number; last_commit_ms: number };
-  gpu?: { util_percent: number; memory_used_mib: number } | null;
+  reid?: {
+    global_identities: number; multi_camera_identities: number; embed_ms_per_frame: number; crops_embedded?: number;
+    submitted?: number; dropped?: number; queued?: number; lag_ms_p50?: number | null; lag_ms_p90?: number | null;
+  } | null;
+  store: { size_mb: number; queued: number; dropped: number; written: number; last_commit_ms: number; failed?: number };
+  live_hub?: { encodes: number; frames_served: number; encode_ms_mean: number };
+  gpu?: { util_percent: number; memory_used_mib: number; power_w?: number | null } | null;
   process_cpu_percent?: number;
   last_hour?: { tracks: number; open_tracks: number; identities: number; multi_camera_identities: number; identity_links: number };
   sse_clients?: number;
@@ -85,6 +89,7 @@ export interface Parsed {
   cameras: string[];
   time: { last_s: number | null; after: string | null; before: string | null } | null;
   free_text: string;
+  vehicle_types?: string[];
 }
 
 export interface SearchHit {
@@ -114,6 +119,44 @@ export interface SearchResponse {
   weights: { text: number; attributes: number };
   hits: SearchHit[];
   timing_ms: { parse: number; search: number; total: number };
+}
+
+export interface Health {
+  status: string;
+  live: boolean;
+  run_id: number | null;
+  version: string;
+  search: boolean;
+  auth: boolean;
+  query_examples: string[];
+  prompt: string | string[] | null;
+}
+
+export interface ModelInfo {
+  model_id?: string;
+  backend?: string;
+  dtype?: string;
+  imgsz?: number;
+  device?: string;
+  parameters_millions?: number;
+  [k: string]: unknown;
+}
+
+export interface SystemInfo {
+  live: boolean;
+  run_id: number | null;
+  environment: {
+    os?: string; python?: string; cpu?: string; cpu_logical_cores?: number; ram_gib?: number; torch?: string;
+    torch_cuda_build?: string; gpu?: { name?: string; driver?: string; memory_total?: string; power_limit?: string } | null;
+  };
+  store: { retention_hours: number | null; thumbnails: boolean; points_every_s: number; batch_s: number };
+  search: { weights: { text: number; attributes: number }; embedder: ModelInfo | null; vehicle_type_check: boolean } | null;
+  detector?: ModelInfo;
+  pipeline?: { phrases: string[]; process_fps: number; batch_size: number; tracker: string; track_thresh: number;
+    phrase_groups: Record<string, string[]> };
+  reid?: { asynchronous: boolean; close_after_s: number; appearance_threshold: number; embedder: ModelInfo } | null;
+  cameras?: { camera_id: string; url: string; kind: string; source?: string | null }[];
+  opencv_threads?: number | null;
 }
 
 export interface Timeline {

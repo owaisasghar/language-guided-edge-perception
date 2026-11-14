@@ -61,7 +61,7 @@ def main() -> int:
     cfg = load_config(REPO_ROOT / "configs/milestone6_query.yaml")
     base = TrackIndex.load(Path(args.run_dir) / "index")
     scorer = QueryScorer(build_embedder(cfg["reid"]["embedder"]),
-                         ScoreWeights.from_dict({**cfg["query"]["weights"], "detection": 0.0}))
+                         ScoreWeights.from_dict({**cfg["query"]["weights"], "detection": 0.0}), check_types=False)
     rng = np.random.default_rng(0)
     res = {"measured": True, "environment": collect_environment(), "base_index_tracks": len(base),
            "queries": QUERIES, "sizes": []}

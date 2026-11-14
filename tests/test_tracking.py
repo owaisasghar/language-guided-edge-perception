@@ -115,3 +115,40 @@ def test_config_and_camera_id_validation():
         TrackerConfig.from_dict({"track_treshold": 0.5})
     with pytest.raises(ValueError):
         CameraTracker("site/cam01")
+
+
+
+def test_aspect_ratio_filter_only_for_people():
+    from lgep.tracking.tracker import CameraTracker, TrackerConfig
+
+    tr = CameraTracker("cam01", TrackerConfig(max_aspect_ratio=1.6))
+    wide = np.array([[100.0, 100.0, 300.0, 180.0]])  # 200 x 80: w/h 2.5, like a car seen from the side
+    out = None
+    for _ in range(3):
+        out = tr.update({"person": (wide, np.array([0.95])), "car": (wide + 400, np.array([0.95]))})
+    assert [t.phrase for t in out.tracks] == ["car"]  # the wide "person" box is dropped, the car kept
+    every = CameraTracker("cam01", TrackerConfig(max_aspect_ratio=1.6, aspect_filter_phrases=None))
+    for _ in range(3):
+        out = every.update({"car": (wide, np.array([0.95]))})
+    assert out.tracks == []
+
+
+
+def test_phrase_groups_track_label_flicker_as_one_object():
+    from lgep.perception.types import Detection, DetectionResult
+    from lgep.tracking.tracker import CameraTracker, TrackerConfig
+
+    def frame(label):
+        d = Detection(box_xyxy=(100.0, 100.0, 300.0, 180.0), score=0.9, phrase_id=["car", "truck"].index(label),
+                      phrase=label)
+        return DetectionResult(phrases=["car", "truck"], prompt="car . truck", image_size=(640, 480),
+                               input_size=(640, 480), detections=[d])
+
+    grouped = CameraTracker("cam01", TrackerConfig(phrase_groups={"vehicle": ["car", "truck"]}))
+    split = CameraTracker("cam01", TrackerConfig())
+    ids_g, ids_s = set(), set()
+    for label in ["car", "car", "truck", "car", "truck", "truck"]:  # the detector flips its label
+        ids_g |= {(t.phrase, t.local_id) for t in grouped.update_from_result(frame(label)).tracks}
+        ids_s |= {(t.phrase, t.local_id) for t in split.update_from_result(frame(label)).tracks}
+    assert ids_g == {("vehicle", 1)}  # one track for the whole time
+    assert len(ids_s) > 1  # per-label trackers split it

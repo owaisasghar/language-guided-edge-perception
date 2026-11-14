@@ -1,0 +1,194 @@
+{
+ "measured": true,
+ "protocol": "zero-shot; attribute weight tuned on S02 (vehicle-gallery MRR), reported on S05; text weight 4.0",
+ "environment": {
+  "timestamp_utc": "2026-11-13T19:50:24+00:00",
+  "os": "Linux-6.8.0-149-generic-x86_64-with-glibc2.35",
+  "python": "3.12.16",
+  "cpu": "AMD Ryzen 7 8845HS w/ Radeon 780M Graphics",
+  "cpu_logical_cores": 16,
+  "ram_gib": 30.6,
+  "packages": {
+   "torch": "2.13.0+cu130",
+   "torchvision": "0.28.0+cu130",
+   "transformers": "5.22.2",
+   "huggingface-hub": "2.4.0",
+   "tokenizers": "0.23.3",
+   "safetensors": "0.8.0",
+   "numpy": "2.5.4",
+   "pillow": "13.0.0",
+   "lgep": "0.1.0",
+   "ultralytics": "8.4.211",
+   "clip": "1.0",
+   "opencv-python": "5.0.0.93",
+   "pycocotools": "2.0.11",
+   "scipy": "1.18.1",
+   "lap": "0.5.14",
+   "trackeval": "1.0.dev1"
+  },
+  "torch_cuda_build": "13.0",
+  "cudnn": 92000,
+  "torch_arch_list": [
+   "sm_75",
+   "sm_80",
+   "sm_86",
+   "sm_90",
+   "sm_100",
+   "sm_120"
+  ],
+  "gpu": {
+   "name": "NVIDIA GeForce RTX 4060 Laptop GPU",
+   "driver": "580.178.04",
+   "memory_total": "8188 MiB",
+   "compute_capability": "8.9",
+   "power_limit": "55.00 W"
+  }
+ },
+ "scenarios": {
+  "tune": "S02",
+  "eval": "S05",
+  "vehicles_eval": 337
+ },
+ "tuned_attribute_weight": {
+  "colour": 0.05,
+  "colour_type": 0.5
+ },
+ "results": {
+  "description only": {
+   "attribute_weight": 0.0,
+   "vehicles": {
+    "queries": 337,
+    "gallery": 337,
+    "mrr": 0.1332139941255658,
+    "r@1": 0.050445103857566766,
+    "r@5": 0.18694362017804153,
+    "r@10": 0.2878338278931751,
+    "p@10": 0.02878338278931751,
+    "map": 0.1332139941255658
+   },
+   "cross_camera": {
+    "queries": 1737,
+    "gallery": 1737,
+    "mrr": 0.1853138023711276,
+    "r@1": 0.08865860679332183,
+    "r@5": 0.26252158894645944,
+    "r@10": 0.3845710995970063,
+    "p@10": 0.0664363845710996,
+    "map": 0.08423057282158754
+   }
+  },
+  "+ colour check (Milestone 6)": {
+   "attribute_weight": 0.05,
+   "vehicles": {
+    "queries": 337,
+    "gallery": 337,
+    "mrr": 0.13912333962482437,
+    "r@1": 0.05934718100890208,
+    "r@5": 0.18694362017804153,
+    "r@10": 0.2997032640949555,
+    "p@10": 0.029970326409495554,
+    "map": 0.13912333962482437
+   },
+   "cross_camera": {
+    "queries": 1737,
+    "gallery": 1737,
+    "mrr": 0.18865152577458275,
+    "r@1": 0.09268854346574554,
+    "r@5": 0.2671272308578008,
+    "r@10": 0.39666090961427747,
+    "p@10": 0.06914219919401267,
+    "map": 0.08742790028436032
+   }
+  },
+  "+ colour and type check": {
+   "attribute_weight": 0.5,
+   "vehicles": {
+    "queries": 337,
+    "gallery": 337,
+    "mrr": 0.1573466875076244,
+    "r@1": 0.06824925816023739,
+    "r@5": 0.19584569732937684,
+    "r@10": 0.3590504451038576,
+    "p@10": 0.03590504451038576,
+    "map": 0.1573466875076244
+   },
+   "cross_camera": {
+    "queries": 1737,
+    "gallery": 1737,
+    "mrr": 0.18465546648925119,
+    "r@1": 0.08578008059873345,
+    "r@5": 0.257915947035118,
+    "r@10": 0.3920552677029361,
+    "p@10": 0.07248128957973518,
+    "map": 0.09565339630326879
+   }
+  }
+ },
+ "colour_type_minus_colour_mrr_ci95": [
+  0.01822334788280002,
+  -0.0005707866076629259,
+  0.036736799967845596
+ ],
+ "queries_naming_a_type": {
+  "queries_with_a_type": 332,
+  "of": 337,
+  "mrr_colour": 0.13533138553921795,
+  "mrr_colour_type": 0.15398461600481575
+ },
+ "clip_type_agreement": {
+  "vehicles_with_described_type": 332,
+  "agreement": 0.7680722891566265,
+  "described_types": {
+   "SUV": 140,
+   "sedan": 108,
+   "pickup": 42,
+   "van": 17,
+   "hatchback": 11,
+   "wagon": 9,
+   "minivan": 5
+  },
+  "top_confusions": [
+   [
+    "sedan",
+    "SUV",
+    20
+   ],
+   [
+    "van",
+    "SUV",
+    12
+   ],
+   [
+    "wagon",
+    "SUV",
+    7
+   ],
+   [
+    "hatchback",
+    "SUV",
+    6
+   ],
+   [
+    "sedan",
+    "hatchback",
+    4
+   ],
+   [
+    "SUV",
+    "minivan",
+    4
+   ]
+  ]
+ },
+ "same_colour_and_type_group": {
+  "median": 26.0,
+  "mean": 24.068249258160236,
+  "max": 43
+ },
+ "attribute_oracle_mrr_colour_type": 0.2378208081928375,
+ "milestone6_reference": {
+  "attribute_oracle_mrr_colour_category": 0.12407834006789203,
+  "same_colour_and_category_group_median": 74.0
+ },
+ "seconds": 41.6
+}

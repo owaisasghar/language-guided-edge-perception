@@ -36,6 +36,11 @@ class TrackerConfig:
     # Output filters (applied to reported tracks only, never to the tracker state), as in ByteTrack.
     min_box_area: float = 100.0  # px^2; ByteTrack's tools/track.py default
     max_aspect_ratio: float | None = None  # drop boxes with w/h above this; ByteTrack uses 1.6 for pedestrians
+    # phrases the aspect-ratio filter applies to (None = all). Cars are often wider than 1.6 x their height.
+    aspect_filter_phrases: list[str] | None = field(default_factory=lambda: ["person"])
+    # phrases tracked together under one name, e.g. {"vehicle": ["car", "truck", "bus"]}: open-vocabulary
+    # detectors flip between "car" and "truck" for the same van, which would split its track per label
+    phrase_groups: dict[str, list[str]] = field(default_factory=dict)
     # Persistence of local IDs across restarts: one JSON file per camera in this directory (None = off).
     id_state_dir: str | None = None
     id_block: int = 1000
@@ -117,7 +122,7 @@ class CameraTracker:
             tracker = self._tracker(phrase)
             for st in tracker.update(boxes, scores):
                 x, y, w, h = st.tlwh
-                if not self._keep(w, h):
+                if not self._keep(w, h, phrase):
                     continue
                 tracks.append(Track(self.camera_id, int(st.track_id), phrase, (x, y, x + w, y + h),
                                     float(st.score), st.start_frame + self._offsets[phrase]))
@@ -125,15 +130,26 @@ class CameraTracker:
 
     def update_from_result(self, result: DetectionResult) -> TrackingResult:
         """Convenience wrapper: group a detector's output by phrase and call :meth:`update`."""
-        dets = {}
-        for i, phrase in enumerate(result.phrases):
-            sel = [d for d in result.detections if d.phrase_id == i]
-            boxes = np.array([d.box_xyxy for d in sel], dtype=np.float64).reshape(-1, 4)
-            dets[phrase] = (boxes, np.array([d.score for d in sel], dtype=np.float64))
-        return self.update(dets)
+        group_of = {p: g for g, members in self.cfg.phrase_groups.items() for p in members}
+        boxes: dict[str, list] = {}
+        scores: dict[str, list] = {}
+        for phrase in result.phrases:  # every phrase (group) of the query, also without detections
+            name = group_of.get(phrase, phrase)
+            boxes.setdefault(name, [])
+            scores.setdefault(name, [])
+        for d in result.detections:
+            name = group_of.get(d.phrase, d.phrase)
+            boxes[name].append(d.box_xyxy)
+            scores[name].append(d.score)
+        return self.update({k: (np.array(boxes[k], dtype=np.float64).reshape(-1, 4),
+                                 np.array(scores[k], dtype=np.float64)) for k in boxes})
 
-    def _keep(self, w: float, h: float) -> bool:
-        # Same test and order as ByteTrack's evaluator: area > min_box_area and not "vertical" (w/h > 1.6).
+    def _keep(self, w: float, h: float, phrase: str = "person") -> bool:
+        # Same test and order as ByteTrack's evaluator: area > min_box_area and not "vertical" (w/h > 1.6); the
+        # aspect test only for pedestrian phrases (``aspect_filter_phrases``), never for vehicles.
         if w * h <= self.cfg.min_box_area:
             return False
-        return not (self.cfg.max_aspect_ratio is not None and h > 0 and w / h > self.cfg.max_aspect_ratio)
+        phrases = self.cfg.aspect_filter_phrases
+        if self.cfg.max_aspect_ratio is None or (phrases is not None and phrase not in phrases):
+            return True
+        return not (h > 0 and w / h > self.cfg.max_aspect_ratio)

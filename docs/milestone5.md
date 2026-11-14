@@ -250,7 +250,7 @@ from the shift in its tuned threshold.
   the size of the camera network (relevant to RQ5).
 * **The appearance feature is the main limit.** The best cue set reaches 0.20 (0.25 post hoc); with the same
   tracklets, oracle association reaches 0.60. CLIP embeddings cannot tell similar vehicles apart; in
-  CityFlow-NL, a vehicle shares its described colour and type with a median of 72 others. A dedicated vehicle
+  CityFlow-NL, a vehicle shares its described colour and type with a median of 74 others. A dedicated vehicle
   Re-ID model is the next backend.
 * **Detection and local tracking cap the oracle at 0.60** (S02 0.46).
   * In S02, 60 % of the annotated boxes are found (IoU ≥ 0.5); in S05, 82 %. The missed boxes are smaller

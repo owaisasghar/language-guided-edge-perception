@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bucketSeconds, cameraHealth, compact, fmtDuration, niceStep, packRows, seqStep, timeTicks } from "./charts";
+import { bucketSeconds, cameraHealth, compact, fmtDuration, fmtGap, niceStep, packRows, seqStep, sparkPath, timeTicks } from "./charts";
 
 describe("packRows", () => {
   it("puts overlapping intervals on separate rows and reuses free rows", () => {
@@ -58,5 +58,18 @@ describe("formatting", () => {
     expect(compact(1284)).toBe("1,284");
     expect(compact(12_900)).toBe("12.9K");
     expect(compact(4_200_000)).toBe("4.2M");
+  });
+});
+
+
+describe("sparkPath and gaps", () => {
+  it("draws through the points, skipping missing ones, from a zero baseline", () => {
+    expect(sparkPath([0, 10], 100, 20, 0)).toBe("M0.0,20.0 L100.0,0.0");
+    expect(sparkPath([5, null, 10], 100, 20, 0)).toBe("M0.0,10.0 L100.0,0.0");
+    expect(sparkPath([1], 100, 20)).toBe("");
+  });
+  it("formats the time between two appearances", () => {
+    expect(fmtGap(10, 22)).toBe("+12 s");
+    expect(fmtGap(10, 5)).toBe("at the same time");
   });
 });
