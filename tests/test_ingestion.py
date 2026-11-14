@@ -176,6 +176,17 @@ def test_url_credentials_are_redacted_and_env_expanded(monkeypatch):
         _ = cam(url="rtsp://admin:${NOT_SET_ANYWHERE}@cam.local/live").resolved_url
 
 
+def test_file_sources_are_shown_without_user_paths(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    assert cam(url=str(tmp_path / "data" / "clip.mp4")).display_url == "data/clip.mp4"  # inside the working dir
+    monkeypatch.setenv("HOME", str(tmp_path / "home" / "someone"))
+    monkeypatch.chdir("/")
+    assert cam(url=str(tmp_path / "home" / "someone" / "v" / "a.mp4")).display_url == "~/v/a.mp4"
+    assert cam(url="/srv/videos/a.mp4").display_url == "/srv/videos/a.mp4"            # outside both: unchanged
+    assert cam(url="data/rel.mp4").display_url == "data/rel.mp4"
+    assert cam(url="rtsp://u:p@h/x").display_url == "rtsp://***@h/x"
+
+
 def test_camera_config_validation():
     with pytest.raises(ValueError, match="Unknown camera config"):
         CameraConfig.from_dict({"camera_id": "a", "url": "x", "fps_limit": 5})

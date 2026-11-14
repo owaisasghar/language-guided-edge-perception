@@ -11,6 +11,8 @@ from pathlib import Path
 
 import numpy as np
 
+from lgep.utils.paths import display_path
+
 _URL_CREDENTIALS = re.compile(r"(?P<scheme>[a-zA-Z][a-zA-Z0-9+.-]*://)[^/@\s]+@")
 _OPEN_LOCK = threading.Lock()  # OPENCV_FFMPEG_CAPTURE_OPTIONS is process-wide; set it per open under a lock
 
@@ -75,7 +77,9 @@ class CameraConfig:
 
     @property
     def display_url(self) -> str:
-        return redact_url(self.url)
+        """What logs, the API and the dashboard show: stream credentials hidden; a local file relative to the
+        working directory (or the home directory, as ~/...), so screenshots do not reveal user names and paths."""
+        return redact_url(self.url) if "://" in self.url else display_path(self.url)
 
 
 @dataclass(frozen=True)

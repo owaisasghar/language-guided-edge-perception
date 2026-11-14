@@ -49,6 +49,17 @@ chosen (supply-chain hygiene).
 | CityFlow (AI City Challenge) | Tang et al., *CityFlow: A City-Scale Benchmark for Multi-Target Multi-Camera Vehicle Tracking and Re-Identification*, CVPR 2019, arXiv:1903.09254 | multi-camera vehicle tracking / Re-ID (M5) | AIC 2022 Track 1 ("CityFlowV2"): direct download from aicitychallenge.org (the request form is deprecated); NVIDIA Dataset License Agreement v. 2022-02-09 (**verified**, read in full): non-commercial academic use only (also for models developed with it), no redistribution except a minimal portion in research papers with acknowledgement and no unredacted faces or licence plates, binding arbitration, US export rules. Accepted by the project owner on 2026-11-13. Never committed; no CityFlow frames in public demos |
 | CityFlow-NL | Feng et al., *CityFlow-NL: Tracking and Retrieval of Vehicles at City Scale by Natural Language Descriptions*, arXiv:2101.04741 | NL vehicle retrieval (M6) | AIC 2023 Track 2: same videos as CityFlowV2 plus track descriptions; NVIDIA Dataset License Agreement v. 2023-01-12 (**verified**: same terms as above). Accepted by the project owner on 2026-11-13 |
 
+Demo footage (Milestone 10; only in the demo video, never committed; details and attribution in [demo.md](demo.md)):
+
+| footage | source | licence |
+|---|---|---|
+| MOT17 training sequences (simulated cameras) | motchallenge.net | CC BY-NC-SA 3.0 |
+| "Views of the Caton Farm Road and Essington Road Intersection in Joliet, Illinois", Illinois_Roadbuff (Rogue Jr) | Wikimedia Commons | CC BY 4.0 (**verified**, file metadata, 2026-11-15) |
+| "Street traffic" (San Francisco), YouTube user "Editor" | Wikimedia Commons | CC BY 3.0 (**verified**, file metadata, 2026-11-15) |
+| "Road traffic – cobblestone road", B. Rezar Grilc, B. Troha, D. Oblak | Wikimedia Commons | CC BY 3.0 (**verified**, file metadata, 2026-11-15) |
+
+Documentation tools (Milestone 10): Python-Markdown 3.7 (BSD-3-Clause, **verified**, package metadata) for the report's PDF (`docs` extra); Matplotlib (figures); Google Chrome (PDF printing, demo recording; not shipped).
+
 Datasets behind downloaded weights only (not downloaded here; Milestone 9's FastReID models were trained on them):
 
 | dataset | paper | use here | access / licence |

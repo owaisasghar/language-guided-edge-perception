@@ -29,6 +29,8 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 
+from lgep.utils.paths import display_path
+
 log = logging.getLogger(__name__)
 
 SCHEMA = """
@@ -300,7 +302,7 @@ class MetadataStore:
 
     def stats(self) -> dict:
         size = sum(p.stat().st_size for p in self.path.parent.glob(self.path.name + "*") if p.is_file())
-        return {"path": str(self.path), "run_id": self.run_id, "queued": self._q.qsize(), "submitted": self.submitted,
+        return {"path": display_path(self.path), "run_id": self.run_id, "queued": self._q.qsize(), "submitted": self.submitted,
                 "written": self.written, "dropped": self.dropped, "failed": self.failed_ops, "commits": self.commits,
                 "last_commit_ms": round(self.last_commit_ms, 2), "max_commit_ms": round(self.max_commit_ms, 2),
                 "size_mb": round(size / 2**20, 2)}

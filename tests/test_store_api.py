@@ -371,3 +371,13 @@ def test_async_reid_uses_segment_keys_fixed_at_frame_time(tmp_path):
     with store.reader() as conn:
         assert [r["key"] for r in queries.list_tracks(conn)] == ["cam01/1"]
     store.close()
+
+
+def test_store_status_shows_no_user_paths(tmp_path, monkeypatch):
+    """/api/status reports the store's path; it must not reveal the user's directories (Milestone 10 fix)."""
+    monkeypatch.chdir(tmp_path)
+    store, _ = make_store(tmp_path)
+    assert store.stats()["path"] == "db.sqlite"
+    monkeypatch.chdir("/")
+    monkeypatch.setenv("HOME", str(tmp_path))
+    assert store.stats()["path"] == "~/db.sqlite"

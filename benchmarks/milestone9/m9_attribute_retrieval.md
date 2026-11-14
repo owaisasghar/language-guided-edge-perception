@@ -1,6 +1,6 @@
 # Attribute retrieval on CityFlow-NL: "find all white SUVs" (zero-shot)
 
-**Actual measurements**, 2026-11-14, `scripts/eval_attribute_retrieval.py`. CityFlow-NL annotated vehicles, one track each; labels = majority colour and type of the three descriptions (parsed; grey = silver); queries generated from labels with >= 3 vehicles; ranking from image embeddings only; attribute weight chosen on S02 by mAP, reported on S05; text weight 4.0.
+**Actual measurements**, 2026-11-15, `scripts/eval_attribute_retrieval.py`. CityFlow-NL annotated vehicles, one track each; labels = majority colour and type of the three descriptions (parsed; grey = silver); queries generated from labels with >= 3 vehicles; ranking from image embeddings only; attribute weight chosen on S02 by mAP, reported on S05; text weight 4.0.
 
 S05: 337 vehicles (337 with a described colour, 332 with a described type), 35 queries.
 
@@ -9,6 +9,12 @@ S05: 337 vehicles (337 with a described colour, 332 with a described type), 35 q
 | description similarity only | 0.0 | 0.458 | 0.084 | 0.629 | 0.571 | 0.483 | 0.306 | 0.628 |
 | + colour check | 0.1 | 0.475 | 0.084 | 0.657 | 0.589 | 0.483 | 0.308 | 0.643 |
 | + colour and type check | 2.0 | 0.514 | 0.084 | 0.686 | 0.646 | 0.526 | 0.313 | 0.631 |
+
+Paired bootstrap over queries (2,000 resamples), mAP difference and 95 % interval:
+
+* + colour check minus description similarity only: +0.017 [+0.002, +0.032]
+* + colour and type check minus + colour check: +0.039 [-0.002, +0.078]
+* + colour and type check minus description similarity only: +0.056 [+0.011, +0.097]
 
 By query family (+ colour and type check):
 
@@ -58,4 +64,4 @@ Per query (+ colour and type check):
 | a gray station wagon | 3 | 0.421 | 0.100 |
 | a white hatchback | 3 | 0.482 | 0.200 |
 
-Scoring latency: median 0.3 ms, p90 6.7 ms per query over 337 vehicles (CPU; text embedding on the GPU; gallery embeddings precomputed).
+Scoring latency: median 0.3 ms, p90 3.1 ms per query over 337 vehicles (CPU; text embedding on the GPU; gallery embeddings precomputed).

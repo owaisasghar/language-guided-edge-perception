@@ -1,0 +1,28 @@
+# Vehicle mode with a dedicated vehicle Re-ID model for cross-camera matching (Milestone 9).
+#
+#   python scripts/serve.py --config configs/vehicles_fastreid.yaml
+#
+# Same as configs/vehicles.yaml, plus FastReID's VeRi-776 model (SBS R50-ibn, official model zoo) as the identity
+# feature: each crop gets a second embedding, used only to decide whether two tracks are the same vehicle. Text
+# search and the colour and type checks stay on CLIP.
+#
+# Why: on CityFlowV2 (Milestone 5's protocol, the same crops) it raised validation IDF1 for every cue set, e.g.
+# 0.200 -> 0.213 with appearance + time rules (this mode's association) and 0.180 -> 0.240 with all cues
+# (benchmarks/milestone9/m9_cityflow_{fastreid,clip}.md). Cost: about 2x CLIP's embedding time per crop.
+#
+# Needs the official FastReID checkout and weights (docs/milestone9.md, "Setup"), and `pip install -e ".[fastreid]"`.
+# The weights are trained on VeRi-776 (non-commercial research): research use only.
+
+extends: vehicles.yaml
+
+run_name: vehicles_fastreid
+output_dir: outputs/vehicles_fastreid
+
+reid_overrides:
+  identity_embedder: {backend: fastreid, model_id: configs/VeRi/sbs_R50-ibn.yml,
+                      weights: models/fastreid/veri_sbs_R50-ibn.pth, revision: null, dtype: float32, batch_size: 64}
+  association:
+    appearance_threshold: 0.45   # tuned for FastReID on CityFlowV2 train with time rules (CLIP's was 0.55)
+
+store:
+  path: outputs/vehicles_fastreid/lgep.sqlite

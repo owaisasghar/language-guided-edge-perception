@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=69", "wheel"]
+requires = ["setuptools>=77", "wheel"]   # >= 77: SPDX licence expressions (PEP 639)
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,6 +7,9 @@ name = "lgep"
 version = "0.1.0"
 description = "Language-Guided Multi-Camera Edge Perception: open-vocabulary detection, tracking and cross-camera retrieval."
 readme = "README.md"
+# This project: AGPL-3.0 (LICENSE). Vendored ByteTrack, OC-SORT and BoT-SORT code: MIT (their LICENSE files).
+license = "AGPL-3.0-only AND MIT"
+license-files = ["LICENSE", "src/lgep/tracking/bytetrack/LICENSE", "src/lgep/tracking/ocsort/LICENSE", "src/lgep/tracking/botsort/LICENSE"]
 requires-python = ">=3.10"  # 3.10 kept for Jetson (JetPack 6 ships Python 3.10)
 # torch / torchvision are intentionally NOT listed: they must be installed from the
 # PyTorch index matching your CUDA driver (see docs/installation.md).
@@ -43,6 +46,8 @@ server = ["fastapi>=0.115", "uvicorn>=0.30", "httpx>=0.27"]
 # Dedicated Re-ID models (Milestone 9): what the official FastReID code (a local checkout at third_party/fast-reid,
 # commit c9bc3ce, Apache-2.0; see docs/milestone9.md) imports for building its models.
 fastreid = ["yacs==0.1.8", "termcolor==2.5.0"]
+# Documentation (Milestone 10): the technical report's PDF (scripts/build_report.py; also needs Chrome / Chromium).
+docs = ["markdown==3.7"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

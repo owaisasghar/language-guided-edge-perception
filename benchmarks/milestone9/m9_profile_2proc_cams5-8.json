@@ -1,0 +1,91 @@
+{
+ "measured": true,
+ "date": "2026-11-15T00:59:17",
+ "config": "configs/milestone8_scaling.yaml",
+ "variant": "full",
+ "streams": 4,
+ "cameras": [
+  "cam05",
+  "cam06",
+  "cam07",
+  "cam08"
+ ],
+ "process_fps": 0,
+ "window_s": 40.1,
+ "processed_fps_total": 55.6,
+ "batches_per_s": 13.9,
+ "mean_batch": 4.0,
+ "process_cpu_percent": 237.5,
+ "thread_cpu_percent": {
+  "camera readers (decode)": 83.2,
+  "perception": 78.2,
+  "reid": 74.5,
+  "status": 0.8,
+  "store-writer": 0.6,
+  "other (native: PyTorch, OpenCV, CUDA, ...)": 0.0,
+  "MainThread": 0.0,
+  "tqdm_monitor": 0.0,
+  "Thread-1 (_read)": 0.0
+ },
+ "worker_thread": "perception",
+ "worker_wall_percent": {
+  "waiting_for_frames": 0.0,
+  "detector_call": 84.8,
+  "detector_pre": 10.7,
+  "detector_infer": 47.0,
+  "detector_post": 25.0,
+  "tracker": 14.3,
+  "finish_incl_callback": 0.7,
+  "other_worker_python": 0.2
+ },
+ "gpu": {
+  "samples": 160,
+  "util_percent_mean": 76.5,
+  "util_percent_p90": 85.1,
+  "device_memory_used_mib_max": 1951.0,
+  "power_w_mean": 52.29
+ },
+ "environment": {
+  "timestamp_utc": "2026-11-14T19:59:17+00:00",
+  "os": "Linux-6.8.0-149-generic-x86_64-with-glibc2.35",
+  "python": "3.12.16",
+  "cpu": "AMD Ryzen 7 8845HS w/ Radeon 780M Graphics",
+  "cpu_logical_cores": 16,
+  "ram_gib": 30.6,
+  "packages": {
+   "torch": "2.13.0+cu130",
+   "torchvision": "0.28.0+cu130",
+   "transformers": "5.22.2",
+   "huggingface-hub": "2.4.0",
+   "tokenizers": "0.23.3",
+   "safetensors": "0.8.0",
+   "numpy": "2.5.4",
+   "pillow": "13.0.0",
+   "lgep": "0.1.0",
+   "ultralytics": "8.4.211",
+   "clip": "1.0",
+   "opencv-python": "5.0.0.93",
+   "pycocotools": "2.0.11",
+   "scipy": "1.18.1",
+   "lap": "0.5.14",
+   "trackeval": "1.0.dev1"
+  },
+  "torch_cuda_build": "13.0",
+  "cudnn": 92000,
+  "torch_arch_list": [
+   "sm_75",
+   "sm_80",
+   "sm_86",
+   "sm_90",
+   "sm_100",
+   "sm_120"
+  ],
+  "gpu": {
+   "name": "NVIDIA GeForce RTX 4060 Laptop GPU",
+   "driver": "580.178.04",
+   "memory_total": "8188 MiB",
+   "compute_capability": "8.9",
+   "power_limit": "55.00 W"
+  }
+ }
+}

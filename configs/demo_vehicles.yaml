@@ -1,0 +1,28 @@
+# Milestone 10 demo: vehicle mode on three openly licensed traffic videos (no CityFlow frames in public demos).
+#
+#   python scripts/record_demo.py          # records the demo video (this config is its vehicle segment)
+#   python scripts/serve.py --config configs/demo_vehicles.yaml
+#
+# The clips are from Wikimedia Commons under CC BY (attribution in docs/demo.md), transcoded to H.264 1080p30
+# by scripts/record_demo.py --prepare into data/demo/cams/ (git-ignored). Unrelated scenes: they show detection,
+# tracking and search, not cross-camera identities (those are evaluated on CityFlowV2, docs/milestone9.md).
+
+extends: vehicles.yaml
+
+run_name: demo_vehicles
+output_dir: outputs/milestone10/demo_vehicles
+
+store:
+  path: outputs/milestone10/demo_vehicles/lgep.sqlite
+
+cameras:
+  - {camera_id: cam01, url: data/demo/cams/joliet_intersection.mp4, extra: {source: "Wikimedia Commons, CC BY 4.0"}}
+  - {camera_id: cam02, url: data/demo/cams/sf_street_traffic.mp4, extra: {source: "Wikimedia Commons, CC BY 3.0"}}
+  - {camera_id: cam03, url: data/demo/cams/cobblestone_road.mp4, extra: {source: "Wikimedia Commons, CC BY 3.0"}}
+
+query_examples:
+  - white SUV
+  - red car
+  - bus
+  - black pickup truck
+  - yellow taxi
